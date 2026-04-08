@@ -1,31 +1,28 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
+import { useEffect } from "react";
 
-export default function PayPage() {
+export default function PayContent() {
   const params = useSearchParams();
-  const amount = Number(params.get("amount"));
+
+  const amount = Number(params.get("amount") || 0);
 
   useEffect(() => {
     initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
-    locale: "en-US",
+      locale: "en-US", // 🔥 idioma
     });
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center">
 
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
 
-        <h1 className="text-2xl font-bold mb-4">
-          Complete your payment 💳
-        </h1>
-
-        <p className="mb-6 text-gray-600">
-          Total: <strong>${amount} MXN</strong>
-        </p>
+        <h2 className="text-xl font-semibold mb-4">
+          Complete Payment 💳
+        </h2>
 
         <Payment
           initialization={{
@@ -35,35 +32,25 @@ export default function PayPage() {
             paymentMethods: {
               creditCard: "all",
               debitCard: "all",
-              ticket: "all",
             },
           }}
-          onSubmit={async (paymentData) => {
+          onSubmit={async (data) => {
             const res = await fetch("/api/process-payment", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                ...paymentData,
+                ...data,
                 transaction_amount: amount,
               }),
             });
 
-            const result = await res.json();
-
-            if (result.status === "approved") {
-              window.location.href = "/success";
-            } else {
-              window.location.href = "/error";
-            }
-
-            return result;
+            return await res.json();
           }}
         />
 
       </div>
-
     </div>
   );
 }

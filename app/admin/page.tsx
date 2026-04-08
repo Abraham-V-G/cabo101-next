@@ -1,161 +1,129 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
+import { useState } from "react";
 
-export default function AdminPage() {
-  const router = useRouter();
-
+export default function AdminDashboard() {
   const [amount, setAmount] = useState("");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [service, setService] = useState("");
-  const [paymentLink, setPaymentLink] = useState("");
-  const [showBrick, setShowBrick] = useState(false);
-  const [webhooks, setWebhooks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  // 🔗 GENERAR LINK DE PAGO
+  const handleGenerateLink = async () => {
+    if (!amount) return alert("Enter amount");
 
-    if (!token) {
-      router.push("/admin/login");
-    } else {
-      loadWebhooks();
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: Number(amount),
+          email,
+        }),
+      });
+
+      const data = await res.json();
+
+      setLoading(false);
+
+      if (data.url) {
+        window.open(data.url, "_blank");
+      } else {
+        alert("Error generating link");
+      }
+
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
     }
-
-    initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
-      locale: "en-US", // 🔥 CAMBIAR A "es-MX" SI QUIERES ESPAÑOL
-    });
-  }, []);
-
-  const loadWebhooks = async () => {
-    const res = await fetch("/api/webhooks");
-    const data = await res.json();
-    setWebhooks(data);
   };
 
-  const createPaymentLink = async () => {
-    const res = await fetch("/api/create-payment", {
-      method: "POST",
-      body: JSON.stringify({
-        amount,
-        name,
-        email,
-        service,
-      }),
-    });
+  // 💳 IR A PÁGINA DE PAGO (BRICK)
+  const handleGoToBrick = () => {
+    if (!amount) return alert("Enter amount");
 
-    const data = await res.json();
-    setPaymentLink(data.url);
+    window.location.href = `/pay?amount=${amount}&email=${email}`;
   };
 
   return (
-    <div className="p-10 space-y-10">
+    <div className="min-h-screen bg-gray-100 p-8">
 
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <div className="max-w-5xl mx-auto space-y-8">
 
-      {/* 🔥 COBRAR */}
-      <div className="border p-6 rounded-xl space-y-4">
-        <h2 className="text-xl font-semibold">Cobrar cliente</h2>
+        <h1 className="text-3xl font-bold">
+          Admin Dashboard ⚙️
+        </h1>
 
-        <input placeholder="Nombre" value={name} onChange={e => setName(e.target.value)} className="border p-2 rounded w-full max-w-xs" />
-        <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="border p-2 rounded w-full max-w-xs" />
-        <input placeholder="Servicio" value={service} onChange={e => setService(e.target.value)} className="border p-2 rounded w-full max-w-xs" />
-        <input placeholder="Monto" value={amount} onChange={e => setAmount(e.target.value)} className="border p-2 rounded w-full max-w-xs" />
+        {/* CARDS */}
+        <div className="grid md:grid-cols-3 gap-6">
 
-        <div className="flex gap-4">
-          <button onClick={createPaymentLink} className="bg-black text-white px-4 py-2 rounded">
-            Generar link
-          </button>
+          <Card title="Reservations" desc="Manage bookings" />
+          <Card title="Payments" desc="View payments" />
+          <Card title="Webhooks" desc="Monitor events" />
 
-          <button onClick={() => setShowBrick(true)} className="bg-green-600 text-white px-4 py-2 rounded">
-            Cobrar aquí
-          </button>
         </div>
 
-        {paymentLink && (
-          <div className="bg-gray-100 p-3 rounded">
-            <a href={paymentLink} target="_blank" className="text-blue-600 underline">
-              {paymentLink}
-            </a>
-          </div>
-        )}
-      </div>
+        {/* PAYMENT GENERATOR */}
+        <div className="bg-white p-6 rounded-2xl shadow space-y-4">
 
-      {/* 💳 BRICK */}
-      {showBrick && (
-        <div className="border p-6 rounded-xl">
-          <Payment
-            initialization={{
-                amount: Number(amount),
-            }}
-            customization={{
-                paymentMethods: {
-                creditCard: "all",
-                debitCard: "all",
-                ticket: "all",
-                },
-            }}
-            onSubmit={async (paymentData) => {
-                const res = await fetch("/api/process-payment", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    ...paymentData,
-                    transaction_amount: Number(amount),
-                }),
-                });
+          <h2 className="text-xl font-semibold">
+            Generate Payment 💳
+          </h2>
 
-                const result = await res.json();
+          <div className="grid md:grid-cols-2 gap-4">
 
-                if (result.status === "approved") {
-                alert("✅ Pago aprobado");
-                } else {
-                alert("❌ Pago rechazado");
-                }
-
-                return result;
-            }}
+            <input
+              type="number"
+              placeholder="Amount (MXN)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="border rounded-xl px-4 py-3 outline-none"
             />
+
+            <input
+              type="email"
+              placeholder="Customer Email (optional)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="border rounded-xl px-4 py-3 outline-none"
+            />
+
+          </div>
+
+          <div className="flex gap-4">
+
+            <button
+              onClick={handleGenerateLink}
+              className="bg-black text-white px-6 py-3 rounded-xl hover:scale-105 transition"
+            >
+              {loading ? "Generating..." : "Generate Link"}
+            </button>
+
+            <button
+              onClick={handleGoToBrick}
+              className="bg-green-600 text-white px-6 py-3 rounded-xl hover:scale-105 transition"
+            >
+              Open Payment Page
+            </button>
+
+          </div>
+
         </div>
-      )}
 
-      {/* 🔥 WEBHOOKS */}
-      <div className="border p-6 rounded-xl">
-        <h2 className="text-xl font-semibold mb-4">Webhooks</h2>
-
-        {webhooks.map((w, i) => (
-          <pre key={i} className="bg-gray-100 p-2 rounded text-xs">
-            {JSON.stringify(w, null, 2)}
-          </pre>
-        ))}
       </div>
+    </div>
+  );
+}
 
-      {/* 🚧 RESERVAS (NO FUNCIONAL) */}
-      <div className="border p-6 rounded-xl opacity-60">
-        <h2 className="text-xl font-semibold">Reservas</h2>
-        <p>Próximamente podrás ver todas las reservas aquí</p>
-      </div>
-
-      {/* 🚧 PAGOS (NO FUNCIONAL) */}
-      <div className="border p-6 rounded-xl opacity-60">
-        <h2 className="text-xl font-semibold">Pagos</h2>
-        <p>Historial de pagos próximamente</p>
-      </div>
-
-      {/* LOGOUT */}
-      <button
-        onClick={() => {
-          localStorage.removeItem("token");
-          router.push("/admin/login");
-        }}
-        className="bg-red-500 text-white px-4 py-2 rounded"
-      >
-        Logout
-      </button>
+// 🔥 CARD COMPONENT
+function Card({ title, desc }: any) {
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="text-gray-500 text-sm mt-1">{desc}</p>
     </div>
   );
 }
