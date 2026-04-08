@@ -11,19 +11,21 @@ export async function POST(req: Request) {
 
     console.log("BODY:", body);
 
+    const data = body.formData || body; // 🔥 CLAVE
+
     const payment = new Payment(client);
 
     const result = await payment.create({
       body: {
-        transaction_amount: Number(body.transaction_amount), // 🔥 FORZAR
-        token: body.token,
+        transaction_amount: Number(data.transaction_amount),
+        token: data.token,
         description: "Transfer Booking",
-        installments: body.installments,
-        payment_method_id: body.payment_method_id,
-        issuer_id: body.issuer_id,
+        installments: data.installments,
+        payment_method_id: data.payment_method_id,
+        issuer_id: data.issuer_id,
 
         payer: {
-          email: body.payer?.email || body.email, // 🔥 fallback
+          email: data.payer?.email || body.email,
         },
       },
     });
