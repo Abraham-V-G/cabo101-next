@@ -6,6 +6,7 @@ export default function AdminDashboard() {
   const [amount, setAmount] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState("");
 
   // 🔗 GENERAR LINK DE PAGO
   const handleGenerateLink = async () => {
@@ -45,7 +46,7 @@ export default function AdminDashboard() {
   const handleGoToBrick = () => {
     if (!amount) return alert("Enter amount");
 
-    window.location.href = `/pay?amount=${amount}&email=${email}`;
+    window.location.href = `/pay?amount=${amount}&email=${email}&summary=${summary}`;
   };
 
   return (
@@ -89,6 +90,13 @@ export default function AdminDashboard() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="border rounded-xl px-4 py-3 outline-none"
+            />
+            <input
+            type="text"
+            placeholder="Service description"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            className="border rounded-xl px-4 py-3"
             />
 
           </div>
