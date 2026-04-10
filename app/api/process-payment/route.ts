@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         installments: data.installments,
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
-        description: body.summary || "Service",
+        description: body.summary,
 
         payer: {
           email: data.payer?.email || body.email,
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // ✅ SOLO SI SE APRUEBA
+    // 🔥 EMAILS SOLO SI APROBADO
     if (result.status === "approved") {
 
       const html = `
@@ -39,13 +39,12 @@ export async function POST(req: Request) {
         <p><strong>Email:</strong> ${body.email}</p>
         <p><strong>Service:</strong> ${body.summary}</p>
         <p><strong>Amount:</strong> $${body.transaction_amount} MXN</p>
-        <p><strong>Status:</strong> ${result.status}</p>
         <p><strong>ID:</strong> ${result.id}</p>
       `;
 
       // 📩 CLIENTE
       await resend.emails.send({
-        from: "Cabo101 <onboarding@resend.dev>",
+        from: "Cabo101 <no-reply@cabo101.com.mx>",
         to: body.email,
         subject: "Payment Confirmation",
         html,
@@ -53,9 +52,9 @@ export async function POST(req: Request) {
 
       // 📩 ADMIN
       await resend.emails.send({
-        from: "Cabo101 <onboarding@resend.dev>",
-        to: "TU_CORREO_ADMIN@gmail.com",
-        subject: "New Payment Received 💰",
+        from: "Cabo101 <no-reply@cabo101.com.mx>",
+        to: "abraham_venegaz@hotmail.com",
+        subject: "New Payment 💰",
         html,
       });
     }

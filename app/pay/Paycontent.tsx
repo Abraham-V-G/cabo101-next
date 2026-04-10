@@ -1,12 +1,13 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function PayContent() {
   const params = useSearchParams();
+  const router = useRouter();
 
   const amount = Number(params.get("amount") || 0);
   const summary = params.get("summary") || "Transportation Service";
@@ -22,75 +23,49 @@ export default function PayContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 space-y-6">
 
-        {/* 🔥 LOGO */}
+        {/* LOGO */}
         <div className="flex justify-center">
           <Image src="/images/logo.png" alt="logo" width={70} height={70} />
         </div>
 
-        {/* 🔥 TITLE */}
+        {/* TITLE */}
         <h2 className="text-2xl font-semibold text-center">
           Complete Payment
         </h2>
 
-        {/* 🔥 SUMMARY */}
+        {/* SUMMARY */}
         <div className="border-2 border-green-400 rounded-xl p-4 text-center">
           <p className="font-medium">{summary}</p>
         </div>
 
-        {/* 🔥 INPUTS */}
+        {/* INPUTS */}
         <div className="space-y-4">
 
-          {/* NAME */}
-          <div className="relative">
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder=" "
-              className="peer w-full border border-gray-300 rounded-xl px-4 pt-5 pb-2 outline-none focus:ring-2 focus:ring-green-500 transition"
-            />
-            <label className="absolute left-4 top-2 text-xs text-gray-500
-              peer-placeholder-shown:top-3.5
-              peer-placeholder-shown:text-sm
-              peer-focus:top-2
-              peer-focus:text-xs transition-all">
-              Client Name
-            </label>
-          </div>
+          <input
+            type="text"
+            placeholder="Client Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full border rounded-xl px-4 py-3"
+          />
 
-          {/* EMAIL */}
-          <div className="relative">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder=" "
-              className="peer w-full border border-gray-300 rounded-xl px-4 pt-5 pb-2 outline-none focus:ring-2 focus:ring-green-500 transition"
-            />
-            <label className="absolute left-4 top-2 text-xs text-gray-500
-              peer-placeholder-shown:top-3.5
-              peer-placeholder-shown:text-sm
-              peer-focus:top-2
-              peer-focus:text-xs transition-all">
-              Email
-            </label>
-          </div>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded-xl px-4 py-3"
+          />
 
         </div>
 
-
-        {/* 💳 PAYMENT */}
-        <div className="pt-2 border-t">
+        {/* PAYMENT */}
+        <div className="pt-2 border-t space-y-4">
 
           <Payment
-            initialization={{
-              amount,
-            }}
+            initialization={{ amount }}
             customization={{
               paymentMethods: {
                 creditCard: "all",
@@ -98,6 +73,13 @@ export default function PayContent() {
               },
             }}
             onSubmit={async (data) => {
+
+              // 🔥 VALIDACIÓN
+              if (!name || !email) {
+                alert("Please complete name and email");
+                return;
+              }
+
               const res = await fetch("/api/process-payment", {
                 method: "POST",
                 headers: {
@@ -112,15 +94,29 @@ export default function PayContent() {
                 }),
               });
 
-              return await res.json();
+              const result = await res.json();
+
+              // 🔥 REDIRECCIÓN
+              if (result.status === "approved") {
+                router.push(`/succes?amount=${amount}&name=${name}`);
+              } else if (
+                result.status === "pending" ||
+                result.status === "in_process"
+              ) {
+                router.push(`/error?type=pending`);
+              } else {
+                router.push(`/error?type=failed`);
+              }
+
+              return result;
             }}
           />
-         
-          {/* 💰 TOTAL */}
-            <div className="flex justify-between items-center text-lg font-semibold">
-                <span>Total</span>
-                <span>${amount} MXN</span>
-            </div>
+
+          {/* TOTAL */}
+          <div className="flex justify-between items-center text-lg font-semibold">
+            <span>Total</span>
+            <span className="text-green-600">${amount} MXN</span>
+          </div>
 
         </div>
 
