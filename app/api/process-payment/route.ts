@@ -35,6 +35,8 @@ export async function POST(req: Request) {
 
       const html = `
         <h2>Payment Confirmed ✅</h2>
+        <p><strong>Name:</strong> ${body.name}</p>
+        <p><strong>Email:</strong> ${body.email}</p>
         <p><strong>Service:</strong> ${body.summary}</p>
         <p><strong>Amount:</strong> $${body.transaction_amount} MXN</p>
         <p><strong>Status:</strong> ${result.status}</p>

@@ -2,14 +2,17 @@
 
 import { useSearchParams } from "next/navigation";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function PayContent() {
   const params = useSearchParams();
 
   const amount = Number(params.get("amount") || 0);
-  const email = params.get("email");
-  const summary = params.get("summary");
+  const summary = params.get("summary") || "Transportation Service";
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
@@ -18,50 +21,108 @@ export default function PayContent() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
 
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md space-y-6">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 space-y-6">
 
+        {/* 🔥 LOGO */}
+        <div className="flex justify-center">
+          <Image src="/images/logo.png" alt="logo" width={70} height={70} />
+        </div>
+
+        {/* 🔥 TITLE */}
         <h2 className="text-2xl font-semibold text-center">
-          Complete Payment 💳
+          Complete Payment
         </h2>
 
         {/* 🔥 SUMMARY */}
-        <div className="bg-gray-100 p-4 rounded-xl space-y-2">
-          <p className="text-sm text-gray-500">Service</p>
-          <p className="font-semibold">{summary}</p>
+        <div className="border-2 border-green-400 rounded-xl p-4 text-center">
+          <p className="font-medium">{summary}</p>
         </div>
 
-        {/* 💰 AMOUNT */}
-        <div className="bg-black text-white p-4 rounded-xl text-center">
-          <p className="text-sm">Total</p>
-          <p className="text-2xl font-bold">${amount} MXN</p>
+        {/* 🔥 INPUTS */}
+        <div className="space-y-4">
+
+          {/* NAME */}
+          <div className="relative">
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder=" "
+              className="peer w-full border border-gray-300 rounded-xl px-4 pt-5 pb-2 outline-none focus:ring-2 focus:ring-green-500 transition"
+            />
+            <label className="absolute left-4 top-2 text-xs text-gray-500
+              peer-placeholder-shown:top-3.5
+              peer-placeholder-shown:text-sm
+              peer-focus:top-2
+              peer-focus:text-xs transition-all">
+              Client Name
+            </label>
+          </div>
+
+          {/* EMAIL */}
+          <div className="relative">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder=" "
+              className="peer w-full border border-gray-300 rounded-xl px-4 pt-5 pb-2 outline-none focus:ring-2 focus:ring-green-500 transition"
+            />
+            <label className="absolute left-4 top-2 text-xs text-gray-500
+              peer-placeholder-shown:top-3.5
+              peer-placeholder-shown:text-sm
+              peer-focus:top-2
+              peer-focus:text-xs transition-all">
+              Email
+            </label>
+          </div>
+
         </div>
 
-        {/* 💳 BRICK */}
-        <Payment
-          initialization={{ amount }}
-          customization={{
-            paymentMethods: {
-              creditCard: "all",
-              debitCard: "all",
-            },
-          }}
-          onSubmit={async (data) => {
-            const res = await fetch("/api/process-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...data,
-                transaction_amount: amount,
-                email,
-                summary,
-              }),
-            });
+        {/* 💰 TOTAL */}
+        <div className="flex justify-between items-center text-lg font-semibold">
+          <span>Total</span>
+          <span>${amount} MXN</span>
+        </div>
 
-            return await res.json();
-          }}
-        />
+        {/* 💳 PAYMENT */}
+        <div className="pt-2 border-t">
+
+          <Payment
+            initialization={{
+              amount,
+            }}
+            customization={{
+              paymentMethods: {
+                creditCard: "all",
+                debitCard: "all",
+              },
+            }}
+            onSubmit={async (data) => {
+              const res = await fetch("/api/process-payment", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  ...data,
+                  transaction_amount: amount,
+                  email,
+                  name,
+                  summary,
+                }),
+              });
+
+              return await res.json();
+            }}
+          />
+
+        </div>
+
       </div>
     </div>
   );
