@@ -83,11 +83,6 @@ export default function PayContent() {
 
         </div>
 
-        {/* 💰 TOTAL */}
-        <div className="flex justify-between items-center text-lg font-semibold">
-          <span>Total</span>
-          <span>${amount} MXN</span>
-        </div>
 
         {/* 💳 PAYMENT */}
         <div className="pt-2 border-t">
@@ -120,6 +115,12 @@ export default function PayContent() {
               return await res.json();
             }}
           />
+         
+          {/* 💰 TOTAL */}
+            <div className="flex justify-between items-center text-lg font-semibold">
+                <span>Total</span>
+                <span>${amount} MXN</span>
+            </div>
 
         </div>
 
