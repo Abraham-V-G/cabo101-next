@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig = {
   experimental: {
-    serverActions: false,
+    serverActions: {}, // ✅ correcto (no false)
   },
 };
 
