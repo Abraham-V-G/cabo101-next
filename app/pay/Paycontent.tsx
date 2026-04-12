@@ -14,7 +14,6 @@ export default function PayContent() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
@@ -24,7 +23,6 @@ export default function PayContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 space-y-6">
 
         {/* LOGO */}
@@ -50,7 +48,7 @@ export default function PayContent() {
             placeholder="Client Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 outline-none"
+            className="w-full border rounded-xl px-4 py-3"
           />
 
           <input
@@ -58,7 +56,7 @@ export default function PayContent() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 outline-none"
+            className="w-full border rounded-xl px-4 py-3"
           />
 
         </div>
@@ -88,63 +86,41 @@ export default function PayContent() {
                 return;
               }
 
-              try {
-                setLoading(true);
+              const res = await fetch("/api/process-payment", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  ...data,
+                  transaction_amount: amount,
+                  email,
+                  name,
+                  summary,
+                }),
+              });
 
-                const res = await fetch("/api/process-payment", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    ...data,
-                    transaction_amount: amount,
-                    email,
-                    name,
-                    summary,
-                  }),
-                });
+              const result = await res.json();
 
-                const result = await res.json();
-
-                console.log("RESULT:", result);
-
-                // 🔥 REDIRECCIÓN CORRECTA
-                if (result.status === "approved") {
-                  router.push(`/succes?amount=${amount}&name=${name}`);
-
-                } else if (
-                  result.status === "pending" ||
-                  result.status === "in_process"
-                ) {
-                  router.push(`/pending?amount=${amount}`);
-
-                } else {
-                  router.push(`/error?type=failed`);
-                }
-
-                return result;
-
-              } catch (err) {
-                console.error(err);
-                router.push("/error?type=server");
-              } finally {
-                setLoading(false);
+              // 🔥 REDIRECCIÓN
+              if (result.status === "approved") {
+                router.push(`/succes?amount=${amount}&name=${name}`);
+              } else if (
+                result.status === "pending" ||
+                result.status === "in_process"
+              ) {
+                router.push(`/error?type=pending`);
+              } else {
+                router.push(`/error?type=failed`);
               }
+
+              return result;
             }}
           />
-
-          {/* LOADING */}
-          {loading && (
-            <p className="text-center text-gray-500 text-sm">
-              Processing payment...
-            </p>
-          )}
 
         </div>
 
       </div>
-
     </div>
   );
 }
