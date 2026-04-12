@@ -15,92 +15,57 @@ export async function POST(req: Request) {
 
     console.log("BODY:", body);
 
-    // 🔒 VALIDACIONES
-    if (!data.transaction_amount) {
-      return NextResponse.json(
-        { error: "transaction_amount is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!data.token || !data.payment_method_id) {
-      return NextResponse.json(
-        { error: "payment data missing" },
-        { status: 400 }
-      );
-    }
-
     const payment = new Payment(mp);
 
     const result = await payment.create({
       body: {
         transaction_amount: Number(data.transaction_amount),
         token: data.token,
-        installments: data.installments,
+        installments: Number(data.installments),
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
-        description: body.summary || "Transportation Service",
-
-        // 🔥 CLAVE PARA EVITAR in_process
-        binary_mode: true,
+        description: body.summary,
 
         payer: {
-          email: body.email || data.payer?.email,
-          first_name: body.name || "Client",
+          email: body.email,
         },
       },
     });
 
     console.log("PAYMENT RESULT:", result);
 
-    // 📩 EMAIL SOLO SI APROBADO
-    if (result.status === "approved") {
+    // 🔥 EMAIL SI APPROVED O PENDING
+    if (
+      result.status === "approved" ||
+      result.status === "pending" ||
+      result.status === "in_process"
+    ) {
       const html = `
-        <div style="font-family: Arial; background:#f5f5f5; padding:20px;">
-          <div style="max-width:600px; margin:auto; background:white; border-radius:12px; overflow:hidden;">
+        <div style="font-family:Arial;padding:20px">
+          <h2 style="color:#16a34a;">Payment Status</h2>
 
-            <div style="background:#000; padding:20px; text-align:center;">
-              <img src="https://cabo101.com.mx/images/logo.png" style="height:50px;" />
-            </div>
-
-            <div style="padding:30px;">
-              <h2>Payment Confirmed ✅</h2>
-
-              <p><strong>Name:</strong> ${body.name}</p>
-              <p><strong>Email:</strong> ${body.email}</p>
-              <p><strong>Service:</strong> ${body.summary}</p>
-
-              <div style="margin-top:20px; font-size:18px;">
-                <strong>Total: $${body.transaction_amount} MXN</strong>
-              </div>
-
-              <p style="margin-top:20px;">
-                Payment ID: ${result.id}
-              </p>
-            </div>
-
-          </div>
+          <p><strong>Name:</strong> ${body.name}</p>
+          <p><strong>Email:</strong> ${body.email}</p>
+          <p><strong>Service:</strong> ${body.summary}</p>
+          <p><strong>Amount:</strong> $${body.transaction_amount} MXN</p>
+          <p><strong>Status:</strong> ${result.status}</p>
+          <p><strong>ID:</strong> ${result.id}</p>
         </div>
       `;
 
-      try {
-        await resend.emails.send({
-          from: "Cabo101 <no-reply@cabo101.com.mx>",
-          to: body.email,
-          subject: "Payment Confirmed – Cabo101",
-          html,
-        });
+      await resend.emails.send({
+        from: "Cabo101 <no-reply@cabo101.com.mx>",
+        to: body.email,
+        subject: "Payment Status",
+        html,
+      });
 
-        await resend.emails.send({
-          from: "Cabo101 <no-reply@cabo101.com.mx>",
-          to: "cabo101guide@gmail.com",
-          subject: "New Payment 💰",
-          html,
-        });
-
-      } catch (err) {
-        console.error("EMAIL ERROR:", err);
-      }
+      await resend.emails.send({
+        from: "Cabo101 <no-reply@cabo101.com.mx>",
+        to: "cabo101guide@gmail.com",
+        subject: "New Payment",
+        html,
+      });
     }
 
     return NextResponse.json(result);
