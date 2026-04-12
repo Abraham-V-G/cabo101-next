@@ -14,6 +14,7 @@ export default function PayContent() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
@@ -23,6 +24,7 @@ export default function PayContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 space-y-6">
 
         {/* LOGO */}
@@ -48,7 +50,7 @@ export default function PayContent() {
             placeholder="Client Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 outline-none"
           />
 
           <input
@@ -56,9 +58,15 @@ export default function PayContent() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 outline-none"
           />
 
+        </div>
+
+        {/* 💰 TOTAL (MEJORADO) */}
+        <div className="bg-green-600 text-white rounded-xl p-4 flex justify-between items-center shadow-md">
+          <span className="font-medium">Total</span>
+          <span className="text-xl font-bold">${amount} MXN</span>
         </div>
 
         {/* PAYMENT */}
@@ -80,47 +88,63 @@ export default function PayContent() {
                 return;
               }
 
-              const res = await fetch("/api/process-payment", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  ...data,
-                  transaction_amount: amount,
-                  email,
-                  name,
-                  summary,
-                }),
-              });
+              try {
+                setLoading(true);
 
-              const result = await res.json();
+                const res = await fetch("/api/process-payment", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    ...data,
+                    transaction_amount: amount,
+                    email,
+                    name,
+                    summary,
+                  }),
+                });
 
-              // 🔥 REDIRECCIÓN
-              if (result.status === "approved") {
-                router.push(`/succes?amount=${amount}&name=${name}`);
-              } else if (
-                result.status === "pending" ||
-                result.status === "in_process"
-              ) {
-                router.push(`/error?type=pending`);
-              } else {
-                router.push(`/error?type=failed`);
+                const result = await res.json();
+
+                console.log("RESULT:", result);
+
+                // 🔥 REDIRECCIÓN CORRECTA
+                if (result.status === "approved") {
+                  router.push(`/succes?amount=${amount}&name=${name}`);
+
+                } else if (
+                  result.status === "pending" ||
+                  result.status === "in_process"
+                ) {
+                  router.push(`/pending?amount=${amount}`);
+
+                } else {
+                  router.push(`/error?type=failed`);
+                }
+
+                return result;
+
+              } catch (err) {
+                console.error(err);
+                router.push("/error?type=server");
+              } finally {
+                setLoading(false);
               }
-
-              return result;
             }}
           />
 
-          {/* TOTAL */}
-          <div className="flex justify-between items-center text-lg font-semibold">
-            <span>Total</span>
-            <span className="text-green-600">${amount} MXN</span>
-          </div>
+          {/* LOADING */}
+          {loading && (
+            <p className="text-center text-gray-500 text-sm">
+              Processing payment...
+            </p>
+          )}
 
         </div>
 
       </div>
+
     </div>
   );
 }

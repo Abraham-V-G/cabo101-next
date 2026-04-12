@@ -13,10 +13,19 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = body.formData || body;
 
-    // 🔒 Validaciones básicas
-    if (!data.transaction_amount || !data.token || !data.payment_method_id) {
+    console.log("BODY:", body);
+
+    // 🔒 VALIDACIONES
+    if (!data.transaction_amount) {
       return NextResponse.json(
-        { error: "Missing payment data" },
+        { error: "transaction_amount is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!data.token || !data.payment_method_id) {
+      return NextResponse.json(
+        { error: "payment data missing" },
         { status: 400 }
       );
     }
@@ -30,62 +39,44 @@ export async function POST(req: Request) {
         installments: data.installments,
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
-        description: body.summary || "Service",
+        description: body.summary || "Transportation Service",
+
+        // 🔥 CLAVE PARA EVITAR in_process
+        binary_mode: true,
 
         payer: {
-          email: data.payer?.email || body.email,
+          email: body.email || data.payer?.email,
+          first_name: body.name || "Client",
         },
       },
     });
 
     console.log("PAYMENT RESULT:", result);
 
-    // 🔥 EMAIL SOLO SI APROBADO
+    // 📩 EMAIL SOLO SI APROBADO
     if (result.status === "approved") {
-
       const html = `
-        <div style="font-family: Arial, sans-serif; background:#f5f5f5; padding:20px;">
-          
-          <div style="max-width:600px; margin:0 auto; background:white; border-radius:12px; overflow:hidden;">
+        <div style="font-family: Arial; background:#f5f5f5; padding:20px;">
+          <div style="max-width:600px; margin:auto; background:white; border-radius:12px; overflow:hidden;">
 
-            <!-- HEADER -->
             <div style="background:#000; padding:20px; text-align:center;">
-              <img src="https://cabo101.com.mx/images/logo.png" alt="Cabo101" style="height:50px;" />
+              <img src="https://cabo101.com.mx/images/logo.png" style="height:50px;" />
             </div>
 
-            <!-- BODY -->
             <div style="padding:30px;">
+              <h2>Payment Confirmed ✅</h2>
 
-              <h2 style="margin-bottom:10px;">Payment Confirmed ✅</h2>
-              <p style="color:#666; margin-bottom:25px;">
-                Thank you for your booking. Your payment has been successfully processed.
+              <p><strong>Name:</strong> ${body.name}</p>
+              <p><strong>Email:</strong> ${body.email}</p>
+              <p><strong>Service:</strong> ${body.summary}</p>
+
+              <div style="margin-top:20px; font-size:18px;">
+                <strong>Total: $${body.transaction_amount} MXN</strong>
+              </div>
+
+              <p style="margin-top:20px;">
+                Payment ID: ${result.id}
               </p>
-
-              <!-- SUMMARY -->
-              <div style="border:1px solid #e5e5e5; border-radius:10px; padding:20px; margin-bottom:25px;">
-                <p><strong>Service:</strong><br/> ${body.summary}</p>
-                <p style="margin-top:10px;"><strong>Name:</strong><br/> ${body.name}</p>
-                <p style="margin-top:10px;"><strong>Email:</strong><br/> ${body.email}</p>
-              </div>
-
-              <!-- TOTAL -->
-              <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-bottom:25px;">
-                <span>Total</span>
-                <span style="color:#16a34a;">$${body.transaction_amount} MXN</span>
-              </div>
-
-              <!-- INFO -->
-              <div style="font-size:14px; color:#555;">
-                <p><strong>Payment ID:</strong> ${result.id}</p>
-                <p><strong>Status:</strong> ${result.status}</p>
-              </div>
-
-            </div>
-
-            <!-- FOOTER -->
-            <div style="background:#f9f9f9; padding:20px; text-align:center; font-size:12px; color:#777;">
-              <p>Cabo101 Transportation Services</p>
-              <p>Los Cabos, Mexico</p>
             </div>
 
           </div>
@@ -93,24 +84,22 @@ export async function POST(req: Request) {
       `;
 
       try {
-        // 📩 CLIENTE
         await resend.emails.send({
           from: "Cabo101 <no-reply@cabo101.com.mx>",
           to: body.email,
-          subject: "Your payment was confirmed – Cabo101",
+          subject: "Payment Confirmed – Cabo101",
           html,
         });
 
-        // 📩 ADMIN
         await resend.emails.send({
           from: "Cabo101 <no-reply@cabo101.com.mx>",
           to: "cabo101guide@gmail.com",
-          subject: "New payment received 💰",
+          subject: "New Payment 💰",
           html,
         });
 
-      } catch (emailError) {
-        console.error("EMAIL ERROR:", emailError);
+      } catch (err) {
+        console.error("EMAIL ERROR:", err);
       }
     }
 
