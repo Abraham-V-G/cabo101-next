@@ -27,7 +27,7 @@ export default function PayContent() {
 
         {/* LOGO */}
         <div className="flex justify-center">
-          <Image src="/images/logo.png" alt="logo" width={70} height={70} />
+          <Image src="/images/logo-color.png" alt="logo" width={70} height={70} />
         </div>
 
         {/* TITLE */}
