@@ -76,7 +76,8 @@ export default function PayContent() {
               paymentMethods: {
                 creditCard: "all",
                 debitCard: "all",
-              },
+                ticket: "all",
+                },
             }}
             onSubmit={async (data) => {
 
