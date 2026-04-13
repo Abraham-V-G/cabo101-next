@@ -19,14 +19,17 @@ export async function POST(req: Request) {
       body: {
         transaction_amount: Number(data.transaction_amount),
         token: data.token,
-        installments: data.installments,
+        installments: Number(data.installments),
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
         description: body.summary,
 
         payer: {
-          email: data.payer?.email || body.email,
+          email: body.email,
+          first_name: body.name,
         },
+
+        binary_mode: true,
       },
     });
 
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
 
           <!-- HEADER -->
           <div style="background:#0f766e; padding:20px; text-align:center;">
-            <img src="https://cabo101.com.mx/images/logo.png" width="60" />
+            <img src="https://cabo101.com.mx/images/logo-color.png" width="60" />
             <h2 style="color:white; margin:10px 0 0;">Payment Confirmation</h2>
           </div>
 

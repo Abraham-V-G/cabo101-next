@@ -105,14 +105,11 @@ export default function PayContent() {
               // 🔥 REDIRECCIÓN
               if (result.status === "approved") {
                 router.push(`/succes?amount=${amount}&name=${name}`);
-              } else if (
-                result.status === "pending" ||
-                result.status === "in_process"
-              ) {
-                router.push(`/error?type=pending`);
-              } else {
+                } else if (result.status === "pending" || result.status === "in_process") {
+                router.push(`/succes?status=pending`);
+                } else {
                 router.push(`/error?type=failed`);
-              }
+                }
 
               return result;
             }}
