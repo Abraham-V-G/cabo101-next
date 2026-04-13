@@ -27,6 +27,10 @@ export async function POST(req: Request) {
         payer: {
           email: body.email,
           first_name: body.name,
+          identification: { 
+            type: "INE",
+            number: "12345678",
+          },
         },
 
         binary_mode: true,
