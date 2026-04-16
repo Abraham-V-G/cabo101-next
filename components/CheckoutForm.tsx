@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
+import PaymentBrick from "@/components/PaymentBrick";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function CheckoutForm({ vehicle, from, to }: any) {
-  const router = useRouter();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -14,18 +12,11 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
     email: "",
     phone: "",
     airline: "",
-    flightNumber: "",
-    arrivalTime: "",
+    flight: "",
+    arrival: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<null | "error">(null);
-
-  useEffect(() => {
-    initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
-      locale: "es-MX",
-    });
-  }, []);
+  const [showPayment, setShowPayment] = useState(false);
 
   const handleChange = (e: any) => {
     setFormData({
@@ -34,141 +25,185 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
     });
   };
 
+  const handlePayment = useCallback(async (data: any) => {
+
+    const res = await fetch("/api/process-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...data,
+        transaction_amount: vehicle.price,
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        summary: `${from} → ${to}`,
+        extra: formData,
+      }),
+    });
+
+    return await res.json();
+
+  }, [formData, vehicle.price, from, to]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-8 rounded-2xl shadow-xl space-y-6"
-    >
-      <h2 className="text-3xl font-semibold">Complete your booking</h2>
+    <div className="bg-white text-black p-6 rounded-3xl shadow space-y-6">
 
-      <div className="grid grid-cols-2 gap-4">
-        <Input name="firstName" label="First Name" onChange={handleChange} />
-        <Input name="lastName" label="Last Name" onChange={handleChange} />
-        <Input name="email" label="Email" onChange={handleChange} />
-        <Input name="phone" label="Phone" onChange={handleChange} />
-        <Input name="airline" label="Airline" onChange={handleChange} />
-        <Input name="flightNumber" label="Flight Number" onChange={handleChange} />
+      <AnimatePresence mode="wait">
 
-        {/* Arrival Time mejorado con etiqueta flotante */}
-        <div className="col-span-2 relative">
-          <input
-            type="time"
-            name="arrivalTime"
-            id="arrivalTime"
-            value={formData.arrivalTime}
-            onChange={handleChange}
-            className="peer w-full border border-gray-300 rounded-xl px-4 pt-5 pb-2 outline-none focus:ring-2 focus:ring-black transition bg-white"
-          />
-          <label
-            htmlFor="arrivalTime"
-            className="absolute left-4 top-2 text-xs text-gray-500 transition-all
-            peer-placeholder-shown:top-3.5
-            peer-placeholder-shown:text-sm
-            peer-focus:top-2
-            peer-focus:text-xs"
+        {!showPayment ? (
+
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-6"
           >
-            Arrival Time
-          </label>
-        </div>
-      </div>
 
-      {/* Payment section */}
-      <div className="mt-6">
-        <h3 className="text-xl font-semibold mb-2">Payment 💳</h3>
-        <Payment
-          initialization={{
-            amount: Number(vehicle.price),
-          }}
-          customization={{
-            paymentMethods: {
-              creditCard: "all",
-              debitCard: "all",
-              ticket: "all",
-            },
-          }}
-          onSubmit={async (paymentData) => {
-            try {
-              setLoading(true);
-              setStatus(null);
+            <h2 className="text-xl font-semibold">
+              Customer Information
+            </h2>
 
-              const res = await fetch("/api/process-payment", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  ...paymentData,
-                  transaction_amount: Number(vehicle.price),
-                  ...formData,
-                  vehicle,
-                  from,
-                  to,
-                }),
-              });
+            {/* GRID */}
+            <div className="grid grid-cols-2 gap-6">
 
-              const result = await res.json();
-              setLoading(false);
+              {/* FIRST NAME */}
+              <div className="input-group">
+                <input
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">First Name</label>
+              </div>
 
-              if (result.status === "approved") {
-                router.push(
-                  `/success?name=${formData.firstName}&email=${formData.email}&vehicle=${vehicle.name}&from=${from}&to=${to}&price=${vehicle.price}`
-                );
-              } else {
-                router.push("/error");
-              }
+              {/* LAST NAME */}
+              <div className="input-group">
+                <input
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">Last Name</label>
+              </div>
 
-              return result;
-            } catch (error) {
-              console.error(error);
-              setLoading(false);
-              router.push("/error");
-            }
-          }}
-          onError={(error) => {
-            console.error("Brick error:", error);
-            setStatus("error");
-          }}
-        />
-      </div>
+              {/* EMAIL */}
+              <div className="input-group col-span-2">
+                <input
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">Email</label>
+              </div>
 
-      {loading && <p className="text-blue-500">Processing payment...</p>}
-      {status === "error" && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-xl">
-          ❌ Payment failed. Please try again.
-        </div>
-      )}
-    </motion.div>
-  );
-}
+              {/* PHONE */}
+              <div className="input-group col-span-2">
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">Phone</label>
+              </div>
 
-// Componente Input genérico (sin cambios)
-function Input({
-  name,
-  label,
-  type = "text",
-  onChange,
-  full = false,
-}: any) {
-  return (
-    <div className={`${full ? "col-span-2" : ""} relative`}>
-      <input
-        name={name}
-        type={type}
-        required
-        onChange={onChange}
-        placeholder=" "
-        className="peer w-full border border-gray-300 rounded-xl px-4 pt-5 pb-2 outline-none focus:ring-2 focus:ring-black transition"
-      />
-      <label
-        className="absolute left-4 top-2 text-xs text-gray-500 transition-all
-        peer-placeholder-shown:top-3.5
-        peer-placeholder-shown:text-sm
-        peer-focus:top-2
-        peer-focus:text-xs"
-      >
-        {label}
-      </label>
+              {/* AIRLINE */}
+              <div className="input-group">
+                <input
+                  name="airline"
+                  value={formData.airline}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">Airline</label>
+              </div>
+
+              {/* FLIGHT */}
+              <div className="input-group">
+                <input
+                  name="flight"
+                  value={formData.flight}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">Flight Number</label>
+              </div>
+
+              {/* ARRIVAL */}
+              <div className="input-group col-span-2">
+                <input
+                  name="arrival"
+                  value={formData.arrival}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">Arrival Time</label>
+              </div>
+
+            </div>
+
+            {/* TOTAL */}
+            <div className="flex justify-between text-lg font-semibold">
+              <span>Total</span>
+              <span>${vehicle.price} USD</span>
+            </div>
+
+            {/* BUTTON */}
+            <button
+              onClick={() => {
+                if (!formData.firstName || !formData.email) {
+                  alert("Complete required fields");
+                  return;
+                }
+
+                setShowPayment(true);
+
+                window.scrollTo({
+                  top: 0,
+                  behavior: "smooth",
+                });
+              }}
+              className="btn-primary"
+            >
+              Continue to Payment
+            </button>
+
+          </motion.div>
+
+        ) : (
+
+          <motion.div
+            key="payment"
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-[#d4f5e7] rounded-3xl p-4"
+          >
+
+            <PaymentBrick
+              amount={vehicle.price}
+              onSubmit={handlePayment}
+            />
+
+          </motion.div>
+
+        )}
+
+      </AnimatePresence>
+
     </div>
   );
 }

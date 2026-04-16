@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Manrope } from "next/font/google";
+import MercadoPagoProvider from "@/components/MercadoPagoProvider";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* ✅ GOOGLE MAPS SIN next/script */}
+        {/* GOOGLE MAPS */}
         <script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&libraries=places`}
           async
@@ -22,6 +23,10 @@ export default function RootLayout({
       </head>
 
       <body className={manrope.className}>
+        
+        {/* 🔥 INIT MERCADOPAGO GLOBAL */}
+        <MercadoPagoProvider />
+
         {children}
       </body>
     </html>

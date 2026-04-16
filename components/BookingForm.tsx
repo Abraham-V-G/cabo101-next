@@ -10,13 +10,21 @@ declare global {
   }
 }
 
-export default function BookingForm() {
+export default function BookingForm({
+  tripType,
+}: {
+  tripType: "oneway" | "round";
+}) {
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef = useRef<HTMLInputElement>(null);
 
   const [showMap, setShowMap] = useState(false);
   const [activeInput, setActiveInput] = useState<"from" | "to" | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [departureDate, setDepartureDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
 
   useEffect(() => {
     if (!(window as any).google) return;
@@ -54,23 +62,12 @@ export default function BookingForm() {
     handlePlace(toAuto, toRef);
   }, []);
 
-  const handleMapSelect = (data: any) => {
-    if (activeInput === "from") {
-      fromRef.current!.value = data.address;
-    } else {
-      toRef.current!.value = data.address;
-    }
-
-    setShowMap(false);
-  };
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     const from = fromRef.current?.value;
     const to = toRef.current?.value;
 
-    const date = e.target.querySelector('input[type="date"]').value;
     const passengers = e.target.querySelector("select").value;
 
     if (!from || !to) {
@@ -80,31 +77,15 @@ export default function BookingForm() {
 
     setLoading(true);
 
-    try {
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ from, to, date, passengers }),
-      });
+    const params = new URLSearchParams({
+      from,
+      to,
+      date: departureDate,
+      passengers,
+      tripType,
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error);
-
-      const params = new URLSearchParams({
-        from,
-        to,
-        date,
-        passengers,
-      });
-
-      window.location.href = `/booking?${params.toString()}`;
-    } catch (err) {
-      console.error(err);
-      alert("Error searching");
-    }
+    window.location.href = `/booking?${params.toString()}`;
 
     setLoading(false);
   };
@@ -114,39 +95,53 @@ export default function BookingForm() {
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-xl w-full h-[65px] flex items-center overflow-hidden text-gray-700 shadow-lg"
+        style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
       >
         {/* FROM */}
         <div className="flex-[2] flex items-center gap-2 px-3">
-          <Image src="/images/from.png" alt="from" width={12} height={12} />
+          <Image src="/images/from.png" alt="" width={12} height={12} />
           <input
             ref={fromRef}
-            type="text"
             placeholder="From airport, hotel, airbnb"
             className="w-full h-full outline-none"
+            style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
           />
         </div>
 
         {/* TO */}
         <div className="flex-[2] flex items-center gap-2 px-3">
-          <Image src="/images/to.png" alt="to" width={18} height={18} />
+          <Image src="/images/to.png" alt="" width={18} height={18} />
           <input
             ref={toRef}
-            type="text"
             placeholder="To airport, hotel, airbnb"
             className="w-full h-full outline-none"
+            style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
           />
         </div>
 
         {/* DATE */}
-        <div className="flex items-center gap-2 px-3 flex-1 border-r border-gray-200">
+        <div
+          onClick={() => setShowDatePicker(true)}
+          className="flex items-center gap-2 px-3 flex-1 border-r border-gray-200 cursor-pointer"
+        >
           <Image src="/images/calendar.png" alt="" width={18} height={18} />
-          <input type="date" className="w-full h-full outline-none" />
+          <span className="text-sm" style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}>
+            {departureDate
+              ? departureDate +
+                (tripType === "round" && returnDate
+                  ? ` → ${returnDate}`
+                  : "")
+              : "Select date"}
+          </span>
         </div>
 
         {/* PASSENGERS */}
         <div className="flex items-center gap-2 px-3 flex-1 border-r border-gray-200">
           <Image src="/images/user.png" alt="" width={18} height={18} />
-          <select className="w-full h-full outline-none">
+          <select
+            className="w-full h-full outline-none"
+            style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
+          >
             {[...Array(19)].map((_, i) => (
               <option key={i}>
                 {i + 1} Passenger{i > 0 ? "s" : ""}
@@ -158,17 +153,70 @@ export default function BookingForm() {
         {/* BUTTON */}
         <button
           type="submit"
-          disabled={loading}
-          className="bg-white text-black px-8 h-full font-semibold"
+          className="bg-[#4ccb8c] text-white px-8 h-full font-semibold"
+          style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
         >
           {loading ? "Searching..." : "Search"}
         </button>
       </form>
 
+      {/* 🔥 CALENDAR MODAL */}
+      {showDatePicker && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl space-y-4">
+            <h2 className="text-lg font-semibold" style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}>
+              Select your trip
+            </h2>
+
+            <p className="text-sm text-gray-500" style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}>
+              {tripType === "round" ? "Round trip" : "One way"}
+            </p>
+
+            {/* DEPARTURE */}
+            <div>
+              <label className="text-sm" style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}>
+                Departure
+              </label>
+              <input
+                type="date"
+                value={departureDate}
+                onChange={(e) => setDepartureDate(e.target.value)}
+                className="w-full border rounded-xl p-3 mt-1"
+                style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
+              />
+            </div>
+
+            {/* RETURN */}
+            {tripType === "round" && (
+              <div>
+                <label className="text-sm" style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}>
+                  Return
+                </label>
+                <input
+                  type="date"
+                  value={returnDate}
+                  onChange={(e) => setReturnDate(e.target.value)}
+                  className="w-full border rounded-xl p-3 mt-1"
+                  style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
+                />
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowDatePicker(false)}
+              className="w-full bg-[#4ccb8c] text-white py-3 rounded-xl"
+              style={{ fontFamily: "Manrope, sans-serif", fontWeight: 200 }}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
+
       <MapModal
         isOpen={showMap}
         onClose={() => setShowMap(false)}
-        onSelect={handleMapSelect}
+        onSelect={() => {}}
       />
     </>
   );
