@@ -1,4 +1,3 @@
-// app/pay/page.tsx
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -65,9 +64,31 @@ export default function PayContent() {
       const result = await res.json();
 
       if (result.status === "approved") {
-        router.push(`/success?amount=${amount}`);
+        // Construir URL con todos los parámetros necesarios para success
+        const successParams = new URLSearchParams({
+          amount: amount.toString(),
+          name: name,
+          email: email,
+          vehicle: vehicleType,
+          from: pickupLocation,
+          to: dropoffLocation,
+          passengers: passengers,
+          pickupTime: pickupTime,
+          pickupDate: pickupDate,
+          phone: phoneParam,
+          roundTrip: roundTrip.toString(),
+        });
+        
+        if (roundTrip) {
+          successParams.append("returnPickupLocation", returnPickupLocation);
+          successParams.append("returnDropoffLocation", returnDropoffLocation);
+          successParams.append("returnPickupTime", returnPickupTime);
+          successParams.append("returnPickupDate", returnPickupDate);
+        }
+        
+        router.push(`/success?${successParams.toString()}`);
       } else if (result.status === "pending" || result.status === "in_process") {
-        router.push(`/success?status=pending`);
+        router.push(`/success?status=pending&amount=${amount}&email=${encodeURIComponent(email)}`);
       } else {
         router.push(`/error?type=failed`);
       }
@@ -78,7 +99,6 @@ export default function PayContent() {
       amount,
       name,
       email,
-      summary,
       phoneParam,
       pickupLocation,
       dropoffLocation,
