@@ -1,10 +1,37 @@
+//components/CheckoutForm.tsx
+
 "use client";
 
 import { useState, useCallback } from "react";
 import PaymentBrick from "@/components/PaymentBrick";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function CheckoutForm({ vehicle, from, to }: any) {
+type Vehicle = {
+  name: string;
+  capacity: string;
+  price: number;
+  image: string;
+};
+
+type Props = {
+  vehicle: Vehicle;
+  from: string;
+  to: string;
+  passengers: string;
+  departureDate: string;
+  returnDate: string;
+  tripType: string;
+};
+
+export default function CheckoutForm({
+  vehicle,
+  from,
+  to,
+  passengers,
+  departureDate,
+  returnDate,
+  tripType,
+}: Props) {  
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -14,18 +41,22 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
     airline: "",
     flight: "",
     arrival: "",
+    pickupTime: "",
   });
 
   const [showPayment, setShowPayment] = useState(false);
 
-  const handleChange = (e: any) => {
-    setFormData({
-      ...formData,
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
-  const handlePayment = useCallback(async (data: any) => {
+  const handlePayment = useCallback(
+  async (data: Record<string, any>) => {
 
     const res = await fetch("/api/process-payment", {
       method: "POST",
@@ -33,18 +64,67 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ...data,
-        transaction_amount: vehicle.price,
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        summary: `${from} → ${to}`,
-        extra: formData,
-      }),
+      ...data,
+
+      transaction_amount: vehicle.price,
+
+      name: `${formData.firstName} ${formData.lastName}`,
+
+      email: formData.email,
+
+      phone: formData.phone,
+
+      summary:
+      tripType === "round"
+        ? `${from} ↔ ${to}`
+        : `${from} → ${to}`,
+      pickupLocation: from,
+      dropoffLocation: to,
+
+      passengers,
+
+      vehicleType: vehicle.name,
+
+      pickupDate: departureDate,
+
+      pickupTime: formData.pickupTime,
+
+      roundTrip: tripType === "round",
+
+      returnPickupLocation:
+        tripType === "round" ? to : "",
+
+      returnDropoffLocation:
+        tripType === "round" ? from : "",
+
+      returnPickupDate:
+        tripType === "round"
+          ? returnDate
+          : "",
+
+      returnPickupTime:
+        tripType === "round"
+          ? formData.pickupTime
+          : "",
+      airline: formData.airline,
+      flight: formData.flight,
+      arrival: formData.arrival,
+    }),
     });
 
     return await res.json();
 
-  }, [formData, vehicle.price, from, to]);
+  }, [
+    formData,
+    vehicle.price,
+    vehicle.name,
+    from,
+    to,
+    passengers,
+    departureDate,
+    returnDate,
+    tripType,
+  ]);
 
   return (
     <div className="bg-white text-black p-6 rounded-3xl shadow space-y-6">
@@ -72,6 +152,7 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
               {/* FIRST NAME */}
               <div className="input-group">
                 <input
+                  required
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
@@ -96,6 +177,8 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
               {/* EMAIL */}
               <div className="input-group col-span-2">
                 <input
+                  required
+                  type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
@@ -108,6 +191,8 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
               {/* PHONE */}
               <div className="input-group col-span-2">
                 <input
+                  required
+                  type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
@@ -141,9 +226,24 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
                 <label className="label-line">Flight Number</label>
               </div>
 
+              <div className="input-group col-span-2">
+                <input
+                  type="time"
+                  name="pickupTime"
+                  value={formData.pickupTime}
+                  onChange={handleChange}
+                  className="input-line peer"
+                  placeholder=" "
+                />
+                <label className="label-line">
+                  Pickup Time
+                </label>
+              </div>
+
               {/* ARRIVAL */}
               <div className="input-group col-span-2">
                 <input
+                  type="time"
                   name="arrival"
                   value={formData.arrival}
                   onChange={handleChange}
@@ -155,16 +255,23 @@ export default function CheckoutForm({ vehicle, from, to }: any) {
 
             </div>
 
+            
+
             {/* TOTAL */}
             <div className="flex justify-between text-lg font-semibold">
               <span>Total</span>
-              <span>${vehicle.price} USD</span>
+              <span>${vehicle.price} MXN</span>
             </div>
 
             {/* BUTTON */}
             <button
+              type="button"
               onClick={() => {
-                if (!formData.firstName || !formData.email) {
+                if (
+                  !formData.firstName ||
+                  !formData.email ||
+                  !formData.phone
+                ) {
                   alert("Complete required fields");
                   return;
                 }

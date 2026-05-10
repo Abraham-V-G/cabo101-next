@@ -1,3 +1,4 @@
+//app/api/create-payment/route.ts
 import { MercadoPagoConfig, Preference } from "mercadopago";
 
 const client = new MercadoPagoConfig({

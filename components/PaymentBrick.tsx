@@ -1,3 +1,5 @@
+//components/PaymentBrick.tsx
+
 "use client";
 
 import { memo } from "react";

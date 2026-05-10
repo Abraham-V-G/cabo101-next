@@ -1,3 +1,5 @@
+//app/api/webhook/mercadopago/route.ts
+
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import nodemailer from "nodemailer";

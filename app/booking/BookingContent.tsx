@@ -1,3 +1,5 @@
+//app/booking/bookingContent.tsx
+
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -18,8 +20,12 @@ const vehicles = [
 export default function BookingContent() {
   const params = useSearchParams();
 
-  const from = params.get("from");
-  const to = params.get("to");
+    const from = params.get("from") || "";
+    const to = params.get("to") || "";
+    const departureDate = params.get("departureDate") || "";
+    const returnDate = params.get("returnDate") || "";
+    const passengers = params.get("passengers") || "1";
+    const tripType = params.get("tripType") || "oneway";
 
   const [vehicle, setVehicle] = useState(vehicles[0]);
 
@@ -71,7 +77,15 @@ export default function BookingContent() {
               onSelect={setVehicle}
             />
 
-            <CheckoutForm vehicle={vehicle} from={from} to={to} />
+            <CheckoutForm
+            vehicle={vehicle}
+            from={from}
+            to={to}
+            passengers={passengers}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
+            />
 
           </div>
 

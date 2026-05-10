@@ -1,3 +1,5 @@
+//app/error/ErrorContent.tsx
+
 "use client";
 
 import { useRouter } from "next/navigation";

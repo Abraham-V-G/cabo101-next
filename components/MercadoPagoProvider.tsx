@@ -1,3 +1,5 @@
+//components/MercadoPagoProvider.tsx
+
 "use client";
 
 import { useEffect } from "react";
