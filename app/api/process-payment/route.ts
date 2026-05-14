@@ -1,5 +1,4 @@
 //api/process-payment
-
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { Resend } from "resend";
@@ -22,9 +21,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const data = body.formData || body;
+    const rawData = body.formData || body;
 
-    // --- Validaciones obligatorias ---
+    // NORMALIZACIÓN: el email puede venir en payer.email (Brick) o directamente en rawData.email
+    const data = {
+      ...rawData,
+      email: rawData.email || rawData.payer?.email || "",
+    };
+
+    // --- Validaciones obligatorias usando data.email normalizado ---
     if (!data.email) {
       return NextResponse.json(
         { error: "Customer email missing" },
@@ -54,7 +59,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // --- Installments: valor por defecto 1 si no es válido ---
+    // Installments: valor por defecto 1
     const installments =
       Number(data.installments) > 0 ? Number(data.installments) : 1;
 
@@ -75,13 +80,13 @@ export async function POST(req: Request) {
         issuer_id: data.issuer_id,
         description: data.summary || "Transportation Service",
         payer: {
-          email: data.email,
+          email: data.email,   // ✅ email normalizado
           first_name: data.name,
         },
         metadata: {
           booking: {
             name: data.name,
-            email: data.email,
+            email: data.email, // ✅ email normalizado
             phone: data.phone,
             pickupLocation: data.pickupLocation,
             dropoffLocation: data.dropoffLocation,
@@ -102,7 +107,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // Solo si el pago fue aprobado
     if (result.status === "approved") {
       const folio = `#${result.id?.toString().slice(-6) || "000000"}`;
 
@@ -144,7 +148,7 @@ export async function POST(req: Request) {
 
       const html = bookingConfirmationTemplate(templateData);
 
-      // Emails con manejo de errores (no afectan la respuesta)
+      // Envío de emails con manejo de errores (no bloquean la respuesta)
       try {
         await resend.emails.send({
           from: "Cabo101 <no-reply@cabo101.com.mx>",
