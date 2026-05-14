@@ -69,25 +69,55 @@ export default function AdminDashboard() {
   // 🚪 2. Abrir página pública de pago (con todos los datos en URL)
   const handleOpenPaymentPage = () => {
     if (!amount) return alert("❌ El monto es obligatorio");
-    const params = new URLSearchParams({
-      amount: amount,
-      email: email || "",
-      summary: summary || "Transportation Service",
-      name: name || "",
-      phone: phone || "",
-      pickupLocation: pickupLocation || "",
-      dropoffLocation: dropoffLocation || "",
-      passengers: passengers || "",
-      vehicleType: vehicleType || "",
-      pickupTime: pickupTime || "",
-      pickupDate: pickupDate || "",
-      roundTrip: roundTrip ? "true" : "false",
-      returnPickupLocation: returnPickupLocation || "",
-      returnDropoffLocation: returnDropoffLocation || "",
-      returnPickupTime: returnPickupTime || "",
-      returnPickupDate: returnPickupDate || "",
-      additionalService: additionalService || "0",
+    const payload = buildBookingPayload({
+    transaction_amount: Number(amount),
+
+    name: name || "Admin Payment",
+
+    email: email || "admin@cabo101.com",
+
+    phone,
+
+    summary:
+        summary || "Transportation Service",
+
+    pickupLocation,
+
+    dropoffLocation,
+
+    passengers,
+
+    vehicleType,
+
+    pickupDate,
+
+    pickupTime,
+
+    roundTrip,
+
+    returnPickupLocation,
+
+    returnDropoffLocation,
+
+    returnPickupDate,
+
+    returnPickupTime,
+
+    additionalService:
+        Number(additionalService),
+
+    paidAmount: Number(amount),
     });
+    const params = new URLSearchParams(
+        Object.entries(payload).reduce(
+            (acc, [key, value]) => {
+            acc[key] = String(value ?? "");
+            return acc;
+            },
+            {} as Record<string, string>
+        )
+        );
+
     window.location.href = `/pay?${params.toString()}`;
   };
 
