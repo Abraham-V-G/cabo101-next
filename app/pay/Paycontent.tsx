@@ -12,7 +12,6 @@ export default function PayContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // --- Leer todos los parámetros de la URL ---
   const transactionAmount = Number(params.get("transaction_amount") || 0);
   const summary = params.get("summary") || "Transportation Service";
   const nameParam = params.get("name") || "";
@@ -37,7 +36,7 @@ export default function PayContent() {
 
   const handlePayment = useCallback(
     async (data: any) => {
-      console.log("PAYMENT DATA ENVIADO AL BACKEND:", data); // depuración
+      console.log("PAYMENT DATA ENVIADO AL BACKEND:", data);
 
       const res = await fetch("/api/process-payment", {
         method: "POST",
@@ -65,15 +64,14 @@ export default function PayContent() {
         }),
       });
 
-      // --- Manejo de errores HTTP (400, 500, etc.) ---
+      const result = await res.json();
+      console.log("BACKEND RESPONSE:", result);
+
+      // 🔥 Manejo de errores: mostrar el mensaje real
       if (!res.ok) {
-        const errorData = await res.json();
-        console.error("ERROR HTTP:", errorData);
-        alert(errorData.error || "Payment error. Please try again.");
+        alert(JSON.stringify(result, null, 2));
         return;
       }
-
-      const result = await res.json();
 
       if (result.status === "approved") {
         const successParams = new URLSearchParams({

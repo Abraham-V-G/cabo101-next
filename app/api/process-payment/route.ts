@@ -21,15 +21,20 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const rawData = body.formData || body;
 
-    // NORMALIZACIÓN: el email puede venir en payer.email (Brick) o directamente en rawData.email
+    // 🔥 MEZCLA: combina los datos de body y body.formData (si existe)
     const data = {
-      ...rawData,
-      email: rawData.email || rawData.payer?.email || "",
+      ...body,
+      ...(body.formData || {}),
     };
 
-    // --- Validaciones obligatorias usando data.email normalizado ---
+    console.log("NORMALIZED DATA:", data); // <-- Verás todos los campos juntos
+
+    // --- Normalización de email (por si viene dentro de payer) ---
+    const customerEmail = data.email || data.payer?.email || "";
+    data.email = customerEmail; // aseguramos que data.email siempre tenga el valor
+
+    // --- Validaciones obligatorias ---
     if (!data.email) {
       return NextResponse.json(
         { error: "Customer email missing" },
@@ -80,13 +85,13 @@ export async function POST(req: Request) {
         issuer_id: data.issuer_id,
         description: data.summary || "Transportation Service",
         payer: {
-          email: data.email,   // ✅ email normalizado
+          email: data.email,
           first_name: data.name,
         },
         metadata: {
           booking: {
             name: data.name,
-            email: data.email, // ✅ email normalizado
+            email: data.email,
             phone: data.phone,
             pickupLocation: data.pickupLocation,
             dropoffLocation: data.dropoffLocation,
@@ -148,7 +153,6 @@ export async function POST(req: Request) {
 
       const html = bookingConfirmationTemplate(templateData);
 
-      // Envío de emails con manejo de errores (no bloquean la respuesta)
       try {
         await resend.emails.send({
           from: "Cabo101 <no-reply@cabo101.com.mx>",
