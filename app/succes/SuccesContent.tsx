@@ -9,9 +9,9 @@ export default function SuccessContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // Leer todos los parámetros de la URL
+  // ✅ CAMBIO: leer transaction_amount en vez de amount
   const status = params.get("status");
-  const amount = params.get("amount");
+  const transactionAmount = params.get("transaction_amount");
   const name = params.get("name");
   const email = params.get("email");
   const vehicle = params.get("vehicle");
@@ -27,9 +27,9 @@ export default function SuccessContent() {
   const returnPickupTime = params.get("returnPickupTime");
   const returnPickupDate = params.get("returnPickupDate");
 
-  // Determinar si el pago fue exitoso o pendiente
+  // ✅ CAMBIO: usar transactionAmount
   const isPending = status === "pending" || status === "in_process";
-  const isApproved = !isPending && amount;
+  const isApproved = !isPending && transactionAmount;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
@@ -85,7 +85,8 @@ export default function SuccessContent() {
               </>
             )}
             
-            <p className="mt-2 pt-2 border-t border-gray-300"><strong>Total:</strong> ${amount} MXN</p>
+            {/* ✅ CAMBIO: mostrar transactionAmount */}
+            <p className="mt-2 pt-2 border-t border-gray-300"><strong>Total:</strong> ${transactionAmount} MXN</p>
             {isPending && (
               <p className="text-yellow-600 text-xs mt-2">
                 * You will receive a confirmation email once your payment is approved.

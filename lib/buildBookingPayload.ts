@@ -1,5 +1,5 @@
 import type { BookingPayload } from "@/types/booking";
-
+//buildBookingPayload.ts
 type BuildBookingPayloadParams = {
   transaction_amount: number;
 

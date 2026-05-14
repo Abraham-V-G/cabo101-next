@@ -34,9 +34,15 @@ export type BookingEmailData = {
 
 export function bookingConfirmationTemplate(data: BookingEmailData): string {
   // Función auxiliar para formatear números de forma segura (Mejora 2)
-  const formatPrice = (value: number | undefined | null): string => {
-    return Number(value ?? 0).toFixed(2);
-  };
+  const formatPrice = (
+    value: number | undefined | null
+    ): string => {
+    const number = Number(value);
+
+    return Number.isFinite(number)
+        ? number.toFixed(2)
+        : "0.00";
+    };
 
   return `
 <div style="font-family: 'Trebuchet MS', Tahoma, sans-serif; background:#f3f4f6; padding:20px;">
@@ -58,7 +64,12 @@ export function bookingConfirmationTemplate(data: BookingEmailData): string {
               </p>
             </td>
             <td align="right">
-              <img src="https://cabo101.com.mx/images/logo-color.png" width="80"/>
+              <img
+                src="https://cabo101.com.mx/images/logo-color.png"
+                width="80"
+                alt="Cabo101 Logo"
+                style="display:block; border:0;"
+                />
             </td>
           </tr>
         </table>

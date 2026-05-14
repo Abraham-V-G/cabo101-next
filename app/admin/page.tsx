@@ -7,7 +7,8 @@ import { buildBookingPayload } from "@/lib/buildBookingPayload";
 
 export default function AdminDashboard() {
   // ========== FORM STATE ==========
-  const [amount, setAmount] = useState("");
+  // ✅ RENOMBRADO: amount → transactionAmount
+  const [transactionAmount, setTransactionAmount] = useState("");
   const [email, setEmail] = useState("");
   const [summary, setSummary] = useState("");
   const [name, setName] = useState("");
@@ -30,14 +31,14 @@ export default function AdminDashboard() {
 
   // 🔗 1. Generar link de pago (Checkout Pro)
   const handleGenerateLink = async () => {
-    if (!amount) return alert("❌ El monto es obligatorio");
+    if (!transactionAmount) return alert("❌ El monto es obligatorio");
     try {
       setLoading(true);
       const res = await fetch("/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Number(amount),
+          transaction_amount: Number(transactionAmount), // ✅ consistente
           email,
           summary,
           name,
@@ -68,112 +69,74 @@ export default function AdminDashboard() {
 
   // 🚪 2. Abrir página pública de pago (con todos los datos en URL)
   const handleOpenPaymentPage = () => {
-    if (!amount) return alert("❌ El monto es obligatorio");
+    if (!transactionAmount) return alert("❌ El monto es obligatorio");
     const payload = buildBookingPayload({
-    transaction_amount: Number(amount),
-
-    name: name || "Admin Payment",
-
-    email: email || "admin@cabo101.com",
-
-    phone,
-
-    summary:
-        summary || "Transportation Service",
-
-    pickupLocation,
-
-    dropoffLocation,
-
-    passengers,
-
-    vehicleType,
-
-    pickupDate,
-
-    pickupTime,
-
-    roundTrip,
-
-    returnPickupLocation,
-
-    returnDropoffLocation,
-
-    returnPickupDate,
-
-    returnPickupTime,
-
-    additionalService:
-        Number(additionalService),
-
-    paidAmount: Number(amount),
+      transaction_amount: Number(transactionAmount), // ✅
+      name: name || "Admin Payment",
+      email: email || "admin@cabo101.com",
+      phone,
+      summary: summary || "Transportation Service",
+      pickupLocation,
+      dropoffLocation,
+      passengers,
+      vehicleType,
+      pickupDate,
+      pickupTime,
+      roundTrip,
+      returnPickupLocation,
+      returnDropoffLocation,
+      returnPickupDate,
+      returnPickupTime,
+      additionalService: Number(additionalService),
+      paidAmount: Number(transactionAmount),
     });
     const params = new URLSearchParams(
-        Object.entries(payload).reduce(
-            (acc, [key, value]) => {
-            acc[key] = String(value ?? "");
-            return acc;
-            },
-            {} as Record<string, string>
-        )
-        );
+      Object.entries(payload).reduce(
+        (acc, [key, value]) => {
+          acc[key] = String(value ?? "");
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    );
 
     window.location.href = `/pay?${params.toString()}`;
   };
 
   // 💳 3. Mostrar Brick para pago dentro del admin
   const handleShowBrick = () => {
-    if (!amount) return alert("❌ El monto es obligatorio");
+    if (!transactionAmount) return alert("❌ El monto es obligatorio");
     setShowBrick(true);
   };
 
   const handleAdminPayment = useCallback(
     async (data: any) => {
-        const payload = buildBookingPayload({
-        transaction_amount: Number(amount),
-
+      const payload = buildBookingPayload({
+        transaction_amount: Number(transactionAmount), // ✅
         name: name || "Admin Payment",
-
         email: email || "admin@cabo101.com",
-
         phone,
-
-        summary:
-            summary || "Transportation Service",
-
+        summary: summary || "Transportation Service",
         pickupLocation,
-
         dropoffLocation,
-
         passengers,
-
         vehicleType,
-
         pickupDate,
-
         pickupTime,
-
         roundTrip,
-
         returnPickupLocation,
-
         returnDropoffLocation,
-
         returnPickupDate,
-
         returnPickupTime,
-
-        additionalService:
-            Number(additionalService),
-
-        paidAmount: Number(amount),
-        });
+        additionalService: Number(additionalService),
+        paidAmount: Number(transactionAmount),
+      });
       const res = await fetch("/api/process-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-        ...data,
-        ...payload,
+          ...data,
+          ...payload,
         }),
       });
       const result = await res.json();
@@ -185,7 +148,7 @@ export default function AdminDashboard() {
       return result;
     },
     [
-      amount,
+      transactionAmount, // ✅ dependencia actualizada
       name,
       email,
       summary,
@@ -246,8 +209,8 @@ export default function AdminDashboard() {
             <input
               type="number"
               placeholder="Monto (MXN) *"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              value={transactionAmount} // ✅ renombrado
+              onChange={(e) => setTransactionAmount(e.target.value)} // ✅ renombrado
               className="border rounded-xl px-4 py-3 border-red-300 focus:border-red-500"
               required
             />
@@ -366,7 +329,6 @@ export default function AdminDashboard() {
 
         {/* SECCIONES ADICIONALES (sin funcionalidad real) */}
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Ver pagos */}
           <div className="bg-white rounded-2xl shadow p-6">
             <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
                Ver pagos
@@ -375,12 +337,10 @@ export default function AdminDashboard() {
               Aquí se mostrará un listado de todos los pagos realizados.
             </p>
             <div className="mt-4 space-y-2 text-sm text-gray-600">
-
               <div className="text-gray-400 italic">Próximamente más detalles...</div>
             </div>
           </div>
 
-          {/* Ver reservas */}
           <div className="bg-white rounded-2xl shadow p-6">
             <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
                Ver reservas
@@ -389,12 +349,10 @@ export default function AdminDashboard() {
               Listado de reservas de transporte registradas.
             </p>
             <div className="mt-4 space-y-2 text-sm text-gray-600">
-
               <div className="text-gray-400 italic">Próximamente más detalles...</div>
             </div>
           </div>
 
-          {/* Viajes */}
           <div className="bg-white rounded-2xl shadow p-6">
             <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
               Viajes

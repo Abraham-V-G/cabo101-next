@@ -12,8 +12,8 @@ export default function PayContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // Leer todos los parámetros de la URL
-  const amount = Number(params.get("amount") || 0);
+  // --- CORRECCIÓN: usar "transaction_amount" en vez de "amount" ---
+  const transactionAmount = Number(params.get("transaction_amount") || 0);
   const summary = params.get("summary") || "Transportation Service";
   const nameParam = params.get("name") || "";
   const emailParam = params.get("email") || "";
@@ -42,7 +42,7 @@ export default function PayContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          transaction_amount: amount,
+          transaction_amount: transactionAmount, // ✅ consistente
           name,
           email,
           summary,
@@ -59,16 +59,16 @@ export default function PayContent() {
           returnPickupTime,
           returnPickupDate,
           additionalService,
-          paidAmount: amount,
+          paidAmount: transactionAmount,
         }),
       });
 
       const result = await res.json();
 
       if (result.status === "approved") {
-        // Construir URL con todos los parámetros necesarios para success
+        // ✅ usar transaction_amount en la URL de success
         const successParams = new URLSearchParams({
-          amount: amount.toString(),
+          transaction_amount: transactionAmount.toString(),
           name: name,
           email: email,
           vehicle: vehicleType,
@@ -80,17 +80,17 @@ export default function PayContent() {
           phone: phoneParam,
           roundTrip: roundTrip.toString(),
         });
-        
+
         if (roundTrip) {
           successParams.append("returnPickupLocation", returnPickupLocation);
           successParams.append("returnDropoffLocation", returnDropoffLocation);
           successParams.append("returnPickupTime", returnPickupTime);
           successParams.append("returnPickupDate", returnPickupDate);
         }
-        
+
         router.push(`/success?${successParams.toString()}`);
       } else if (result.status === "pending" || result.status === "in_process") {
-        router.push(`/success?status=pending&amount=${amount}&email=${encodeURIComponent(email)}`);
+        router.push(`/success?status=pending&transaction_amount=${transactionAmount}&email=${encodeURIComponent(email)}`);
       } else {
         router.push(`/error?type=failed`);
       }
@@ -98,7 +98,7 @@ export default function PayContent() {
       return result;
     },
     [
-      amount,
+      transactionAmount,
       name,
       email,
       phoneParam,
@@ -156,7 +156,7 @@ export default function PayContent() {
               />
               <div className="flex justify-between items-center text-xl font-semibold text-black px-1">
                 <span>Total</span>
-                <span>${amount} MXN</span>
+                <span>${transactionAmount} MXN</span> {/* ✅ consistente */}
               </div>
               <button
                 onClick={() => {
@@ -179,7 +179,7 @@ export default function PayContent() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-[#d4f5e7] rounded-3xl p-4"
             >
-              <PaymentBrick amount={amount} onSubmit={handlePayment} />
+              <PaymentBrick amount={transactionAmount} onSubmit={handlePayment} />
             </motion.div>
           )}
         </AnimatePresence>
