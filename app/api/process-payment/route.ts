@@ -22,19 +22,32 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // 🔥 MEZCLA: combina los datos de body y body.formData (si existe)
+    // 🔥 Fusión completa: combina body y formData, y unifica payer
     const data = {
       ...body,
       ...(body.formData || {}),
+      payer: {
+        ...(body.formData?.payer || {}),
+        email:
+          body.email ||
+          body.formData?.payer?.email ||
+          "",
+      },
     };
 
-    console.log("NORMALIZED DATA:", data); // <-- Verás todos los campos juntos
-
-    // --- Normalización de email (por si viene dentro de payer) ---
+    // Normalizar email también a nivel raíz
     const customerEmail = data.email || data.payer?.email || "";
-    data.email = customerEmail; // aseguramos que data.email siempre tenga el valor
+    data.email = customerEmail;
 
-    // --- Validaciones obligatorias ---
+    console.log("DATOS NORMALIZADOS:", {
+      transaction_amount: data.transaction_amount,
+      email: data.email,
+      payer: data.payer,
+      token: !!data.token,
+      payment_method_id: data.payment_method_id,
+    });
+
+    // --- Validaciones ---
     if (!data.email) {
       return NextResponse.json(
         { error: "Customer email missing" },
@@ -64,11 +77,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Installments: valor por defecto 1
     const installments =
       Number(data.installments) > 0 ? Number(data.installments) : 1;
 
-    // Cálculos de precios
     const additionalService = Number(data.additionalService) || 0;
     const subtotal = Math.max(total - additionalService, 0);
     const paidAmount = Number(data.paidAmount) || total;
@@ -84,10 +95,7 @@ export async function POST(req: Request) {
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
         description: data.summary || "Transportation Service",
-        payer: {
-          email: data.email,
-          first_name: data.name,
-        },
+        payer: data.payer, // Usamos el payer fusionado (con email no nulo)
         metadata: {
           booking: {
             name: data.name,
@@ -112,6 +120,7 @@ export async function POST(req: Request) {
       },
     });
 
+    // Si el pago fue aprobado, enviar emails
     if (result.status === "approved") {
       const folio = `#${result.id?.toString().slice(-6) || "000000"}`;
 

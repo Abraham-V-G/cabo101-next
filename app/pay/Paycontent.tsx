@@ -1,5 +1,4 @@
 //app/pay/Paycontent.tsx
-
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -67,7 +66,6 @@ export default function PayContent() {
       const result = await res.json();
       console.log("BACKEND RESPONSE:", result);
 
-      // 🔥 Manejo de errores: mostrar el mensaje real
       if (!res.ok) {
         alert(JSON.stringify(result, null, 2));
         return;
@@ -98,6 +96,10 @@ export default function PayContent() {
         router.push(`/success?${successParams.toString()}`);
       } else if (result.status === "pending" || result.status === "in_process") {
         router.push(`/success?status=pending&transaction_amount=${transactionAmount}&email=${encodeURIComponent(email)}`);
+      } else if (result.status === "rejected") {
+        // 🔥 Manejo específico para rechazos
+        const detail = result.status_detail || "unknown";
+        router.push(`/error?type=rejected&detail=${encodeURIComponent(detail)}`);
       } else {
         router.push(`/error?type=failed`);
       }
