@@ -12,7 +12,7 @@ export default function PayContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // --- CORRECCIÓN: usar "transaction_amount" en vez de "amount" ---
+  // --- Leer todos los parámetros de la URL ---
   const transactionAmount = Number(params.get("transaction_amount") || 0);
   const summary = params.get("summary") || "Transportation Service";
   const nameParam = params.get("name") || "";
@@ -37,12 +37,14 @@ export default function PayContent() {
 
   const handlePayment = useCallback(
     async (data: any) => {
+      console.log("PAYMENT DATA ENVIADO AL BACKEND:", data); // depuración
+
       const res = await fetch("/api/process-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          transaction_amount: transactionAmount, // ✅ consistente
+          transaction_amount: transactionAmount,
           name,
           email,
           summary,
@@ -63,10 +65,17 @@ export default function PayContent() {
         }),
       });
 
+      // --- Manejo de errores HTTP (400, 500, etc.) ---
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("ERROR HTTP:", errorData);
+        alert(errorData.error || "Payment error. Please try again.");
+        return;
+      }
+
       const result = await res.json();
 
       if (result.status === "approved") {
-        // ✅ usar transaction_amount en la URL de success
         const successParams = new URLSearchParams({
           transaction_amount: transactionAmount.toString(),
           name: name,
@@ -156,7 +165,7 @@ export default function PayContent() {
               />
               <div className="flex justify-between items-center text-xl font-semibold text-black px-1">
                 <span>Total</span>
-                <span>${transactionAmount} MXN</span> {/* ✅ consistente */}
+                <span>${transactionAmount} MXN</span>
               </div>
               <button
                 onClick={() => {

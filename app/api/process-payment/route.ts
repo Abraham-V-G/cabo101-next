@@ -1,3 +1,5 @@
+//api/process-payment
+
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { Resend } from "resend";
@@ -52,14 +54,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // --- Validación de installments (mejora recomendada) ---
-    const installments = Number(data.installments);
-    if (!Number.isInteger(installments) || installments <= 0) {
-      return NextResponse.json(
-        { error: "Invalid installments" },
-        { status: 400 }
-      );
-    }
+    // --- Installments: valor por defecto 1 si no es válido ---
+    const installments =
+      Number(data.installments) > 0 ? Number(data.installments) : 1;
 
     // Cálculos de precios
     const additionalService = Number(data.additionalService) || 0;
@@ -76,7 +73,7 @@ export async function POST(req: Request) {
         installments,
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
-        description: data.summary || "Transportation Service", // valor por defecto
+        description: data.summary || "Transportation Service",
         payer: {
           email: data.email,
           first_name: data.name,
