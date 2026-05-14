@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from "react";
 import PaymentBrick from "@/components/PaymentBrick";
+import { buildBookingPayload } from "@/lib/buildBookingPayload";
 
 export default function AdminDashboard() {
   // ========== FORM STATE ==========
@@ -98,29 +99,51 @@ export default function AdminDashboard() {
 
   const handleAdminPayment = useCallback(
     async (data: any) => {
+        const payload = buildBookingPayload({
+        transaction_amount: Number(amount),
+
+        name: name || "Admin Payment",
+
+        email: email || "admin@cabo101.com",
+
+        phone,
+
+        summary:
+            summary || "Transportation Service",
+
+        pickupLocation,
+
+        dropoffLocation,
+
+        passengers,
+
+        vehicleType,
+
+        pickupDate,
+
+        pickupTime,
+
+        roundTrip,
+
+        returnPickupLocation,
+
+        returnDropoffLocation,
+
+        returnPickupDate,
+
+        returnPickupTime,
+
+        additionalService:
+            Number(additionalService),
+
+        paidAmount: Number(amount),
+        });
       const res = await fetch("/api/process-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
-          transaction_amount: Number(amount),
-          name: name || "Admin Payment",
-          email: email || "admin@cabo101.com",
-          summary: summary || "Transportation Service",
-          phone,
-          pickupLocation,
-          dropoffLocation,
-          passengers,
-          vehicleType,
-          pickupTime,
-          pickupDate,
-          roundTrip,
-          returnPickupLocation,
-          returnDropoffLocation,
-          returnPickupTime,
-          returnPickupDate,
-          additionalService: Number(additionalService),
-          paidAmount: Number(amount),
+        ...data,
+        ...payload,
         }),
       });
       const result = await res.json();

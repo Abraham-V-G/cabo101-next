@@ -5,6 +5,7 @@
 import { useState, useCallback } from "react";
 import PaymentBrick from "@/components/PaymentBrick";
 import { motion, AnimatePresence } from "framer-motion";
+import { buildBookingPayload } from "@/lib/buildBookingPayload";
 
 type Vehicle = {
   name: string;
@@ -58,63 +59,68 @@ export default function CheckoutForm({
   const handlePayment = useCallback(
   async (data: Record<string, any>) => {
 
+    const payload = buildBookingPayload({
+    transaction_amount: vehicle.price,
+
+    name: `${formData.firstName} ${formData.lastName}`,
+
+    email: formData.email,
+
+    phone: formData.phone,
+
+    summary:
+      tripType === "round"
+        ? `${from} ↔ ${to}`
+        : `${from} → ${to}`,
+
+    pickupLocation: from,
+    dropoffLocation: to,
+
+    passengers,
+
+    vehicleType: vehicle.name,
+
+    pickupDate: departureDate,
+
+    pickupTime: formData.pickupTime,
+
+    roundTrip: tripType === "round",
+
+    returnPickupLocation:
+      tripType === "round" ? to : "",
+
+    returnDropoffLocation:
+      tripType === "round" ? from : "",
+
+    returnPickupDate:
+      tripType === "round"
+        ? returnDate
+        : "",
+
+    returnPickupTime:
+      tripType === "round"
+        ? formData.pickupTime
+        : "",
+
+    airline: formData.airline,
+
+    flight: formData.flight,
+
+    arrival: formData.arrival,
+  });
+
     const res = await fetch("/api/process-payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-      ...data,
-
-      transaction_amount: vehicle.price,
-
-      name: `${formData.firstName} ${formData.lastName}`,
-
-      email: formData.email,
-
-      phone: formData.phone,
-
-      summary:
-      tripType === "round"
-        ? `${from} ↔ ${to}`
-        : `${from} → ${to}`,
-      pickupLocation: from,
-      dropoffLocation: to,
-
-      passengers,
-
-      vehicleType: vehicle.name,
-
-      pickupDate: departureDate,
-
-      pickupTime: formData.pickupTime,
-
-      roundTrip: tripType === "round",
-
-      returnPickupLocation:
-        tripType === "round" ? to : "",
-
-      returnDropoffLocation:
-        tripType === "round" ? from : "",
-
-      returnPickupDate:
-        tripType === "round"
-          ? returnDate
-          : "",
-
-      returnPickupTime:
-        tripType === "round"
-          ? formData.pickupTime
-          : "",
-      airline: formData.airline,
-      flight: formData.flight,
-      arrival: formData.arrival,
-    }),
+      body: JSON.stringify(payload),
     });
 
     return await res.json();
 
-  }, [
+  },
+  [
     formData,
     vehicle.price,
     vehicle.name,
@@ -124,7 +130,8 @@ export default function CheckoutForm({
     departureDate,
     returnDate,
     tripType,
-  ]);
+  ]
+  );
 
   return (
     <div className="bg-white text-black p-6 rounded-3xl shadow space-y-6">
