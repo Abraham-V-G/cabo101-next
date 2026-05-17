@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import useGoogleMaps from "@/lib/useGoogleMaps"; // FIX: importar el hook
+import useGoogleMaps from "@/lib/useGoogleMaps";
 
 declare global {
   interface Window {
@@ -15,17 +15,19 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef = useRef<HTMLInputElement>(null);
 
+  // Refs para guardar datos completos del lugar
+  const fromPlaceRef = useRef<any>(null);
+  const toPlaceRef = useRef<any>(null);
+
   const [loading, setLoading] = useState(false);
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [showDepartureCalendar, setShowDepartureCalendar] = useState(false);
   const [showReturnCalendar, setShowReturnCalendar] = useState(false);
 
-  // FIX: usar el hook para saber cuándo Maps está listo
   const mapsLoaded = useGoogleMaps();
 
   useEffect(() => {
-    // FIX: solo inicializar cuando mapsLoaded sea true
     if (!mapsLoaded || !window.google?.maps?.places) return;
 
     try {
@@ -36,7 +38,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           new window.google.maps.LatLng(25.5, -108.5)
         ),
         strictBounds: true,
-        fields: ["geometry", "formatted_address"],
+        fields: ["geometry", "formatted_address", "name", "types"],
       };
 
       if (fromRef.current) {
@@ -47,7 +49,8 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         fromAuto.addListener("place_changed", () => {
           const place = fromAuto.getPlace();
           if (place?.geometry && fromRef.current) {
-            fromRef.current.value = place.formatted_address;
+            fromPlaceRef.current = place;
+            fromRef.current.value = place.name;
           }
         });
       }
@@ -60,47 +63,58 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         toAuto.addListener("place_changed", () => {
           const place = toAuto.getPlace();
           if (place?.geometry && toRef.current) {
-            toRef.current.value = place.formatted_address;
+            toPlaceRef.current = place;
+            toRef.current.value = place.name;
           }
         });
       }
     } catch (error) {
       console.error("Error inicializando Google Places:", error);
     }
-  // FIX: mapsLoaded como dependencia — se ejecuta cuando Maps termina de cargar
   }, [mapsLoaded]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const from = fromRef.current?.value;
-    const to = toRef.current?.value;
-    const passengers = (e.target as HTMLFormElement).querySelector(
-      "#passengers"
-    ) as HTMLSelectElement;
-    const passengersValue = passengers?.value || "1";
 
-    if (!from || !to) {
-      alert("Please select locations");
+    const fromPlace = fromPlaceRef.current;
+    const toPlace = toPlaceRef.current;
+
+    if (!fromPlace || !toPlace) {
+      alert("Please select locations from the dropdown");
       return;
     }
+
     if (!departureDate) {
       alert("Please select departure date");
       return;
     }
+
     if (tripType === "round" && !returnDate) {
       alert("Please select return date");
       return;
     }
 
+    const passengers = (e.target as HTMLFormElement).querySelector(
+      "#passengers"
+    ) as HTMLSelectElement;
+
     setLoading(true);
+
     const params = new URLSearchParams({
-      from,
-      to,
+      fromName: fromPlace.name,
+      toName: toPlace.name,
+      from: fromPlace.formatted_address,
+      to: toPlace.formatted_address,
+      fromLat: String(fromPlace.geometry.location.lat()),
+      fromLng: String(fromPlace.geometry.location.lng()),
+      toLat: String(toPlace.geometry.location.lat()),
+      toLng: String(toPlace.geometry.location.lng()),
       departureDate,
       returnDate: tripType === "round" ? returnDate : "",
-      passengers: passengersValue,
+      passengers: passengers?.value || "1",
       tripType,
     });
+
     window.location.href = `/booking?${params.toString()}`;
     setLoading(false);
   };
@@ -167,13 +181,17 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
     const changeMonth = (increment: number) => {
       setCurrentMonth(
-        new Date(currentMonth.getFullYear(), currentMonth.getMonth() + increment, 1)
+        new Date(
+          currentMonth.getFullYear(),
+          currentMonth.getMonth() + increment,
+          1
+        )
       );
     };
 
     const monthNames = [
-      "January","February","March","April","May","June",
-      "July","August","September","October","November","December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
     ];
     const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
     const daysInMonth = getDaysInCurrentMonth(currentMonth);
@@ -190,7 +208,9 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     return (
       <div
         className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       >
         <div
           className="bg-white rounded-2xl shadow-xl w-full max-w-[400px]"
@@ -199,13 +219,16 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           <div className="p-4 border-b">
             <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
           </div>
+
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={() => changeMonth(-1)}
                 className="p-2 hover:bg-gray-100 rounded-full transition cursor-pointer"
-              >←</button>
+              >
+                ←
+              </button>
               <span className="font-semibold text-gray-800">
                 {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
               </span>
@@ -213,23 +236,32 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
                 type="button"
                 onClick={() => changeMonth(1)}
                 className="p-2 hover:bg-gray-100 rounded-full transition cursor-pointer"
-              >→</button>
+              >
+                →
+              </button>
             </div>
+
             <div className="grid grid-cols-7 gap-1 mb-2">
               {weekDays.map((day) => (
-                <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+                <div
+                  key={day}
+                  className="text-center text-xs font-medium text-gray-500 py-2"
+                >
                   {day}
                 </div>
               ))}
             </div>
+
             <div className="grid grid-cols-7 gap-1">
               {calendarCells.map((cell, idx) => {
                 if (!cell.date)
                   return <div key={idx} className="aspect-square rounded-lg" />;
+
                 const date = cell.date;
                 const isSelectedDay = isSelected(date);
                 const isTodayDay = isToday(date);
                 const isPast = isPastDate(date);
+
                 return (
                   <button
                     key={idx}
@@ -249,17 +281,22 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
               })}
             </div>
           </div>
+
           <div className="p-4 border-t flex gap-3">
             <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition cursor-pointer"
-            >Cancel</button>
+            >
+              Cancel
+            </button>
             <button
               type="button"
               onClick={handleConfirm}
               className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition cursor-pointer"
-            >Confirm</button>
+            >
+              Confirm
+            </button>
           </div>
         </div>
       </div>
@@ -279,6 +316,8 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             type="text"
             placeholder="From airport, hotel, airbnb"
             className="w-full outline-none text-sm sm:text-base py-2"
+            // Limpiar el place guardado si el usuario borra el input manualmente
+            onChange={() => { fromPlaceRef.current = null; }}
           />
         </div>
 
@@ -289,6 +328,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             type="text"
             placeholder="To airport, hotel, airbnb"
             className="w-full outline-none text-sm sm:text-base py-2"
+            onChange={() => { toPlaceRef.current = null; }}
           />
         </div>
 
