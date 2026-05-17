@@ -107,7 +107,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     setLoading(false);
   };
 
-  // FIX timezone: construir desde partes, nunca desde string ISO
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     const [y, m, d] = dateString.split("-").map(Number);
@@ -144,7 +143,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     const firstDay    = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // FIX timezone: comparar por partes, nunca con new Date(string)
     const isSelected = (d: number) => {
       if (!tempDate) return false;
       const [y, m, day] = tempDate.split("-").map(Number);
@@ -156,7 +154,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
     const isPast = (d: number) => new Date(year, month, d) < today;
 
-    // FIX timezone: construir string manualmente, sin .toISOString()
     const handleDayClick = (d: number) => {
       if (isPast(d)) return;
       const mm = String(month + 1).padStart(2, "0");
@@ -169,7 +166,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       onClose();
     };
 
-    // FIX timezone: construir desde partes, nunca desde string ISO
     const formatFooter = (dateStr: string) => {
       if (!dateStr) return "—";
       const [y, m, d] = dateStr.split("-").map(Number);
@@ -276,12 +272,12 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
                     <span
                       className="absolute rounded-full"
                       style={{
-                        width:     3,
-                        height:    3,
+                        width:      3,
+                        height:     3,
                         background: "#111827",
-                        bottom:    3,
-                        left:      "50%",
-                        transform: "translateX(-50%)",
+                        bottom:     3,
+                        left:       "50%",
+                        transform:  "translateX(-50%)",
                       }}
                     />
                   )}
@@ -331,9 +327,10 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
   return (
     <>
+      {/* FIX: items-stretch para que el botón tome todo el alto */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-xl w-full flex flex-col sm:flex-row items-stretch sm:items-center overflow-hidden text-gray-700 shadow-lg"
+        className="bg-white rounded-xl w-full flex flex-col sm:flex-row items-stretch overflow-hidden text-gray-700 shadow-lg"
       >
         {/* From */}
         <div className="flex-[2] flex items-center gap-2 px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-gray-200">
@@ -398,11 +395,22 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </select>
         </div>
 
-        {/* Search button */}
+        {/* Search button — FIX: self-stretch + h-full, sin py fijo */}
         <button
           type="submit"
           disabled={loading}
-          className="bg-[#4ccb8c] text-white px-4 sm:px-8 py-3 sm:py-4 font-semibold w-full sm:w-auto transition hover:bg-[#3db37a] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="
+            bg-[#4ccb8c]
+            text-white
+            px-4 sm:px-8
+            py-4 sm:py-0
+            self-stretch
+            font-semibold
+            transition
+            hover:bg-[#3db37a]
+            disabled:opacity-50
+            disabled:cursor-not-allowed
+          "
         >
           {loading ? "Searching..." : "Search"}
         </button>
@@ -425,4 +433,4 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       )}
     </>
   );
-}
+} 

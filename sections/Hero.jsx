@@ -6,9 +6,9 @@ import BookingForm from "@/components/BookingForm";
 import { useState } from "react";
 
 export default function Hero() {
-  const [tripType, setTripType] = useState("oneway"); // Sin tipos
+  const [tripType, setTripType] = useState("oneway");
 
-  const handleTripTypeChange = (type) => { // Sin tipos
+  const handleTripTypeChange = (type) => {
     setTripType(type);
   };
 
@@ -34,7 +34,7 @@ export default function Hero() {
 
       {/* Contenedor principal */}
       <div className="relative z-10 flex flex-col flex-1 justify-center max-w-7xl mx-auto w-full mt-4 md:mt-8">
-        
+
         {/* Título */}
         <h1
           className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-semibold leading-tight mb-4 sm:mb-6 text-white max-w-full md:max-w-[850px]"
@@ -44,27 +44,57 @@ export default function Hero() {
         </h1>
 
         {/* Radio buttons */}
-        <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8 mb-6 text-white text-base sm:text-lg">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="tripType"
-              checked={tripType === "oneway"}
-              onChange={() => handleTripTypeChange("oneway")}
-              className="w-5 h-5 sm:w-6 sm:h-6 accent-teal-500"
-            />
-            <span style={{ fontFamily: "Manrope, sans-serif", fontWeight: 600 }}>One way</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="tripType"
-              checked={tripType === "round"}
-              onChange={() => handleTripTypeChange("round")}
-              className="w-5 h-5 sm:w-6 sm:h-6 accent-teal-500"
-            />
-            <span style={{ fontFamily: "Manrope, sans-serif", fontWeight: 600 }}>Round trip</span>
-          </label>
+        <div className="flex flex-wrap gap-6 sm:gap-8 mb-6">
+          {[
+            { value: "oneway", label: "One way" },
+            { value: "round",  label: "Round trip" },
+          ].map(({ value, label }) => (
+            <label
+              key={value}
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => handleTripTypeChange(value)}
+            >
+              {/* Cuadrado */}
+              <span
+                style={{
+                  width:           18,
+                  height:          18,
+                  flexShrink:      0,
+                  display:         "flex",
+                  alignItems:      "center",
+                  justifyContent:  "center",
+                  background:      "#ffffff",
+                  borderRadius:    3,
+                  border:          "none",
+                }}
+              >
+                {/* Check verde cuando está seleccionado */}
+                {tripType === value && (
+                  <span
+                    style={{
+                      width:        10,
+                      height:       10,
+                      borderRadius: 2,
+                      background:   "#4ccb8c",
+                      display:      "block",
+                    }}
+                  />
+                )}
+              </span>
+
+              {/* Label fuera del cuadrado */}
+              <span
+                style={{
+                  fontFamily: "Manrope, sans-serif",
+                  fontWeight: 600,
+                  fontSize:   15,
+                  color:      "#ffffff",
+                }}
+              >
+                {label}
+              </span>
+            </label>
+          ))}
         </div>
 
         {/* Booking Form */}
