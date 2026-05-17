@@ -1,14 +1,12 @@
-// Helper de sanitización mejorado (escapa &, <, >, ", ')
 function safe(value: unknown): string {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");  // <- Mejora 1: escapar comillas simples
+    .replace(/'/g, "&#39;");
 }
 
-// Tipo para los datos del email
 export type BookingEmailData = {
   pickupDate?: string;
   id?: string | number;
@@ -33,43 +31,42 @@ export type BookingEmailData = {
 };
 
 export function bookingConfirmationTemplate(data: BookingEmailData): string {
-  // Función auxiliar para formatear números de forma segura (Mejora 2)
-  const formatPrice = (
-    value: number | undefined | null
-    ): string => {
+  const formatPrice = (value: number | undefined | null): string => {
     const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(2) : "0.00";
+  };
 
-    return Number.isFinite(number)
-        ? number.toFixed(2)
-        : "0.00";
-    };
+  const field = (label: string, value: string) => `
+    <span style="font-size:13px; color:#374151; font-weight:600; display:block; margin-bottom:3px;">${label}</span>
+    <span style="font-size:12px; color:#1f2937;">${value}</span>
+  `;
 
   return `
 <div style="font-family: 'Trebuchet MS', Tahoma, sans-serif; background:#f3f4f6; padding:20px;">
-  <!-- MAIN TABLE -->
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:650px; margin:auto; background:white; border-radius:12px; overflow:hidden; border-collapse:collapse;">
-    
+
     <!-- HEADER -->
     <tr>
       <td style="background:#d4f5e7; padding:25px;">
         <table width="100%" style="border-collapse:collapse;">
           <tr>
-            <td>
-              <h2 style="margin:0; color:#1f2937; font-size:25px;">
-                Your Transfer <br/> Is Confirmed <img src="https://cabo101.com.mx/images/palomita.png" width="20" style="vertical-align:middle; margin-left:6px;"/>
+            <td style="vertical-align:top;">
+              <h2 style="margin:0; color:#1f2937; font-size:25px; line-height:1.3;">
+                Your Transfer <br/> Is Confirmed
+                <img src="https://cabo101.com.mx/images/palomita.png" width="20" style="vertical-align:middle; margin-left:6px;"/>
               </h2>
-              <p style="margin-top:10px; color:#374151; font-size:12px;">
+              <p style="margin:10px 0 0 0; color:#374151; font-size:12px; line-height:1.6;">
                 Thank you for choosing CABO 101. <br/>
                 Our driver will be ready for you.
               </p>
             </td>
-            <td align="right">
+            <td style="width:110px; vertical-align:middle; text-align:center;">
               <img
                 src="https://cabo101.com.mx/images/logo-color.png"
                 width="80"
                 alt="Cabo101 Logo"
-                style="display:block; border:0;"
-                />
+                style="display:inline-block; border:0;"
+              />
             </td>
           </tr>
         </table>
@@ -78,18 +75,18 @@ export function bookingConfirmationTemplate(data: BookingEmailData): string {
 
     <!-- INFO -->
     <tr>
-      <td style="padding:20px;">
-        <table width="100%" style="font-size:14px; border-collapse:collapse;">
+      <td style="padding:20px; border-bottom:1px solid #f3f4f6;">
+        <table width="100%" style="border-collapse:collapse;">
           <tr>
-            <td><strong>Booking Date</strong><br/>${safe(data.pickupDate)}</td>
-            <td><strong>Folio</strong><br/>${safe(data.id)}</td>
-            <td><strong>Service Type</strong><br/>${data.roundTrip ? "Round Trip" : "One way"}</td>
+            <td style="padding:0 8px 0 0; width:33%;">${field("Booking Date", safe(data.pickupDate))}</td>
+            <td style="padding:0 8px; width:33%;">${field("Folio", safe(data.id))}</td>
+            <td style="padding:0 0 0 8px; width:33%;">${field("Service Type", data.roundTrip ? "Round Trip" : "One way")}</td>
           </tr>
-          <tr><td height="15"></td></tr>
+          <tr><td height="14" colspan="3"></td></tr>
           <tr>
-            <td><strong>Name</strong><br/>${safe(data.name)}</td>
-            <td><strong>Phone</strong><br/>${safe(data.phone)}</td>
-            <td><strong>Email</strong><br/>${safe(data.email)}</td>
+            <td style="padding:0 8px 0 0;">${field("Name", safe(data.name))}</td>
+            <td style="padding:0 8px;">${field("Phone", safe(data.phone))}</td>
+            <td style="padding:0 0 0 8px;">${field("Email", safe(data.email))}</td>
           </tr>
         </table>
       </td>
@@ -98,40 +95,39 @@ export function bookingConfirmationTemplate(data: BookingEmailData): string {
     <!-- SERVICE -->
     <tr>
       <td style="padding:20px;">
-        <h3 style="margin-bottom:10px; font-size:18px;">Transportation Service</h3>
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0; border-collapse:collapse;">
-          <tr><td style="border-top:2px solid #e5e7eb;"></td></tr>
-        </table>
+        <h3 style="margin:0 0 10px; font-size:18px; color:#1f2937;">Transportation Service</h3>
+        <div style="border-top:2px solid #e5e7eb; margin-bottom:14px;"></div>
+
         <!-- OUTBOUND -->
-        <table width="100%" style="font-size:13px; border-collapse:collapse;">
-          <tr><td colspan="3"><strong style="text-decoration:underline; text-underline-offset:5px;">OUTBOUND</strong></td></tr>
-          <tr><td height="10"></td></tr>
+        <p style="font-size:15px; font-weight:700; color:#374151; margin:0 0 10px; text-decoration:underline; text-underline-offset:4px;">OUTBOUND</p>
+        <table width="100%" style="border-collapse:collapse;">
           <tr>
-            <td><strong>From</strong><br/>${safe(data.pickupLocation)}</td>
-            <td><strong>To</strong><br/>${safe(data.dropoffLocation)}</td>
-            <td><strong>Passengers</strong><br/>${safe(data.passengers)}</td>
+            <td style="padding:0 8px 8px 0; width:33%;">${field("From", safe(data.pickupLocation))}</td>
+            <td style="padding:0 8px 8px; width:33%;">${field("To", safe(data.dropoffLocation))}</td>
+            <td style="padding:0 0 8px; width:33%;">${field("Passengers", safe(data.passengers))}</td>
           </tr>
           <tr>
-            <td><strong>Vehicle</strong><br/>${safe(data.vehicleType)}</td>
-            <td><strong>Pick-up Time</strong><br/>${safe(data.pickupTime)}</td>
-            <td><strong>Date</strong><br/>${safe(data.pickupDate)}</td>
+            <td style="padding:0 8px 0 0;">${field("Vehicle", safe(data.vehicleType))}</td>
+            <td style="padding:0 8px;">${field("Pick-up Time", safe(data.pickupTime))}</td>
+            <td style="padding:0;">${field("Date", safe(data.pickupDate))}</td>
           </tr>
         </table>
+
         ${data.roundTrip ? `
-        <br/>
+        <div style="height:16px;"></div>
+
         <!-- RETURN -->
-        <table width="100%" style="font-size:13px; border-collapse:collapse;">
-          <tr><td colspan="3"><strong style="text-decoration:underline; text-underline-offset:5px;">RETURN</strong></td></tr>
-          <tr><td height="10"></td></tr>
+        <p style="font-size:15px; font-weight:700; color:#374151; margin:0 0 10px; text-decoration:underline; text-underline-offset:4px;">RETURN</p>
+        <table width="100%" style="border-collapse:collapse;">
           <tr>
-            <td><strong>From</strong><br/>${safe(data.returnPickupLocation)}</td>
-            <td><strong>To</strong><br/>${safe(data.returnDropoffLocation)}</td>
-            <td><strong>Passengers</strong><br/>${safe(data.passengers)}</td>
+            <td style="padding:0 8px 8px 0; width:33%;">${field("From", safe(data.returnPickupLocation))}</td>
+            <td style="padding:0 8px 8px; width:33%;">${field("To", safe(data.returnDropoffLocation))}</td>
+            <td style="padding:0 0 8px; width:33%;">${field("Passengers", safe(data.passengers))}</td>
           </tr>
           <tr>
-            <td><strong>Vehicle</strong><br/>${safe(data.vehicleType)}</td>
-            <td><strong>Pick-up Time</strong><br/>${safe(data.returnPickupTime)}</td>
-            <td><strong>Date</strong><br/>${safe(data.returnPickupDate)}</td>
+            <td style="padding:0 8px 0 0;">${field("Vehicle", safe(data.vehicleType))}</td>
+            <td style="padding:0 8px;">${field("Pick-up Time", safe(data.returnPickupTime))}</td>
+            <td style="padding:0;">${field("Date", safe(data.returnPickupDate))}</td>
           </tr>
         </table>
         ` : ""}
@@ -140,31 +136,29 @@ export function bookingConfirmationTemplate(data: BookingEmailData): string {
 
     <!-- PRICE DETAILS -->
     <tr>
-      <td style="padding:20px;">
-        <h3 style="font-size:18px;">Price Details</h3>
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0; border-collapse:collapse;">
-          <tr><td style="border-top:2px solid #e5e7eb;"></td></tr>
-        </table>
-        <table width="100%" style="font-size:14px; border-collapse:collapse;">
+      <td style="padding:20px; border-top:1px solid #f3f4f6;">
+        <h3 style="margin:0 0 10px; font-size:18px; color:#1f2937;">Price Details</h3>
+        <div style="border-top:2px solid #e5e7eb; margin-bottom:14px;"></div>
+        <table width="100%" style="font-size:13px; border-collapse:collapse; color:#1f2937;">
           <tr>
-            <td>Subtotal</td>
-            <td align="right">$${formatPrice(data.subtotal)} MXN</td>
+            <td style="padding:5px 0; color:#374151;">Subtotal</td>
+            <td align="right" style="padding:5px 0;">$${formatPrice(data.subtotal)} MXN</td>
           </tr>
           <tr>
-            <td>Additional Service</td>
-            <td align="right">$${formatPrice(data.additionalService)} MXN</td>
+            <td style="padding:5px 0; color:#374151;">Additional Service</td>
+            <td align="right" style="padding:5px 0;">$${formatPrice(data.additionalService)} MXN</td>
           </tr>
           <tr>
-            <td><strong>Total</strong></td>
-            <td align="right"><strong>$${formatPrice(data.total)} MXN</strong></td>
+            <td style="padding:5px 0; border-top:1px solid #e5e7eb; font-weight:600; color:#374151;">Total</td>
+            <td align="right" style="padding:5px 0; border-top:1px solid #e5e7eb; font-weight:600;">$${formatPrice(data.total)} MXN</td>
           </tr>
           <tr>
-            <td>Paid Amount</td>
-            <td align="right">$${formatPrice(data.paidAmount)} MXN</td>
+            <td style="padding:5px 0; color:#374151;">Paid Amount</td>
+            <td align="right" style="padding:5px 0;">$${formatPrice(data.paidAmount)} MXN</td>
           </tr>
           <tr>
-            <td><strong style="font-size:16px;">To Pay</strong></td>
-            <td align="right"><strong style="font-size:16px;">$${formatPrice(data.toPay)} MXN</strong></td>
+            <td style="padding:8px 0 0; font-size:15px; font-weight:600; color:#374151;">To Pay</td>
+            <td align="right" style="padding:8px 0 0; font-size:15px; font-weight:600; color:#059669;">$${formatPrice(data.toPay)} MXN</td>
           </tr>
         </table>
       </td>
@@ -172,26 +166,26 @@ export function bookingConfirmationTemplate(data: BookingEmailData): string {
 
     <!-- IMPORTANT -->
     <tr>
-      <td style="background:#ffffff; padding:16px 20px; font-size:12px; color:#92400e;">
-        <strong>Important:</strong> If applicable, please arrive at least 10 minutes early. A maximum wait time of 15 minutes after scheduled pickup is allowed. Changes or cancellations must be requested at least 8 hours in advance. Keep this email as your official receipt.
+      <td style="background:#fffbeb; padding:16px 20px; font-size:12px; color:#92400e; border-top:1px solid #fde68a;">
+        <strong>Important:</strong> If applicable, please arrive at least 10 minutes early. A maximum wait time of 15 minutes after scheduled pickup is allowed. Changes or cancellations must be requested at least 8 hours in advance. Keep this email as your official receipt.
       </td>
     </tr>
 
     <!-- TERMS -->
     <tr>
-      <td style="background:#ffffff; padding:16px 20px; font-size:12px; color:#374151;">
-        <strong>Terms & Conditions:</strong> This ticket is personal and non-transferable. Must be presented at boarding. Lost or damaged tickets may be considered invalid. Valid only for the date and time shown. Changes must be requested at least 8 hours in advance and are subject to availability. Cancellations must be made at least 8 hours in advance to qualify for a refund. Any damage caused inside the vehicle will result in additional charges. Cabo101 reserves the right to deny service to anyone posing a risk to others or the operation.
+      <td style="background:#f9fafb; padding:16px 20px; font-size:12px; color:#6b7280; border-top:1px solid #e5e7eb;">
+        <strong style="color:#374151;">Terms & Conditions:</strong> This ticket is personal and non-transferable. Must be presented at boarding. Lost or damaged tickets may be considered invalid. Valid only for the date and time shown. Changes must be requested at least 8 hours in advance and are subject to availability. Cancellations must be made at least 8 hours in advance to qualify for a refund. Any damage caused inside the vehicle will result in additional charges. Cabo101 reserves the right to deny service to anyone posing a risk to others or the operation.
       </td>
     </tr>
 
     <!-- CONTACT -->
     <tr>
-      <td style="background:#d4f5e7; padding:16px 20px; font-size:12px; text-align:center;">
-        +52 (624) 320 98 77 • booking@cabo101.com.mx • +52 (624) 174 63 53 
+      <td style="background:#d4f5e7; padding:16px 20px; font-size:12px; text-align:center; color:#065f46; font-weight:500; letter-spacing:0.03em;">
+        +52 (624) 320 98 77 &nbsp;•&nbsp; +52 (624) 174 63 53 &nbsp;•&nbsp; booking@cabo101.com.mx
       </td>
     </tr>
 
-  </table> <!-- FIN MAIN TABLE -->
+  </table>
 </div>
 `;
 }

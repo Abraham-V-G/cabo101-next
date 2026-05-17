@@ -1,9 +1,9 @@
-//components/BookingForm.tsx
-
+// components/BookingForm.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import useGoogleMaps from "@/lib/useGoogleMaps"; // FIX: importar el hook
 
 declare global {
   interface Window {
@@ -18,15 +18,15 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
   const [loading, setLoading] = useState(false);
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
-  
   const [showDepartureCalendar, setShowDepartureCalendar] = useState(false);
   const [showReturnCalendar, setShowReturnCalendar] = useState(false);
 
+  // FIX: usar el hook para saber cuándo Maps está listo
+  const mapsLoaded = useGoogleMaps();
+
   useEffect(() => {
-    if (typeof window === "undefined" || !window.google) {
-      console.log("Google Maps no está disponible aún");
-      return;
-    }
+    // FIX: solo inicializar cuando mapsLoaded sea true
+    if (!mapsLoaded || !window.google?.maps?.places) return;
 
     try {
       const options = {
@@ -46,7 +46,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         );
         fromAuto.addListener("place_changed", () => {
           const place = fromAuto.getPlace();
-          if (place && place.geometry && fromRef.current) {
+          if (place?.geometry && fromRef.current) {
             fromRef.current.value = place.formatted_address;
           }
         });
@@ -59,7 +59,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         );
         toAuto.addListener("place_changed", () => {
           const place = toAuto.getPlace();
-          if (place && place.geometry && toRef.current) {
+          if (place?.geometry && toRef.current) {
             toRef.current.value = place.formatted_address;
           }
         });
@@ -67,25 +67,26 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     } catch (error) {
       console.error("Error inicializando Google Places:", error);
     }
-  }, []);
+  // FIX: mapsLoaded como dependencia — se ejecuta cuando Maps termina de cargar
+  }, [mapsLoaded]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const from = fromRef.current?.value;
     const to = toRef.current?.value;
-    const passengers = (e.target as HTMLFormElement).querySelector("#passengers") as HTMLSelectElement;
+    const passengers = (e.target as HTMLFormElement).querySelector(
+      "#passengers"
+    ) as HTMLSelectElement;
     const passengersValue = passengers?.value || "1";
 
     if (!from || !to) {
       alert("Please select locations");
       return;
     }
-
     if (!departureDate) {
       alert("Please select departure date");
       return;
     }
-
     if (tripType === "round" && !returnDate) {
       alert("Please select return date");
       return;
@@ -110,55 +111,42 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  // ✅ CALENDARIO CORREGIDO
-  const CustomCalendar = ({ 
-    selectedDate, 
-    onDateChange, 
-    onClose, 
-    title 
-  }: { 
-    selectedDate: string; 
-    onDateChange: (date: string) => void; 
+  const CustomCalendar = ({
+    selectedDate,
+    onDateChange,
+    onClose,
+    title,
+  }: {
+    selectedDate: string;
+    onDateChange: (date: string) => void;
     onClose: () => void;
     title: string;
   }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [tempDate, setTempDate] = useState(selectedDate || "");
 
-    // Obtener días del mes actual SOLAMENTE
     const getDaysInCurrentMonth = (date: Date) => {
       const year = date.getFullYear();
       const month = date.getMonth();
       const lastDay = new Date(year, month + 1, 0);
       const days = [];
-      
-      // Solo días del mes actual
       for (let i = 1; i <= lastDay.getDate(); i++) {
-        const dateObj = new Date(year, month, i);
-        days.push(dateObj);
+        days.push(new Date(year, month, i));
       }
-      
       return days;
     };
 
-    // Obtener el día de la semana del primer día del mes (0 = domingo)
     const getFirstDayOfMonth = (date: Date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const firstDay = new Date(year, month, 1);
-      return firstDay.getDay();
+      return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
     };
 
     const isSelected = (date: Date) => {
       if (!tempDate) return false;
-      const selected = new Date(tempDate);
-      return date.toDateString() === selected.toDateString();
+      return date.toDateString() === new Date(tempDate).toDateString();
     };
 
-    const isToday = (date: Date) => {
-      const today = new Date();
-      return date.toDateString() === today.toDateString();
-    };
+    const isToday = (date: Date) =>
+      date.toDateString() === new Date().toDateString();
 
     const isPastDate = (date: Date) => {
       const today = new Date();
@@ -166,79 +154,58 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       return date < today;
     };
 
-    const handleDateClick = (date: Date) => {
-      // Prevenir propagación de eventos
-      event?.stopPropagation();
+    const handleDateClick = (date: Date, e: React.MouseEvent) => {
+      e.stopPropagation();
       if (isPastDate(date)) return;
-      const dateString = date.toISOString().split("T")[0];
-      setTempDate(dateString);
+      setTempDate(date.toISOString().split("T")[0]);
     };
 
     const handleConfirm = () => {
-      if (tempDate) {
-        onDateChange(tempDate);
-      }
+      if (tempDate) onDateChange(tempDate);
       onClose();
     };
 
     const changeMonth = (increment: number) => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + increment, 1));
+      setCurrentMonth(
+        new Date(currentMonth.getFullYear(), currentMonth.getMonth() + increment, 1)
+      );
     };
 
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthNames = [
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December",
+    ];
     const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-    
     const daysInMonth = getDaysInCurrentMonth(currentMonth);
     const firstDayOfMonth = getFirstDayOfMonth(currentMonth);
-    
-    // Crear array de 42 celdas (6 semanas × 7 días)
-    const totalCells = 42;
-    const calendarCells = [];
-    
-    // Añadir celdas vacías al inicio
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      calendarCells.push({ date: null, isCurrentMonth: false });
-    }
-    
-    // Añadir los días del mes
-    for (let i = 0; i < daysInMonth.length; i++) {
-      calendarCells.push({ date: daysInMonth[i], isCurrentMonth: true });
-    }
-    
-    // Añadir celdas vacías al final
-    const remainingCells = totalCells - calendarCells.length;
-    for (let i = 0; i < remainingCells; i++) {
-      calendarCells.push({ date: null, isCurrentMonth: false });
-    }
+    const calendarCells: { date: Date | null }[] = [];
+
+    for (let i = 0; i < firstDayOfMonth; i++)
+      calendarCells.push({ date: null });
+    for (const d of daysInMonth)
+      calendarCells.push({ date: d });
+    while (calendarCells.length < 42)
+      calendarCells.push({ date: null });
 
     return (
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-        onClick={(e) => {
-          // Cerrar si se hace clic fuera del calendario
-          if (e.target === e.currentTarget) {
-            onClose();
-          }
-        }}
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div 
+        <div
           className="bg-white rounded-2xl shadow-xl w-full max-w-[400px]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4 border-b">
             <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
           </div>
-          
           <div className="p-4">
-            {/* Navegación de meses */}
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={() => changeMonth(-1)}
                 className="p-2 hover:bg-gray-100 rounded-full transition cursor-pointer"
-              >
-                ←
-              </button>
+              >←</button>
               <span className="font-semibold text-gray-800">
                 {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
               </span>
@@ -246,49 +213,34 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
                 type="button"
                 onClick={() => changeMonth(1)}
                 className="p-2 hover:bg-gray-100 rounded-full transition cursor-pointer"
-              >
-                →
-              </button>
+              >→</button>
             </div>
-            
-            {/* Días de la semana */}
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {weekDays.map(day => (
+              {weekDays.map((day) => (
                 <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
                   {day}
                 </div>
               ))}
             </div>
-            
-            {/* Celdas del calendario */}
             <div className="grid grid-cols-7 gap-1">
               {calendarCells.map((cell, idx) => {
-                if (!cell.date) {
-                  // Celda vacía (no clickeable)
-                  return (
-                    <div
-                      key={idx}
-                      className="aspect-square rounded-lg"
-                    />
-                  );
-                }
-                
+                if (!cell.date)
+                  return <div key={idx} className="aspect-square rounded-lg" />;
                 const date = cell.date;
                 const isSelectedDay = isSelected(date);
                 const isTodayDay = isToday(date);
                 const isPast = isPastDate(date);
-                
                 return (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => handleDateClick(date)}
+                    onClick={(e) => handleDateClick(date, e)}
                     disabled={isPast}
                     className={`
                       aspect-square rounded-lg text-sm font-medium transition-all cursor-pointer
-                      ${isPast ? 'text-gray-300 cursor-not-allowed bg-gray-50' : 'hover:bg-teal-50'}
-                      ${isSelectedDay ? 'bg-teal-600 text-white hover:bg-teal-700' : 'text-gray-700'}
-                      ${isTodayDay && !isSelectedDay ? 'border-2 border-teal-600' : ''}
+                      ${isPast ? "text-gray-300 cursor-not-allowed bg-gray-50" : "hover:bg-teal-50"}
+                      ${isSelectedDay ? "bg-teal-600 text-white hover:bg-teal-700" : "text-gray-700"}
+                      ${isTodayDay && !isSelectedDay ? "border-2 border-teal-600" : ""}
                     `}
                   >
                     {date.getDate()}
@@ -297,23 +249,17 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
               })}
             </div>
           </div>
-          
-          {/* Botones de acción */}
           <div className="p-4 border-t flex gap-3">
             <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition cursor-pointer"
-            >
-              Cancel
-            </button>
+            >Cancel</button>
             <button
               type="button"
               onClick={handleConfirm}
               className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition cursor-pointer"
-            >
-              Confirm
-            </button>
+            >Confirm</button>
           </div>
         </div>
       </div>
