@@ -11,15 +11,15 @@ declare global {
 
 export default function BookingForm({ tripType }: { tripType: "oneway" | "round" }) {
   const fromRef = useRef<HTMLInputElement>(null);
-  const toRef = useRef<HTMLInputElement>(null);
+  const toRef   = useRef<HTMLInputElement>(null);
   const fromPlaceRef = useRef<any>(null);
-  const toPlaceRef = useRef<any>(null);
+  const toPlaceRef   = useRef<any>(null);
 
   const [loading, setLoading] = useState(false);
   const [departureDate, setDepartureDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+  const [returnDate, setReturnDate]       = useState("");
   const [showDepartureCalendar, setShowDepartureCalendar] = useState(false);
-  const [showReturnCalendar, setShowReturnCalendar] = useState(false);
+  const [showReturnCalendar, setShowReturnCalendar]       = useState(false);
 
   const mapsLoaded = useGoogleMaps();
 
@@ -67,7 +67,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     e.preventDefault();
 
     const fromPlace = fromPlaceRef.current;
-    const toPlace = toPlaceRef.current;
+    const toPlace   = toPlaceRef.current;
 
     if (!fromPlace || !toPlace) {
       alert("Please select locations from the dropdown");
@@ -82,19 +82,21 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       return;
     }
 
-    const passengers = (e.target as HTMLFormElement).querySelector("#passengers") as HTMLSelectElement;
+    const passengers = (e.target as HTMLFormElement).querySelector(
+      "#passengers"
+    ) as HTMLSelectElement;
 
     setLoading(true);
 
     const params = new URLSearchParams({
       fromName: fromPlace.name,
-      toName: toPlace.name,
-      from: fromPlace.formatted_address,
-      to: toPlace.formatted_address,
-      fromLat: String(fromPlace.geometry.location.lat()),
-      fromLng: String(fromPlace.geometry.location.lng()),
-      toLat: String(toPlace.geometry.location.lat()),
-      toLng: String(toPlace.geometry.location.lng()),
+      toName:   toPlace.name,
+      from:     fromPlace.formatted_address,
+      to:       toPlace.formatted_address,
+      fromLat:  String(fromPlace.geometry.location.lat()),
+      fromLng:  String(fromPlace.geometry.location.lng()),
+      toLat:    String(toPlace.geometry.location.lat()),
+      toLng:    String(toPlace.geometry.location.lng()),
       departureDate,
       returnDate: tripType === "round" ? returnDate : "",
       passengers: passengers?.value || "1",
@@ -105,23 +107,25 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     setLoading(false);
   };
 
+  // FIX timezone: construir desde partes, nunca desde string ISO
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const [y, m, d] = dateString.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+      month: "short",
+      day:   "numeric",
+    });
   };
 
-  // ── Minimal Calendar ──────────────────────────────────────────
+  // ── Minimal Calendar ───────────────────────────────────────────
   const CustomCalendar = ({
     selectedDate,
     onDateChange,
     onClose,
-    title,
   }: {
     selectedDate: string;
     onDateChange: (date: string) => void;
     onClose: () => void;
-    title: string;
   }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [tempDate, setTempDate] = useState(selectedDate || "");
@@ -140,9 +144,11 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     const firstDay    = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+    // FIX timezone: comparar por partes, nunca con new Date(string)
     const isSelected = (d: number) => {
       if (!tempDate) return false;
-      return new Date(year, month, d).toDateString() === new Date(tempDate).toDateString();
+      const [y, m, day] = tempDate.split("-").map(Number);
+      return y === year && m - 1 === month && day === d;
     };
 
     const isToday = (d: number) =>
@@ -150,9 +156,12 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
     const isPast = (d: number) => new Date(year, month, d) < today;
 
+    // FIX timezone: construir string manualmente, sin .toISOString()
     const handleDayClick = (d: number) => {
       if (isPast(d)) return;
-      setTempDate(new Date(year, month, d).toISOString().split("T")[0]);
+      const mm = String(month + 1).padStart(2, "0");
+      const dd = String(d).padStart(2, "0");
+      setTempDate(`${year}-${mm}-${dd}`);
     };
 
     const handleConfirm = () => {
@@ -160,10 +169,15 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       onClose();
     };
 
+    // FIX timezone: construir desde partes, nunca desde string ISO
     const formatFooter = (dateStr: string) => {
       if (!dateStr) return "—";
-      const d = new Date(dateStr);
-      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const [y, m, d] = dateStr.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+        month: "short",
+        day:   "numeric",
+        year:  "numeric",
+      });
     };
 
     const prevMonth = () => setCurrentMonth(new Date(year, month - 1, 1));
@@ -180,7 +194,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           style={{ width: 300, border: "0.5px solid rgba(0,0,0,0.1)" }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* ── Header ── */}
+          {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <span className="text-sm font-medium text-gray-800">
               {MONTHS[month]} {year}
@@ -207,26 +221,30 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             </div>
           </div>
 
-          {/* ── Day of week labels ── */}
+          {/* Day of week labels */}
           <div className="grid grid-cols-7 mb-1">
             {DOWS.map((d) => (
-              <div key={d} className="text-center pb-2" style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.04em" }}>
+              <div
+                key={d}
+                className="text-center pb-2"
+                style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.04em" }}
+              >
                 {d}
               </div>
             ))}
           </div>
 
-          {/* ── Days grid ── */}
+          {/* Days grid */}
           <div className="grid grid-cols-7" style={{ gap: 2 }}>
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={`empty-${i}`} />
             ))}
 
             {Array.from({ length: daysInMonth }).map((_, i) => {
-              const d = i + 1;
-              const sel   = isSelected(d);
-              const tod   = isToday(d);
-              const past  = isPast(d);
+              const d    = i + 1;
+              const sel  = isSelected(d);
+              const tod  = isToday(d);
+              const past = isPast(d);
 
               return (
                 <button
@@ -237,12 +255,12 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
                   className="relative flex items-center justify-center rounded-lg transition-all"
                   style={{
                     aspectRatio: "1",
-                    fontSize: 13,
-                    fontWeight: tod && !sel ? 500 : 400,
-                    background: sel ? "#111827" : "transparent",
-                    color: sel ? "#ffffff" : past ? "#d1d5db" : "#1f2937",
-                    cursor: past ? "default" : "pointer",
-                    border: "none",
+                    fontSize:    13,
+                    fontWeight:  tod && !sel ? 500 : 400,
+                    background:  sel ? "#111827" : "transparent",
+                    color:       sel ? "#ffffff" : past ? "#d1d5db" : "#1f2937",
+                    cursor:      past ? "default" : "pointer",
+                    border:      "none",
                   }}
                   onMouseEnter={(e) => {
                     if (!past && !sel)
@@ -257,7 +275,14 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
                   {tod && !sel && (
                     <span
                       className="absolute rounded-full"
-                      style={{ width: 3, height: 3, background: "#111827", bottom: 3, left: "50%", transform: "translateX(-50%)" }}
+                      style={{
+                        width:     3,
+                        height:    3,
+                        background: "#111827",
+                        bottom:    3,
+                        left:      "50%",
+                        transform: "translateX(-50%)",
+                      }}
                     />
                   )}
                 </button>
@@ -265,13 +290,15 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             })}
           </div>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           <div
             className="flex items-center justify-between mt-4 pt-4"
             style={{ borderTop: "0.5px solid #e5e7eb" }}
           >
             <div>
-              <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>Selected</p>
+              <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>
+                Selected
+              </p>
               <p style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>
                 {formatFooter(tempDate)}
               </p>
@@ -279,19 +306,19 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             <button
               type="button"
               onClick={handleConfirm}
-              style={{
-                background: "#111827",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                padding: "7px 18px",
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: "pointer",
-                opacity: tempDate ? 1 : 0.4,
-                transition: "opacity .15s",
-              }}
               disabled={!tempDate}
+              style={{
+                background:   "#111827",
+                color:        "#fff",
+                border:       "none",
+                borderRadius: 8,
+                padding:      "7px 18px",
+                fontSize:     13,
+                fontWeight:   500,
+                cursor:       tempDate ? "pointer" : "default",
+                opacity:      tempDate ? 1 : 0.4,
+                transition:   "opacity .15s",
+              }}
             >
               Confirm
             </button>
@@ -300,7 +327,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       </div>
     );
   };
-  // ── end CustomCalendar ────────────────────────────────────────
+  // ── end CustomCalendar ─────────────────────────────────────────
 
   return (
     <>
@@ -308,6 +335,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         onSubmit={handleSubmit}
         className="bg-white rounded-xl w-full flex flex-col sm:flex-row items-stretch sm:items-center overflow-hidden text-gray-700 shadow-lg"
       >
+        {/* From */}
         <div className="flex-[2] flex items-center gap-2 px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/from.png" alt="" width={14} height={14} />
           <input
@@ -319,6 +347,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           />
         </div>
 
+        {/* To */}
         <div className="flex-[2] flex items-center gap-2 px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/to.png" alt="" width={18} height={18} />
           <input
@@ -330,6 +359,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           />
         </div>
 
+        {/* Departure */}
         <div
           onClick={() => setShowDepartureCalendar(true)}
           className="flex items-center gap-2 px-4 py-3 sm:py-4 flex-1 border-b sm:border-b-0 sm:border-r border-gray-200 cursor-pointer hover:bg-gray-50 transition"
@@ -340,6 +370,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </span>
         </div>
 
+        {/* Return (solo round trip) */}
         {tripType === "round" && (
           <div
             onClick={() => setShowReturnCalendar(true)}
@@ -352,6 +383,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </div>
         )}
 
+        {/* Passengers */}
         <div className="flex items-center gap-2 px-4 py-3 sm:py-4 flex-1 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/user.png" alt="" width={18} height={18} />
           <select
@@ -366,6 +398,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </select>
         </div>
 
+        {/* Search button */}
         <button
           type="submit"
           disabled={loading}
@@ -380,7 +413,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           selectedDate={departureDate}
           onDateChange={setDepartureDate}
           onClose={() => setShowDepartureCalendar(false)}
-          title="Select departure date"
         />
       )}
 
@@ -389,7 +421,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           selectedDate={returnDate}
           onDateChange={setReturnDate}
           onClose={() => setShowReturnCalendar(false)}
-          title="Select return date"
         />
       )}
     </>
