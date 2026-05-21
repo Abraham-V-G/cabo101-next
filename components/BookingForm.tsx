@@ -333,25 +333,25 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         className="bg-white rounded-xl w-full flex flex-col sm:flex-row items-stretch overflow-hidden text-gray-700 shadow-lg"
       >
         {/* From */}
-        <div className="flex-[2] flex items-center gap-2 px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-gray-200">
-          <Image src="/images/from.png" alt="" width={14} height={14} />
+        <div className="flex-[2] flex items-center gap-2 py-[8.4px] pl-5 pr-4 border-b sm:border-b-0 sm:border-r border-gray-200">
+          <Image src="/images/from.png" alt="" width={11} height={11} />
           <input
             ref={fromRef}
             type="text"
             placeholder="From airport, hotel, airbnb"
-            className="w-full outline-none text-sm sm:text-base py-2"
+            className="w-full outline-none text-sm sm:text-base py-[8.4px]"
             onChange={() => { fromPlaceRef.current = null; }}
           />
         </div>
 
         {/* To */}
-        <div className="flex-[2] flex items-center gap-2 px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-gray-200">
-          <Image src="/images/to.png" alt="" width={18} height={18} />
+        <div className="flex-[2] flex items-center gap-2 pl-5 pr-4 py-[8.4px] border-b sm:border-b-0 sm:border-r border-gray-200">
+          <Image src="/images/to.png" alt="" width={15} height={15} />
           <input
             ref={toRef}
             type="text"
             placeholder="To airport, hotel, airbnb"
-            className="w-full outline-none text-sm sm:text-base py-2"
+            className="w-full outline-none text-sm sm:text-base py-[8.4px]"
             onChange={() => { toPlaceRef.current = null; }}
           />
         </div>
@@ -359,10 +359,10 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         {/* Departure */}
         <div
           onClick={() => setShowDepartureCalendar(true)}
-          className="flex items-center gap-2 px-4 py-3 sm:py-4 flex-1 border-b sm:border-b-0 sm:border-r border-gray-200 cursor-pointer hover:bg-gray-50 transition"
+          className="flex items-center gap-2 px-4 py-[8.4px] flex-1 border-b sm:border-b-0 sm:border-r border-gray-200 cursor-pointer hover:bg-gray-50 transition"
         >
-          <Image src="/images/calendar.png" alt="" width={18} height={18} />
-          <span className="text-xs sm:text-sm">
+          <Image src="/images/calendar.png" alt="" width={16} height={16} />
+          <span className="text-xs sm:text-sm py-[8.4px]">
             {departureDate ? formatDate(departureDate) : "Departure"}
           </span>
         </div>
@@ -371,21 +371,21 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         {tripType === "round" && (
           <div
             onClick={() => setShowReturnCalendar(true)}
-            className="flex items-center gap-2 px-4 py-3 sm:py-4 flex-1 border-b sm:border-b-0 sm:border-r border-gray-200 cursor-pointer hover:bg-gray-50 transition"
+            className="flex items-center gap-2 px-4 py-[8.4px] flex-1 border-b sm:border-b-0 sm:border-r border-gray-200 cursor-pointer hover:bg-gray-50 transition"
           >
-            <Image src="/images/calendar.png" alt="" width={18} height={18} />
-            <span className="text-xs sm:text-sm">
+            <Image src="/images/calendar.png" alt="" width={16} height={16} />
+            <span className="text-xs sm:text-sm py-[8.4px]">
               {returnDate ? formatDate(returnDate) : "Return"}
             </span>
           </div>
         )}
 
         {/* Passengers */}
-        <div className="flex items-center gap-2 px-4 py-3 sm:py-4 flex-1 border-b sm:border-b-0 sm:border-r border-gray-200">
+        <div className="flex items-center gap-2 px-4 py-[8.4px] flex-1 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/user.png" alt="" width={18} height={18} />
           <select
             id="passengers"
-            className="w-full outline-none text-sm sm:text-base py-2 bg-white cursor-pointer"
+            className="w-full outline-none text-sm sm:text-base py-[8.4px] bg-white cursor-pointer"
           >
             {[...Array(19)].map((_, i) => (
               <option key={i} value={i + 1}>
@@ -395,7 +395,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </select>
         </div>
 
-        {/* Search button — FIX: self-stretch + h-full, sin py fijo */}
+        {/* Search button */}
         <button
           type="submit"
           disabled={loading}
@@ -403,7 +403,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             bg-[#4ccb8c]
             text-white
             px-4 sm:px-8
-            py-4 sm:py-0
+            py-3 sm:py-0
             self-stretch
             font-semibold
             transition

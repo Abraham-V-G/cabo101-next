@@ -9,14 +9,14 @@ export default function Navbar() {
         <Image
             src="/images/logo.png"
             alt="Cabo 101"
-            width={53}
-            height={33}
+            width={43}
+            height={43}
             className="object-contain"
         />
         </div>
 
       {/* Links */}
-      <div className="flex gap-8 text-lg mr-22">
+      <div className="flex gap-16 text-lg mr-22">
         <a href="#">Home</a>
         <a href="#">Experiences</a>
         <a href="#">About us</a>

@@ -91,8 +91,16 @@ export default function BookingContent() {
 
           {/* DERECHA */}
           <div className="lg:sticky top-10 h-fit">
-            <BookingSummary from={from} to={to} vehicle={vehicle} />
-          </div>
+            <BookingSummary
+                from={from}
+                to={to}
+                vehicle={vehicle}
+                passengers={passengers}
+                departureDate={departureDate}
+                returnDate={returnDate}
+                tripType={tripType as "oneway" | "round"}
+            />
+           </div>
 
         </div>
 
