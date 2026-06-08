@@ -121,6 +121,11 @@ export default function CheckoutForm({
         throw new Error(result.error || "Payment failed");
       }
 
+      if (result.status === "approved") {
+        console.log("PAYMENT APPROVED");
+        alert(`PAYMENT APPROVED ${result.id}`);
+      }
+
       return result;
     },
     [
