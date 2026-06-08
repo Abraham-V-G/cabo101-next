@@ -1,85 +1,82 @@
-import type { BookingPayload } from "@/types/booking";
-//buildBookingPayload.ts
-type BuildBookingPayloadParams = {
-  transaction_amount: number;
+// lib/buildBookingPayload.ts
 
+type BookingInput = {
+  transaction_amount: number;
   name: string;
   email: string;
   phone: string;
-
   summary: string;
-
   pickupLocation: string;
   dropoffLocation: string;
-
-  passengers: string;
-
+  passengers: string | number;
   vehicleType: string;
-
   pickupDate: string;
   pickupTime: string;
-
   roundTrip: boolean;
-
-  returnPickupLocation?: string;
-  returnDropoffLocation?: string;
-
-  returnPickupDate?: string;
-  returnPickupTime?: string;
-
-  airline?: string;
-  flight?: string;
-  arrival?: string;
-
-  additionalService?: number;
-
-  paidAmount?: number;
+  returnPickupLocation: string;
+  returnDropoffLocation: string;
+  returnPickupDate: string;
+  returnPickupTime: string;
+  airline?: string;          // opcional
+  flight?: string;           // opcional
+  arrival?: string;          // opcional
+  additionalService?: number; // ✅ nuevo
+  paidAmount?: number;        // ✅ nuevo
 };
 
-export function buildBookingPayload(
-  params: BuildBookingPayloadParams
-): BookingPayload {
+export function buildBookingPayload(input: BookingInput) {
   return {
-    transaction_amount: params.transaction_amount,
+    // Datos de la reserva (raíz)
+    transaction_amount: input.transaction_amount,
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    pickupLocation: input.pickupLocation,
+    dropoffLocation: input.dropoffLocation,
+    passengers: input.passengers,
+    vehicleType: input.vehicleType,
+    pickupDate: input.pickupDate,
+    pickupTime: input.pickupTime,
+    roundTrip: input.roundTrip,
+    returnPickupLocation: input.returnPickupLocation,
+    returnDropoffLocation: input.returnDropoffLocation,
+    returnPickupDate: input.returnPickupDate,
+    returnPickupTime: input.returnPickupTime,
+    airline: input.airline,
+    flight: input.flight,
+    arrival: input.arrival,
+    additionalService: input.additionalService, // ✅
+    paidAmount: input.paidAmount,               // ✅
 
-    name: params.name,
-    email: params.email,
-    phone: params.phone,
+    description: input.summary,
 
-    summary: params.summary,
+    payer: {
+      name: input.name,
+      email: input.email,
+      phone: {
+        number: input.phone,
+      },
+    },
 
-    pickupLocation: params.pickupLocation,
-    dropoffLocation: params.dropoffLocation,
-
-    passengers: params.passengers,
-
-    vehicleType: params.vehicleType,
-
-    pickupDate: params.pickupDate,
-    pickupTime: params.pickupTime,
-
-    roundTrip: params.roundTrip,
-
-    returnPickupLocation:
-      params.returnPickupLocation || "",
-
-    returnDropoffLocation:
-      params.returnDropoffLocation || "",
-
-    returnPickupDate:
-      params.returnPickupDate || "",
-
-    returnPickupTime:
-      params.returnPickupTime || "",
-
-    airline: params.airline || "",
-    flight: params.flight || "",
-    arrival: params.arrival || "",
-
-    additionalService:
-      params.additionalService || 0,
-
-    paidAmount:
-      params.paidAmount || params.transaction_amount,
+    metadata: {
+      booking: {
+        pickupLocation: input.pickupLocation,
+        dropoffLocation: input.dropoffLocation,
+        passengers: input.passengers,
+        vehicleType: input.vehicleType,
+        pickupDate: input.pickupDate,
+        pickupTime: input.pickupTime,
+        roundTrip: input.roundTrip,
+        returnPickupLocation: input.returnPickupLocation,
+        returnDropoffLocation: input.returnDropoffLocation,
+        returnPickupDate: input.returnPickupDate,
+        returnPickupTime: input.returnPickupTime,
+        airline: input.airline,
+        flight: input.flight,
+        arrival: input.arrival,
+        additionalService: input.additionalService,
+        paidAmount: input.paidAmount,
+      },
+    },
   };
 }

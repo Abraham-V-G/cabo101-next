@@ -4,19 +4,24 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+type Vehicle = {
+  name: string;
+  image: string;
+  capacity: string | number;
+};
+
 type Props = {
   from: string;
   to: string;
-  vehicle: {
-    name: string;
-    image: string;
-    capacity: string | number; // FIX: acepta ambos
-    price: number;
-  };
+  vehicle: Vehicle;
+  priceUSD: number | null;
+  isLoadingPrice?: boolean;
   passengers: string | number;
   departureDate: string;
   returnDate?: string;
   tripType: "oneway" | "round";
+  fromZone?: string;
+  toZone?: string;
 };
 
 const formatDate = (dateStr: string) => {
@@ -34,11 +39,15 @@ export default function BookingSummary({
   from,
   to,
   vehicle,
+  priceUSD,
+  isLoadingPrice = false,
   passengers,
   departureDate,
   returnDate,
   tripType,
 }: Props) {
+  const displayPrice = isLoadingPrice ? "Calculating..." : `$${priceUSD ?? 0} USD`;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 30 }}
@@ -64,7 +73,6 @@ export default function BookingSummary({
       </div>
 
       <div className="p-6 space-y-5">
-
         {/* Trip type badge */}
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">Trip Summary</h2>
@@ -102,13 +110,11 @@ export default function BookingSummary({
 
         {/* Details grid */}
         <div className="grid grid-cols-2 gap-3">
-          {/* Departure */}
           <div className="bg-[#f9fafb] rounded-xl p-3">
             <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Departure</p>
             <p className="text-xs font-medium text-gray-800">{formatDate(departureDate)}</p>
           </div>
 
-          {/* Return or Passengers */}
           {tripType === "round" && returnDate ? (
             <div className="bg-[#f9fafb] rounded-xl p-3">
               <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Return</p>
@@ -123,7 +129,6 @@ export default function BookingSummary({
             </div>
           )}
 
-          {/* If round trip, show passengers in full width */}
           {tripType === "round" && (
             <div className="bg-[#f9fafb] rounded-xl p-3 col-span-2">
               <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Passengers</p>
@@ -137,11 +142,11 @@ export default function BookingSummary({
         {/* Divider */}
         <div className="border-t border-[#f3f4f6]" />
 
-        {/* Price */}
+        {/* Price - ahora usa priceUSD dinámico */}
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-500">Transport</span>
-            <span className="font-medium text-gray-800">${vehicle.price} USD</span>
+            <span className="font-medium text-gray-800">{displayPrice}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-500">Taxes</span>
@@ -149,7 +154,7 @@ export default function BookingSummary({
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-[#f3f4f6]">
             <span className="text-sm font-semibold text-gray-900">Total</span>
-            <span className="text-base font-semibold text-gray-900">${vehicle.price} USD</span>
+            <span className="text-base font-semibold text-gray-900">{displayPrice}</span>
           </div>
         </div>
 
@@ -157,7 +162,6 @@ export default function BookingSummary({
         <p className="text-[11px] text-gray-400 text-center pt-1">
           Free cancellation · No hidden fees · Flight tracking included
         </p>
-
       </div>
     </motion.div>
   );

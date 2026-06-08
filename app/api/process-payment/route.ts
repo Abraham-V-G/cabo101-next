@@ -1,10 +1,10 @@
-//api/process-payment
+//app/api/process-payment/route.ts
+
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { Resend } from "resend";
 import { bookingConfirmationTemplate, BookingEmailData } from "@/lib/emailTemplates/bookingConfirmation";
 
-// Validación de entorno
 if (!process.env.MP_ACCESS_TOKEN) {
   throw new Error("Missing MP_ACCESS_TOKEN environment variable");
 }
@@ -18,122 +18,91 @@ const mp = new MercadoPagoConfig({
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// 🔥 Tipo de cambio desde variable de entorno (o fallback 19.25)
+const USD_TO_MXN_RATE = Number(process.env.USD_TO_MXN_RATE ?? 19.25);
+
 export async function POST(req: Request) {
   try {
+    console.log("PROCESS PAYMENT HIT");
     const body = await req.json();
 
-    // 🔥 Fusión completa: combina body y formData, y unifica payer
-    const data = {
-      ...body,
-      ...(body.formData || {}),
-      payer: {
-        ...(body.formData?.payer || {}),
-        email:
-          body.email ||
-          body.formData?.payer?.email ||
-          "",
-      },
-    };
+    // El payload ya trae todos los datos en raíz (incluyendo token, payment_method_id, etc.)
+    const data = body;
+    console.log(
+      JSON.stringify(body, null, 2)
+    );
+    // Aseguramos el email
+    data.email = data.email || data.payer?.email || "";
 
-    // Normalizar email también a nivel raíz
-    const customerEmail = data.email || data.payer?.email || "";
-    data.email = customerEmail;
-
-    console.log("DATOS NORMALIZADOS:", {
+    console.log("DATOS RECIBIDOS:", {
       transaction_amount: data.transaction_amount,
       email: data.email,
-      payer: data.payer,
+      name: data.name,
+      pickupLocation: data.pickupLocation,
       token: !!data.token,
       payment_method_id: data.payment_method_id,
     });
 
-    // --- Validaciones ---
+    // Validaciones
     if (!data.email) {
-      return NextResponse.json(
-        { error: "Customer email missing" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Customer email missing" }, { status: 400 });
     }
 
-    const total = Number(data.transaction_amount);
-    if (!Number.isFinite(total) || total <= 0) {
-      return NextResponse.json(
-        { error: "Invalid transaction amount" },
-        { status: 400 }
-      );
+    const totalUSD = Number(data.transaction_amount);
+    if (!Number.isFinite(totalUSD) || totalUSD <= 0) {
+      return NextResponse.json({ error: "Invalid transaction amount (USD)" }, { status: 400 });
     }
 
     if (!data.token) {
-      return NextResponse.json(
-        { error: "Payment token missing" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Payment token missing" }, { status: 400 });
     }
 
     if (!data.payment_method_id) {
-      return NextResponse.json(
-        { error: "Payment method missing" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Payment method missing" }, { status: 400 });
     }
 
-    const installments =
-      Number(data.installments) > 0 ? Number(data.installments) : 1;
-
+    const installments = Number(data.installments) > 0 ? Number(data.installments) : 1;
     const additionalService = Number(data.additionalService) || 0;
-    const subtotal = Math.max(total - additionalService, 0);
-    const paidAmount = Number(data.paidAmount) || total;
-    const toPay = Math.max(total - paidAmount, 0);
+    const subtotal = Math.max(totalUSD - additionalService, 0);
+    const paidAmount = Number(data.paidAmount) || totalUSD;
+    const toPay = Math.max(totalUSD - paidAmount, 0);
 
-    // Crear pago en Mercado Pago
+    // Conversión USD → MXN
+    const totalMXN = Math.round(totalUSD * USD_TO_MXN_RATE);
+
     const payment = new Payment(mp);
     const result = await payment.create({
       body: {
-        transaction_amount: total,
+        transaction_amount: totalMXN,
         token: data.token,
         installments,
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
-        description: data.summary || "Transportation Service",
-        payer: data.payer, // Usamos el payer fusionado (con email no nulo)
+        description: data.description || data.summary || "Transportation Service",
+        payer: data.payer,
         metadata: {
+          ...data.metadata,
           booking: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            pickupLocation: data.pickupLocation,
-            dropoffLocation: data.dropoffLocation,
-            pickupDate: data.pickupDate,
-            pickupTime: data.pickupTime,
-            returnPickupLocation: data.returnPickupLocation,
-            returnDropoffLocation: data.returnDropoffLocation,
-            returnPickupDate: data.returnPickupDate,
-            returnPickupTime: data.returnPickupTime,
-            passengers: data.passengers,
-            vehicleType: data.vehicleType,
-            roundTrip: data.roundTrip,
-            totalAmount: total,
-            additionalService,
+            ...(data.metadata?.booking || {}),
+            totalUSD,
+            exchangeRate: USD_TO_MXN_RATE,
           },
         },
         binary_mode: true,
       },
     });
 
-    // Si el pago fue aprobado, enviar emails
     if (result.status === "approved") {
       const folio = `#${result.id?.toString().slice(-6) || "000000"}`;
 
-      console.log("BOOKING DATA:", {
+      console.log("RESERVA APROBADA:", {
         name: data.name,
         email: data.email,
-        amount: total,
-        paid: paidAmount,
-        toPay,
+        amountUSD: totalUSD,
+        amountMXN: totalMXN,
         pickup: data.pickupLocation,
         dropoff: data.dropoffLocation,
         serviceType: data.roundTrip ? "Round Trip" : "One way",
-        paymentStatus: result.status,
         paymentId: result.id,
       });
 
@@ -155,7 +124,7 @@ export async function POST(req: Request) {
         returnPickupDate: data.returnPickupDate,
         subtotal,
         additionalService,
-        total,
+        total: totalUSD,
         paidAmount,
         toPay,
       };
@@ -169,7 +138,6 @@ export async function POST(req: Request) {
           subject: `Booking Confirmation - ${folio}`,
           html,
         });
-
         await resend.emails.send({
           from: "Cabo101 <no-reply@cabo101.com.mx>",
           to: "cabo101guide@gmail.com",
@@ -184,6 +152,6 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("MP ERROR:", error);
-    return NextResponse.json({ error: true }, { status: 500 });
+    return NextResponse.json({ error: true, message: String(error) }, { status: 500 });
   }
 }

@@ -19,9 +19,9 @@ export default function Hero() {
         <video autoPlay loop muted playsInline className="w-full h-full object-cover">
           <source src="/images/hero1.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/55 from-[10%] via-black/25 via-[25%] to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 from-[10%] via-black/25 via-[25%] to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 from-[10%] via-black/25 via-[25%] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 from-[10%] via-black/25 via-[20%] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 from-[10%] via-black/25 via-[20%] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 from-[10%] via-black/25 via-[20%] to-transparent" />
       </div>
 
       <Navbar />

@@ -1,19 +1,34 @@
 // components/BookingForm.tsx
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import useGoogleMaps from "@/lib/useGoogleMaps";
+import MapModal from "@/components/MapModal";
 
 declare global {
   interface Window { google: any; }
 }
 
+// Tipo para unificar ubicaciones (Google Places o custom del mapa)
+type PlaceLike = {
+  name?: string;
+  formatted_address?: string;
+  isCustomLocation?: boolean;
+  geometry: {
+    location: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+};
+
 export default function BookingForm({ tripType }: { tripType: "oneway" | "round" }) {
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef   = useRef<HTMLInputElement>(null);
-  const fromPlaceRef = useRef<any>(null);
-  const toPlaceRef   = useRef<any>(null);
+  const fromPlaceRef = useRef<PlaceLike | null>(null);
+  const toPlaceRef   = useRef<PlaceLike | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [departureDate, setDepartureDate] = useState("");
@@ -23,6 +38,15 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
   const mapsLoaded = useGoogleMaps();
 
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [selectingFromLocation, setSelectingFromLocation] = useState(false);
+  const [selectingToLocation, setSelectingToLocation]     = useState(false);
+
+  // Banderas para saber si la ubicación vino del mapa (custom)
+  const [customFrom, setCustomFrom] = useState(false);
+  const [customTo,   setCustomTo]   = useState(false);
+
+  // Inicializar Google Places Autocomplete
   useEffect(() => {
     if (!mapsLoaded || !window.google?.maps?.places) return;
 
@@ -44,6 +68,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           if (place?.geometry && fromRef.current) {
             fromPlaceRef.current = place;
             fromRef.current.value = place.name;
+            setCustomFrom(false); // Viene de Google Places, no es custom
           }
         });
       }
@@ -55,6 +80,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           if (place?.geometry && toRef.current) {
             toPlaceRef.current = place;
             toRef.current.value = place.name;
+            setCustomTo(false);
           }
         });
       }
@@ -70,7 +96,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     const toPlace   = toPlaceRef.current;
 
     if (!fromPlace || !toPlace) {
-      alert("Please select locations from the dropdown");
+      alert("Please select origin and destination using Google Places or the map.");
       return;
     }
     if (!departureDate) {
@@ -88,11 +114,15 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
     setLoading(true);
 
+    // Fallback seguro para name
+    const fromName = fromPlace.name || fromPlace.formatted_address;
+    const toName   = toPlace.name   || toPlace.formatted_address;
+
     const params = new URLSearchParams({
-      fromName: fromPlace.name,
-      toName:   toPlace.name,
-      from:     fromPlace.formatted_address,
-      to:       toPlace.formatted_address,
+      fromName: fromName!,
+      toName: toName!,
+      from:     fromPlace.formatted_address!,
+      to:       toPlace.formatted_address!,
       fromLat:  String(fromPlace.geometry.location.lat()),
       fromLng:  String(fromPlace.geometry.location.lng()),
       toLat:    String(toPlace.geometry.location.lat()),
@@ -101,10 +131,12 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       returnDate: tripType === "round" ? returnDate : "",
       passengers: passengers?.value || "1",
       tripType,
+      customFrom: String(customFrom),
+      customTo:   String(customTo),
     });
 
+    // Redirigir; el setLoading(false) es innecesario porque la página se recarga
     window.location.href = `/booking?${params.toString()}`;
-    setLoading(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -116,7 +148,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     });
   };
 
-  // ── Minimal Calendar ───────────────────────────────────────────
+  // ── Minicalendario personalizado (sin cambios) ──────────────────
   const CustomCalendar = ({
     selectedDate,
     onDateChange,
@@ -190,7 +222,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           style={{ width: 300, border: "0.5px solid rgba(0,0,0,0.1)" }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <span className="text-sm font-medium text-gray-800">
               {MONTHS[month]} {year}
@@ -217,31 +248,23 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             </div>
           </div>
 
-          {/* Day of week labels */}
           <div className="grid grid-cols-7 mb-1">
             {DOWS.map((d) => (
-              <div
-                key={d}
-                className="text-center pb-2"
-                style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.04em" }}
-              >
+              <div key={d} className="text-center pb-2" style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.04em" }}>
                 {d}
               </div>
             ))}
           </div>
 
-          {/* Days grid */}
           <div className="grid grid-cols-7" style={{ gap: 2 }}>
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={`empty-${i}`} />
             ))}
-
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const d    = i + 1;
               const sel  = isSelected(d);
               const tod  = isToday(d);
               const past = isPast(d);
-
               return (
                 <button
                   key={d}
@@ -271,14 +294,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
                   {tod && !sel && (
                     <span
                       className="absolute rounded-full"
-                      style={{
-                        width:      3,
-                        height:     3,
-                        background: "#111827",
-                        bottom:     3,
-                        left:       "50%",
-                        transform:  "translateX(-50%)",
-                      }}
+                      style={{ width: 3, height: 3, background: "#111827", bottom: 3, left: "50%", transform: "translateX(-50%)" }}
                     />
                   )}
                 </button>
@@ -286,34 +302,26 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             })}
           </div>
 
-          {/* Footer */}
-          <div
-            className="flex items-center justify-between mt-4 pt-4"
-            style={{ borderTop: "0.5px solid #e5e7eb" }}
-          >
+          <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: "0.5px solid #e5e7eb" }}>
             <div>
-              <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>
-                Selected
-              </p>
-              <p style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>
-                {formatFooter(tempDate)}
-              </p>
+              <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>Selected</p>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>{formatFooter(tempDate)}</p>
             </div>
             <button
               type="button"
               onClick={handleConfirm}
               disabled={!tempDate}
               style={{
-                background:   "#111827",
-                color:        "#fff",
-                border:       "none",
+                background: "#111827",
+                color: "#fff",
+                border: "none",
                 borderRadius: 8,
-                padding:      "7px 18px",
-                fontSize:     13,
-                fontWeight:   500,
-                cursor:       tempDate ? "pointer" : "default",
-                opacity:      tempDate ? 1 : 0.4,
-                transition:   "opacity .15s",
+                padding: "7px 18px",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: tempDate ? "pointer" : "default",
+                opacity: tempDate ? 1 : 0.4,
+                transition: "opacity .15s",
               }}
             >
               Confirm
@@ -323,11 +331,10 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       </div>
     );
   };
-  // ── end CustomCalendar ─────────────────────────────────────────
+  // ── Fin CustomCalendar ─────────────────────────────────────────
 
   return (
     <>
-      {/* FIX: items-stretch para que el botón tome todo el alto */}
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-xl w-full flex flex-col sm:flex-row items-stretch overflow-hidden text-gray-700 shadow-lg"
@@ -340,8 +347,22 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             type="text"
             placeholder="From airport, hotel, airbnb"
             className="w-full outline-none text-sm sm:text-base py-[8.4px]"
-            onChange={() => { fromPlaceRef.current = null; }}
+            onChange={() => {
+              fromPlaceRef.current = null;
+              setCustomFrom(false);
+            }}
           />
+          <button
+            type="button"
+            onClick={() => {
+              setSelectingFromLocation(true);
+              setSelectingToLocation(false);
+              setShowMapModal(true);
+            }}
+            className="shrink-0"
+          >
+            <Image src="/images/custom.png" alt="Custom location" width={18} height={18} />
+          </button>
         </div>
 
         {/* To */}
@@ -352,8 +373,22 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             type="text"
             placeholder="To airport, hotel, airbnb"
             className="w-full outline-none text-sm sm:text-base py-[8.4px]"
-            onChange={() => { toPlaceRef.current = null; }}
+            onChange={() => {
+              toPlaceRef.current = null;
+              setCustomTo(false);
+            }}
           />
+          <button
+            type="button"
+            onClick={() => {
+              setSelectingToLocation(true);
+              setSelectingFromLocation(false);
+              setShowMapModal(true);
+            }}
+            className="shrink-0"
+          >
+            <Image src="/images/custom.png" alt="Custom location" width={18} height={18} />
+          </button>
         </div>
 
         {/* Departure */}
@@ -367,7 +402,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </span>
         </div>
 
-        {/* Return (solo round trip) */}
+        {/* Return */}
         {tripType === "round" && (
           <div
             onClick={() => setShowReturnCalendar(true)}
@@ -383,10 +418,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         {/* Passengers */}
         <div className="flex items-center gap-2 px-4 py-[8.4px] flex-1 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/user.png" alt="" width={18} height={18} />
-          <select
-            id="passengers"
-            className="w-full outline-none text-sm sm:text-base py-[8.4px] bg-white cursor-pointer"
-          >
+          <select id="passengers" className="w-full outline-none text-sm sm:text-base py-[8.4px] bg-white cursor-pointer">
             {[...Array(19)].map((_, i) => (
               <option key={i} value={i + 1}>
                 {i + 1} Passenger{i > 0 ? "s" : ""}
@@ -399,38 +431,63 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         <button
           type="submit"
           disabled={loading}
-          className="
-            bg-[#4ccb8c]
-            text-white
-            px-4 sm:px-8
-            py-3 sm:py-0
-            self-stretch
-            font-semibold
-            transition
-            hover:bg-[#3db37a]
-            disabled:opacity-50
-            disabled:cursor-not-allowed
-          "
+          className="bg-[#4ccb8c] text-white px-4 sm:px-8 py-3 sm:py-0 self-stretch font-semibold transition hover:bg-[#3db37a] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Searching..." : "Search"}
         </button>
       </form>
 
       {showDepartureCalendar && (
-        <CustomCalendar
-          selectedDate={departureDate}
-          onDateChange={setDepartureDate}
-          onClose={() => setShowDepartureCalendar(false)}
-        />
+        <CustomCalendar selectedDate={departureDate} onDateChange={setDepartureDate} onClose={() => setShowDepartureCalendar(false)} />
       )}
 
       {tripType === "round" && showReturnCalendar && (
-        <CustomCalendar
-          selectedDate={returnDate}
-          onDateChange={setReturnDate}
-          onClose={() => setShowReturnCalendar(false)}
+        <CustomCalendar selectedDate={returnDate} onDateChange={setReturnDate} onClose={() => setShowReturnCalendar(false)} />
+      )}
+
+      {/* MapModal con lógica robusta y propiedad isCustomLocation */}
+      {showMapModal && (
+        <MapModal
+          isOpen={showMapModal}
+          onClose={() => {
+            setShowMapModal(false);
+            setSelectingFromLocation(false);
+            setSelectingToLocation(false);
+          }}
+          onSelect={(location) => {
+            // location ya tiene tipo MapLocation gracias a las props de MapModal
+            const address = location.address || location.formattedAddress || `${location.lat}, ${location.lng}`;
+
+            const normalizedPlace: PlaceLike = {
+              name: address,
+              formatted_address: address,
+              isCustomLocation: true,
+              geometry: {
+                location: {
+                  lat: () => location.lat,
+                  lng: () => location.lng,
+                },
+              },
+            };
+
+            if (selectingFromLocation && fromRef.current) {
+              fromRef.current.value = address;
+              fromPlaceRef.current = normalizedPlace;
+              setCustomFrom(true);
+            }
+
+            if (selectingToLocation && toRef.current) {
+              toRef.current.value = address;
+              toPlaceRef.current = normalizedPlace;
+              setCustomTo(true);
+            }
+
+            setShowMapModal(false);
+            setSelectingFromLocation(false);
+            setSelectingToLocation(false);
+          }}
         />
       )}
     </>
   );
-} 
+}

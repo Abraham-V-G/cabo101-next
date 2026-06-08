@@ -10,10 +10,34 @@ export default function PopularTransfers() {
   const router = useRouter();
 
   const transfers = [
-    { title: "San José del Cabo", price: "$90 USD", image: "/images/transfer.jpg" },
-    { title: "Cabo San Lucas", price: "$110 USD", image: "/images/transfer.jpg" },
-    { title: "Todos Santos", price: "$210 USD", image: "/images/transfer.jpg" },
-    { title: "La Paz", price: "$250 USD", image: "/images/transfer.jpg" },
+    {
+      title: "San José del Cabo",
+      subtitle: "15 min from airport",
+      price: "$90 USD",
+      tag: "Most Popular",
+      image: "/images/san jose del cabo.jpg",
+    },
+    {
+      title: "Cabo San Lucas",
+      subtitle: "45 min from airport",
+      price: "$110 USD",
+      tag: null,
+      image: "/images/cabo san lucas.jpg",
+    },
+    {
+      title: "Todos Santos",
+      subtitle: "1 hr from airport",
+      price: "$210 USD",
+      tag: null,
+      image: "/images/todos santos.jpg",
+    },
+    {
+      title: "La Paz",
+      subtitle: "2 hrs from airport",
+      price: "$250 USD",
+      tag: null,
+      image: "/images/la paz.jpg",
+    },
   ];
 
   const handleBooking = (destination) => {
@@ -26,56 +50,118 @@ export default function PopularTransfers() {
   };
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 bg-gray-100">
+    <section className="py-16 md:py-24 px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 bg-white">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-2">
-          Popular Airport Transfers
-        </h2>
-        <p className="text-gray-500 mb-6 sm:mb-8 md:mb-10">
-          Choose your route and enjoy a comfortable trip
-        </p>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+          <div>
+            <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-2">
+              Airport Transfers
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+              Where are you heading?
+            </h2>
+          </div>
+          <p className="text-sm text-gray-400 sm:text-right max-w-xs">
+            Private, door-to-door transfers with professional drivers
+          </p>
+        </div>
+
+        {/* Swiper */}
         <Swiper
           modules={[Navigation, Autoplay]}
           navigation
           loop={true}
-          autoplay={{ delay: 3000, disableOnInteraction: false }}
-          spaceBetween={16}
+          autoplay={{ delay: 4000, disableOnInteraction: false }}
+          spaceBetween={20}
+          slidesPerView={1.1}
           breakpoints={{
-            480: { slidesPerView: 1.2, spaceBetween: 16 },
-            640: { slidesPerView: 1.5, spaceBetween: 20 },
-            768: { slidesPerView: 2, spaceBetween: 20 },
-            1024: { slidesPerView: 2.5, spaceBetween: 24 },
-            1280: { slidesPerView: 3, spaceBetween: 24 },
+            480:  { slidesPerView: 1.3, spaceBetween: 16 },
+            640:  { slidesPerView: 1.8, spaceBetween: 20 },
+            768:  { slidesPerView: 2.2, spaceBetween: 20 },
+            1024: { slidesPerView: 2.8, spaceBetween: 24 },
+            1280: { slidesPerView: 3.2, spaceBetween: 24 },
           }}
         >
           {transfers.map((item, index) => (
             <SwiperSlide key={index}>
-              <div className="bg-white rounded-xl shadow-md overflow-hidden group transition h-full flex flex-col">
-                <div className="overflow-hidden h-48 sm:h-52 md:h-48">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-                  />
+              <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-[380px] sm:h-[420px] shadow-sm hover:shadow-xl transition-shadow duration-500">
+
+                {/* Background image */}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                {/* Tag badge */}
+                {item.tag && (
+                  <div className="absolute top-4 left-4 bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    {item.tag}
+                  </div>
+                )}
+
+                {/* Price badge */}
+                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-xl shadow-sm">
+                  {item.price}
+                  <span className="block text-[10px] font-normal text-gray-500 leading-none mt-0.5 text-center">
+                    Round Trip
+                  </span>
                 </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="font-semibold text-base sm:text-lg">
-                    Airport - {item.title}
+
+                {/* Bottom content */}
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  {/* Route info */}
+                  <div className="flex items-center gap-1.5 text-white/60 text-xs mb-2">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Los Cabos Airport</span>
+                    <svg className="w-3 h-3 mx-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span className="text-white/80">{item.title}</span>
+                  </div>
+
+                  <h3 className="text-white text-xl font-bold leading-tight mb-0.5">
+                    {item.title}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {item.price} Round Trip
+                  <p className="text-white/60 text-xs mb-4">
+                    {item.subtitle}
                   </p>
+
+                  {/* Book button */}
                   <button
                     onClick={() => handleBooking(item.title)}
-                    className="mt-4 w-full bg-teal-700 hover:bg-teal-800 text-white py-2 rounded-lg transition text-sm sm:text-base"
+                    className="
+                      w-full
+                      bg-white text-gray-900
+                      hover:bg-teal-500 hover:text-white
+                      text-sm font-semibold
+                      py-3 rounded-xl
+                      transition-all duration-300
+                      flex items-center justify-center gap-2
+                    "
                   >
-                    BOOK NOW
+                    Book this transfer
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
+
               </div>
             </SwiperSlide>
           ))}
         </Swiper>
+
       </div>
     </section>
   );

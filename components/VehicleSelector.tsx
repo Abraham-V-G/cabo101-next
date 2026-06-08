@@ -1,13 +1,26 @@
+//components/VehicleSelector.tsx
+
 "use client";
 
 import Image from "next/image";
 import { motion } from "framer-motion";
 
-export default function VehicleSelector({ vehicles, selected, onSelect }: any) {
+type Vehicle = {
+  name: string;
+  capacity: string;
+  image: string;
+};
+
+type Props = {
+  vehicles: Vehicle[];
+  selected: Vehicle;
+  onSelect: (vehicle: Vehicle) => void;
+};
+
+export default function VehicleSelector({ vehicles, selected, onSelect }: Props) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-
-      {vehicles.map((v: any, index: number) => {
+      {vehicles.map((v, index) => {
         const active = selected.name === v.name;
 
         return (
@@ -22,48 +35,23 @@ export default function VehicleSelector({ vehicles, selected, onSelect }: any) {
             className={`
               flex items-center justify-between p-4 cursor-pointer
               transition-all duration-300
-              ${active
-                ? "bg-gray-100"
-                : "hover:bg-gray-50"}
+              ${active ? "bg-gray-100" : "hover:bg-gray-50"}
               ${index !== vehicles.length - 1 ? "border-b border-gray-200" : ""}
             `}
           >
-
             {/* LEFT SIDE */}
             <div className="flex items-center gap-4">
-
-              <motion.div
-                whileHover={{ scale: 1.08 }}
-                className="bg-gray-50 rounded-lg p-2"
-              >
-                <Image
-                  src={v.image}
-                  alt={v.name}
-                  width={90}
-                  height={50}
-                  className="object-contain"
-                />
+              <motion.div whileHover={{ scale: 1.08 }} className="bg-gray-50 rounded-lg p-2">
+                <Image src={v.image} alt={v.name} width={90} height={50} className="object-contain" />
               </motion.div>
-
               <div>
-                <p className="font-semibold text-gray-900">
-                  {v.name}
-                </p>
-
-                <p className="text-sm text-gray-500">
-                  Up to {v.capacity} passengers
-                </p>
+                <p className="font-semibold text-gray-900">{v.name}</p>
+                <p className="text-sm text-gray-500">Up to {v.capacity} passengers</p>
               </div>
-
             </div>
 
-            {/* RIGHT SIDE */}
+            {/* RIGHT SIDE – sin precio fijo */}
             <div className="text-right">
-
-              <p className="font-semibold text-lg text-gray-900">
-                ${v.price}
-              </p>
-
               {active && (
                 <motion.p
                   initial={{ opacity: 0 }}
@@ -73,9 +61,9 @@ export default function VehicleSelector({ vehicles, selected, onSelect }: any) {
                   Selected
                 </motion.p>
               )}
-
+              {/* Opcional: mostrar mensaje de precio dinámico */}
+              <p className="text-xs text-gray-400 mt-1">Dynamic pricing</p>
             </div>
-
           </motion.div>
         );
       })}
