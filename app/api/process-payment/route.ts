@@ -71,6 +71,13 @@ export async function POST(req: Request) {
     const totalMXN = Math.round(totalUSD * USD_TO_MXN_RATE);
 
     const payment = new Payment(mp);
+
+    console.log("TOKEN:", data.token);
+    console.log("PAYMENT METHOD:", data.payment_method_id);
+    console.log("ISSUER:", data.issuer_id);
+    console.log("PAYER:", JSON.stringify(data.payer, null, 2));
+    console.log("AMOUNT:", totalMXN);
+
     const result = await payment.create({
       body: {
         transaction_amount: totalMXN,
@@ -150,8 +157,18 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(result);
-  } catch (error) {
-    console.error("MP ERROR:", error);
-    return NextResponse.json({ error: true, message: String(error) }, { status: 500 });
+  } catch (error: any) {
+    console.error("FULL MP ERROR:");
+    console.dir(error, { depth: null });
+
+    return NextResponse.json(
+      {
+        error: true,
+        message: error?.message,
+        cause: error?.cause,
+        status: error?.status,
+      },
+      { status: 500 }
+    );
   }
 }

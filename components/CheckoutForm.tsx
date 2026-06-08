@@ -104,6 +104,7 @@ export default function CheckoutForm({
         payment_method_id,
         issuer_id,
         installments: installments || 1,
+        payer: brickData.formData?.payer,
       };
 
       const res = await fetch("/api/process-payment", {
