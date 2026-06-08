@@ -122,8 +122,7 @@ export default function CheckoutForm({
       }
 
       if (result.status === "approved") {
-        console.log("PAYMENT APPROVED");
-        alert(`PAYMENT APPROVED ${result.id}`);
+        window.location.href = `/booking/success?id=${result.id}`;
       }
 
       return result;
