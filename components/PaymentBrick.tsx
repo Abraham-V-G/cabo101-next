@@ -22,9 +22,14 @@ function PaymentBrickComponent({ amount, onSubmit }: Props) {
         },
       }}
       onSubmit={onSubmit}
+      onError={(error) => {
+        console.error("BRICK ERROR:", error);
+      }}
+      onReady={() => {
+        console.log("BRICK READY");
+      }}
     />
   );
 }
 
-// 🔥 evita re-render SI amount no cambia
 export default memo(PaymentBrickComponent);

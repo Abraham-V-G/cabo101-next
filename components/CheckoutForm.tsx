@@ -113,7 +113,15 @@ export default function CheckoutForm({
         body: JSON.stringify(payload),
       });
 
-      return await res.json();
+      const result = await res.json();
+
+      console.log("PROCESS PAYMENT RESPONSE:", result);
+
+      if (!res.ok) {
+        throw new Error(result.error || "Payment failed");
+      }
+
+      return result;
     },
     [
       formData,
