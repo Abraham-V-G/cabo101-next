@@ -2,40 +2,44 @@
 
 import { pricingMatrix } from "./pricingMatrix";
 
-export type VehicleType = "SUV" | "VAN" | "SPRINTER";
+export type VehicleType =
+  | "SUV"
+  | "VAN"
+  | "SPRINTER";
 
-type VehiclePrices = {
-  SUV: number;
-  VAN: number;
-  SPRINTER: number;
+type PriceType = {
+  oneWay: number;
+  roundTrip: number;
 };
 
-type PricingMatrix = {
-  [zone: string]: {
-    [destinationZone: string]: VehiclePrices;
-  };
+type VehiclePrices = {
+  SUV: PriceType;
+  VAN: PriceType;
+  SPRINTER: PriceType;
 };
 
 export function getPrice(
   fromZone: string,
   toZone: string,
-  vehicle: VehicleType
+  vehicle: VehicleType,
+  tripType: "oneway" | "round"
 ): number | null {
+
+  // misma zona
   if (fromZone === toZone) {
     return null;
   }
 
-  const direct = (pricingMatrix as PricingMatrix)?.[fromZone]?.[toZone];
+  // buscar directa o inversa
+  const route =
+    pricingMatrix[fromZone]?.[toZone] ||
+    pricingMatrix[toZone]?.[fromZone];
 
-  if (direct && vehicle in direct) {
-    return direct[vehicle];
+  if (!route) {
+    return null;
   }
 
-  const reverse = (pricingMatrix as PricingMatrix)?.[toZone]?.[fromZone];
-
-  if (reverse && vehicle in reverse) {
-    return reverse[vehicle];
-  }
-
-  return null;
+  return tripType === "round"
+    ? route[vehicle].roundTrip
+    : route[vehicle].oneWay;
 }

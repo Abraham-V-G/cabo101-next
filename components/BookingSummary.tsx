@@ -56,7 +56,7 @@ export default function BookingSummary({
       className="bg-white rounded-2xl sticky top-6 border border-[#e5e7eb] overflow-hidden"
     >
       {/* Vehicle image header */}
-      <div className="bg-[#f3fdf8] px-6 pt-6 pb-4 flex flex-col items-center text-center border-b border-[#e5e7eb]">
+      <div className=" px-6 pt-6 pb-4 flex flex-col items-center text-center border-b border-[#e5e7eb]">
         <Image
           src={vehicle.image}
           alt={vehicle.name}

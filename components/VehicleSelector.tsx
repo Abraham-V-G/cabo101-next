@@ -9,6 +9,8 @@ type Vehicle = {
   name: string;
   capacity: string;
   image: string;
+  maxPassengers: number;
+  disabled?: boolean;
 };
 
 type Props = {
@@ -26,17 +28,27 @@ export default function VehicleSelector({ vehicles, selected, onSelect }: Props)
         return (
           <motion.div
             key={v.name}
-            onClick={() => onSelect(v)}
+            onClick={() => {
+            if (!v.disabled) {
+                onSelect(v);
+            }
+            }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={v.disabled ? {} : { scale: 1.01 }}
+            whileTap={v.disabled ? {} : { scale: 0.98 }}
             className={`
-              flex items-center justify-between p-4 cursor-pointer
-              transition-all duration-300
-              ${active ? "bg-gray-100" : "hover:bg-gray-50"}
-              ${index !== vehicles.length - 1 ? "border-b border-gray-200" : ""}
+            flex items-center justify-between p-4
+            transition-all duration-300
+            ${
+                v.disabled
+                ? "opacity-40 cursor-not-allowed bg-gray-50"
+                : active
+                ? "bg-gray-100 cursor-pointer"
+                : "hover:bg-gray-50 cursor-pointer"
+            }
+            ${index !== vehicles.length - 1 ? "border-b border-gray-200" : ""}
             `}
           >
             {/* LEFT SIDE */}
@@ -47,6 +59,11 @@ export default function VehicleSelector({ vehicles, selected, onSelect }: Props)
               <div>
                 <p className="font-semibold text-gray-900">{v.name}</p>
                 <p className="text-sm text-gray-500">Up to {v.capacity} passengers</p>
+                {v.disabled && (
+                <p className="text-xs text-red-500 mt-1">
+                    Not enough capacity
+                </p>
+                )}
               </div>
             </div>
 

@@ -186,7 +186,6 @@ export default function PayContent() {
               key="payment"
               initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[#d4f5e7] rounded-3xl p-4"
             >
               <PaymentBrick amount={transactionAmount} onSubmit={handlePayment} />
             </motion.div>

@@ -47,8 +47,8 @@ export default function Hero() {
             >
               <span
                 style={{
-                  width:          24,
-                  height:         24,
+                  width:          22,
+                  height:         22,
                   flexShrink:     0,
                   display:        "flex",
                   alignItems:     "center",
@@ -61,8 +61,8 @@ export default function Hero() {
                 {tripType === value && (
                   <span
                     style={{
-                      width:        12,
-                      height:       12,
+                      width:        8,
+                      height:       8,
                       borderRadius: 2,
                       background:   "#4ccb8c",
                       display:      "block",

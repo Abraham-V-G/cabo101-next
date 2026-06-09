@@ -1,5 +1,6 @@
 // lib/buildBookingPayload.ts
 
+
 type BookingInput = {
   transaction_amount: number;
   name: string;
@@ -13,15 +14,16 @@ type BookingInput = {
   pickupDate: string;
   pickupTime: string;
   roundTrip: boolean;
+  returnFlight: string;               // ✅ corregido
   returnPickupLocation: string;
   returnDropoffLocation: string;
   returnPickupDate: string;
   returnPickupTime: string;
-  airline?: string;          // opcional
-  flight?: string;           // opcional
-  arrival?: string;          // opcional
-  additionalService?: number; // ✅ nuevo
-  paidAmount?: number;        // ✅ nuevo
+  airline?: string;
+  flight?: string;
+  arrival?: string;
+  additionalService?: number;
+  paidAmount?: number;
 };
 
 export function buildBookingPayload(input: BookingInput) {
@@ -45,8 +47,8 @@ export function buildBookingPayload(input: BookingInput) {
     airline: input.airline,
     flight: input.flight,
     arrival: input.arrival,
-    additionalService: input.additionalService, // ✅
-    paidAmount: input.paidAmount,               // ✅
+    additionalService: input.additionalService,
+    paidAmount: input.paidAmount,
 
     description: input.summary,
 
@@ -74,6 +76,7 @@ export function buildBookingPayload(input: BookingInput) {
         airline: input.airline,
         flight: input.flight,
         arrival: input.arrival,
+        returnFlight: input.returnFlight,        // ✅ agregado
         additionalService: input.additionalService,
         paidAmount: input.paidAmount,
       },

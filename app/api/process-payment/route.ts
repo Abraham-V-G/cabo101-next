@@ -18,7 +18,6 @@ const mp = new MercadoPagoConfig({
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 🔥 Tipo de cambio desde variable de entorno (o fallback 19.25)
 const USD_TO_MXN_RATE = Number(process.env.USD_TO_MXN_RATE ?? 19.25);
 
 export async function POST(req: Request) {
@@ -26,12 +25,7 @@ export async function POST(req: Request) {
     console.log("PROCESS PAYMENT HIT");
     const body = await req.json();
 
-    // El payload ya trae todos los datos en raíz (incluyendo token, payment_method_id, etc.)
     const data = body;
-    console.log(
-      JSON.stringify(body, null, 2)
-    );
-    // Aseguramos el email
     data.email = data.email || data.payer?.email || "";
 
     console.log("DATOS RECIBIDOS:", {
@@ -43,7 +37,6 @@ export async function POST(req: Request) {
       payment_method_id: data.payment_method_id,
     });
 
-    // Validaciones
     if (!data.email) {
       return NextResponse.json({ error: "Customer email missing" }, { status: 400 });
     }
@@ -67,7 +60,6 @@ export async function POST(req: Request) {
     const paidAmount = Number(data.paidAmount) || totalUSD;
     const toPay = Math.max(totalUSD - paidAmount, 0);
 
-    // Conversión USD → MXN
     const totalMXN = Math.round(totalUSD * USD_TO_MXN_RATE);
 
     const payment = new Payment(mp);
@@ -113,28 +105,44 @@ export async function POST(req: Request) {
         paymentId: result.id,
       });
 
+      // ✅ Construcción del templateData con todos los campos
       const templateData: BookingEmailData = {
         pickupDate: data.pickupDate,
         id: result.id,
         roundTrip: data.roundTrip,
+
         name: data.name,
         phone: data.phone,
         email: data.email,
+
         pickupLocation: data.pickupLocation,
         dropoffLocation: data.dropoffLocation,
+
         passengers: data.passengers,
         vehicleType: data.vehicleType,
+
         pickupTime: data.pickupTime,
+
+        airline: data.airline,      // ✅ agregado
+        flight: data.flight,        // ✅ agregado
+        arrival: data.arrival,      // ✅ agregado
+
         returnPickupLocation: data.returnPickupLocation,
         returnDropoffLocation: data.returnDropoffLocation,
         returnPickupTime: data.returnPickupTime,
         returnPickupDate: data.returnPickupDate,
+        returnFlight: data.returnFlight,  // ✅ agregado
+
         subtotal,
         additionalService,
         total: totalUSD,
         paidAmount,
         toPay,
       };
+
+      // 🔍 LOG PARA VERIFICAR QUE LLEGAN LOS CAMPOS DE VUELO
+      console.log("📧 EMAIL DATA (templateData):");
+      console.log(JSON.stringify(templateData, null, 2));
 
       const html = bookingConfirmationTemplate(templateData);
 

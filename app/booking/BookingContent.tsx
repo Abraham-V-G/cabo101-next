@@ -17,10 +17,25 @@ type Vehicle = {
   image: string;
 };
 
-const vehicles: Vehicle[] = [
-  { name: "SUV", capacity: "1-3", image: "/images/suv.png" },
-  { name: "VAN", capacity: "1-5", image: "/images/van.png" },
-  { name: "SPRINTER", capacity: "5-7", image: "/images/splinter.png" },
+const vehicles = [
+  {
+    name: "SUV",
+    capacity: "Up to 6",
+    image: "/images/suv.png",
+    maxPassengers: 6,
+  },
+  {
+    name: "VAN",
+    capacity: "Up to 11",
+    image: "/images/van.png",
+    maxPassengers: 11,
+  },
+  {
+    name: "SPRINTER",
+    capacity: "Up to 19",
+    image: "/images/splinter.png",
+    maxPassengers: 19,
+  },
 ];
 
 export default function BookingContent() {
@@ -32,6 +47,7 @@ export default function BookingContent() {
   const departureDate = params.get("departureDate") || "";
   const returnDate = params.get("returnDate") || "";
   const passengers = params.get("passengers") || "1";
+  const passengerCount = Number(passengers);
   const tripType = params.get("tripType") || "oneway";
 
   // Coordenadas (raw strings)
@@ -57,11 +73,23 @@ export default function BookingContent() {
     !Number.isNaN(toLng);
 
   // Estados
-  const [vehicle, setVehicle] = useState<Vehicle>(vehicles[0]);
+  const [vehicle, setVehicle] = useState(vehicles[0]);
   const [priceUSD, setPriceUSD] = useState<number | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
   const [fromZone, setFromZone] = useState("");
   const [toZone, setToZone] = useState("");
+
+    useEffect(() => {
+    if (vehicle.maxPassengers >= passengerCount) return;
+
+    if (passengerCount > 11) {
+        setVehicle(vehicles.find(v => v.name === "SPRINTER")!);
+    } else if (passengerCount > 6) {
+        setVehicle(vehicles.find(v => v.name === "VAN")!);
+    } else {
+        setVehicle(vehicles.find(v => v.name === "SUV")!);
+    }
+    }, [passengerCount, vehicle]);
 
   // Llamada a /api/pricing
   useEffect(() => {
@@ -89,7 +117,8 @@ export default function BookingContent() {
             toLat,
             toLng,
             vehicle: vehicle.name,
-          }),
+            tripType,
+            }),
         });
 
         const data = await res.json();
@@ -124,7 +153,20 @@ export default function BookingContent() {
     return () => {
       mounted = false;
     };
-  }, [fromLat, fromLng, toLat, toLng, vehicle.name, isValidCoordinates]);
+    }, [
+        fromLat,
+        fromLng,
+        toLat,
+        toLng,
+        vehicle.name,
+        tripType,
+        isValidCoordinates,
+    ]);
+
+    const availableVehicles = vehicles.map((v) => ({
+    ...v,
+    disabled: passengerCount > v.maxPassengers,
+    }));
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] text-black">
@@ -132,7 +174,7 @@ export default function BookingContent() {
       <div className="bg-white border-b border-[#e5e7eb]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-            <Image src="/images/logo.png" alt="Cabo101" width={40} height={40} />
+            <Image src="/images/logo-color.png" alt="Cabo101" width={40} height={40} />
           </Link>
           <div className="text-sm text-gray-500">Step 2 of 2</div>
         </div>
@@ -148,9 +190,9 @@ export default function BookingContent() {
           {/* COLUMNA IZQUIERDA */}
           <div className="space-y-6">
             <VehicleSelector
-              vehicles={vehicles}
-              selected={vehicle}
-              onSelect={setVehicle}
+            vehicles={availableVehicles}
+            selected={vehicle}
+            onSelect={setVehicle}
             />
 
             <CheckoutForm

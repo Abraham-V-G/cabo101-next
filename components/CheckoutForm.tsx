@@ -33,8 +33,7 @@ export default function CheckoutForm({
   departureDate,
   returnDate,
   tripType,
-}: Props) {  
-
+}: Props) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -44,6 +43,8 @@ export default function CheckoutForm({
     flight: "",
     arrival: "",
     pickupTime: "",
+    returnFlight: "",
+    returnPickupTime: "",
   });
 
   const [showPayment, setShowPayment] = useState(false);
@@ -57,16 +58,15 @@ export default function CheckoutForm({
 
   const handlePayment = useCallback(
     async (brickData: Record<string, any>) => {
-      // 🔥 DEBUG: ver qué envía realmente el PaymentBrick
       console.log("BRICK DATA:", brickData);
-      console.log("BRICK DATA", brickData);
+
       if (priceUSD === null) {
         throw new Error("Price not available. Please refresh the page.");
       }
 
-      // Determinar la estructura de brickData (puede ser directa o anidada en formData)
       const token = brickData.token ?? brickData.formData?.token;
-      const payment_method_id = brickData.payment_method_id ?? brickData.formData?.payment_method_id;
+      const payment_method_id =
+        brickData.payment_method_id ?? brickData.formData?.payment_method_id;
       const issuer_id = brickData.issuer_id ?? brickData.formData?.issuer_id;
       const installments = brickData.installments ?? brickData.formData?.installments;
 
@@ -74,9 +74,9 @@ export default function CheckoutForm({
         throw new Error("Missing payment information from the brick");
       }
 
-      // Datos de reserva (sin campos del brick)
+      // ✅ Construcción del payload con todos los campos requeridos
       const bookingPayload = buildBookingPayload({
-        transaction_amount: priceUSD, // USD, se convertirá en backend
+        transaction_amount: priceUSD,
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         phone: formData.phone,
@@ -91,13 +91,13 @@ export default function CheckoutForm({
         returnPickupLocation: tripType === "round" ? to : "",
         returnDropoffLocation: tripType === "round" ? from : "",
         returnPickupDate: tripType === "round" ? returnDate : "",
-        returnPickupTime: tripType === "round" ? formData.pickupTime : "",
+        returnPickupTime: tripType === "round" ? formData.returnPickupTime : "",
+        returnFlight: tripType === "round" ? formData.returnFlight : "",   // ✅ agregado
         airline: formData.airline,
         flight: formData.flight,
         arrival: formData.arrival,
       });
 
-      // Fusionar campos de pago
       const payload = {
         ...bookingPayload,
         token,
@@ -114,7 +114,6 @@ export default function CheckoutForm({
       });
 
       const result = await res.json();
-
       console.log("PROCESS PAYMENT RESPONSE:", result);
 
       if (!res.ok) {
@@ -140,14 +139,11 @@ export default function CheckoutForm({
     ]
   );
 
-  const totalDisplay = priceUSD === null
-    ? "Calculating..."
-    : `$${priceUSD} USD`;
+  const totalDisplay =
+    priceUSD === null ? "Calculating..." : `$${priceUSD} USD`;
 
-  const isContinueDisabled = priceUSD === null ||
-    !formData.firstName ||
-    !formData.email ||
-    !formData.phone;
+  const isContinueDisabled =
+    priceUSD === null || !formData.firstName || !formData.email || !formData.phone;
 
   return (
     <div className="bg-white text-black p-6 rounded-3xl shadow space-y-6">
@@ -258,7 +254,41 @@ export default function CheckoutForm({
                 />
                 <label className="label-line">Arrival Time</label>
               </div>
-            </div>
+
+              {/* ✅ Campos de regreso dentro del grid (con corrección visual) */}
+              {tripType === "round" && (
+                <>
+                  <div className="col-span-2 mt-2">
+                    <h3 className="font-semibold text-gray-700">
+                      Return Transfer
+                    </h3>
+                  </div>
+
+                  <div className="input-group">
+                    <input
+                      name="returnFlight"
+                      value={formData.returnFlight}
+                      onChange={handleChange}
+                      className="input-line peer"
+                      placeholder=" "
+                    />
+                    <label className="label-line">Return Flight Number</label>
+                  </div>
+
+                  <div className="input-group">
+                    <input
+                      type="time"
+                      name="returnPickupTime"
+                      value={formData.returnPickupTime}
+                      onChange={handleChange}
+                      className="input-line peer"
+                      placeholder=" "
+                    />
+                    <label className="label-line">Return Pickup Time</label>
+                  </div>
+                </>
+              )}
+            </div> {/* fin del grid */}
 
             <div className="flex justify-between text-lg font-semibold">
               <span>Total</span>
@@ -269,9 +299,11 @@ export default function CheckoutForm({
               type="button"
               onClick={() => {
                 if (isContinueDisabled) {
-                  alert(priceUSD === null
-                    ? "Price is still loading. Please wait."
-                    : "Complete required fields");
+                  alert(
+                    priceUSD === null
+                      ? "Price is still loading. Please wait."
+                      : "Complete required fields"
+                  );
                   return;
                 }
                 setShowPayment(true);
@@ -289,12 +321,8 @@ export default function CheckoutForm({
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-[#d4f5e7] rounded-3xl p-4"
           >
-            <PaymentBrick
-              amount={priceUSD ?? 0}
-              onSubmit={handlePayment}
-            />
+            <PaymentBrick amount={priceUSD ?? 0} onSubmit={handlePayment} />
           </motion.div>
         )}
       </AnimatePresence>
