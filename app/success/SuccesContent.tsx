@@ -1,5 +1,4 @@
-//app/succes/SuccesContent.tsx
-
+// app/success/SuccessContent.tsx
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -9,9 +8,9 @@ export default function SuccessContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // ✅ CAMBIO: leer transaction_amount en vez de amount
   const status = params.get("status");
   const transactionAmount = params.get("transaction_amount");
+  const paymentId = params.get("paymentId"); // ✅ nuevo: ID del pago
   const name = params.get("name");
   const email = params.get("email");
   const vehicle = params.get("vehicle");
@@ -27,7 +26,6 @@ export default function SuccessContent() {
   const returnPickupTime = params.get("returnPickupTime");
   const returnPickupDate = params.get("returnPickupDate");
 
-  // ✅ CAMBIO: usar transactionAmount
   const isPending = status === "pending" || status === "in_process";
   const isApproved = !isPending && transactionAmount;
 
@@ -64,6 +62,10 @@ export default function SuccessContent() {
         {/* Detalles del viaje */}
         {name && (
           <div className="bg-gray-100 p-4 rounded-xl text-left text-sm space-y-1">
+            {/* ✅ Número de referencia del pago */}
+            {paymentId && (
+              <p><strong>Confirmation #:</strong> {paymentId}</p>
+            )}
             <p><strong>Name:</strong> {name}</p>
             <p><strong>Email:</strong> {email}</p>
             <p><strong>Phone:</strong> {phone}</p>
@@ -85,8 +87,10 @@ export default function SuccessContent() {
               </>
             )}
             
-            {/* ✅ CAMBIO: mostrar transactionAmount */}
-            <p className="mt-2 pt-2 border-t border-gray-300"><strong>Total:</strong> ${transactionAmount} MXN</p>
+            {/* ✅ CORREGIDO: el monto se muestra en USD (etiqueta correcta) */}
+            <p className="mt-2 pt-2 border-t border-gray-300">
+              <strong>Total Paid:</strong> ${transactionAmount} USD
+            </p>
             {isPending && (
               <p className="text-yellow-600 text-xs mt-2">
                 * You will receive a confirmation email once your payment is approved.

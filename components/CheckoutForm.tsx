@@ -121,7 +121,7 @@ export default function CheckoutForm({
       }
 
       if (result.status === "approved") {
-        window.location.href = `/booking/success?id=${result.id}`;
+        window.location.href = `/success?id=${result.id}`;
       }
 
       return result;

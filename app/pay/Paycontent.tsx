@@ -165,7 +165,7 @@ export default function PayContent() {
               />
               <div className="flex justify-between items-center text-xl font-semibold text-black px-1">
                 <span>Total</span>
-                <span>${transactionAmount} MXN</span>
+                <span>${transactionAmount} USD</span>
               </div>
               <button
                 onClick={() => {
