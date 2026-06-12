@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Booking {
+  id                    Int      @id @default(autoincrement())
+  name                  String
+  email                 String
+  phone                 String
+
+  pickupLocation        String
+  dropoffLocation       String
+
+  passengers            Int
+  vehicleType           String
+
+  pickupDate            String
+  pickupTime            String
+
+  roundTrip             Boolean @default(false)
+
+  returnPickupLocation  String?
+  returnDropoffLocation String?
+  returnPickupDate      String?
+  returnPickupTime      String?
+
+  paymentStatus         String   @default("pending")
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  payments              Payment[]
+}
+
+model Payment {
+  id              Int      @id @default(autoincrement())
+
+  bookingId       Int?
+
+  mercadopagoId   String?
+  status          String
+
+  totalUSD        Float
+  totalMXN        Float
+  exchangeRate    Float
+
+  createdAt       DateTime @default(now())
+
+  booking         Booking? @relation(fields: [bookingId], references: [id])
+}
+
+model Zone {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Price {
+  id             Int      @id @default(autoincrement())
+
+  fromZone       String
+  toZone         String
+
+  suvPrice       Float
+  vanPrice       Float
+  sprinterPrice  Float
+
+  createdAt      DateTime @default(now())
+}
