@@ -1,73 +1,42 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "mysql"
-}
-
 model Booking {
-  id                    Int      @id @default(autoincrement())
-  name                  String
-  email                 String
-  phone                 String
+  id Int @id @default(autoincrement())
 
-  pickupLocation        String
-  dropoffLocation       String
+  firstName String
+  lastName String
 
-  passengers            Int
-  vehicleType           String
+  email String
+  phone String
 
-  pickupDate            String
-  pickupTime            String
+  pickupLocation String
+  dropoffLocation String
 
-  roundTrip             Boolean @default(false)
+  passengers Int
+  vehicleType String
 
-  returnPickupLocation  String?
+  pickupDate String
+  pickupTime String
+
+  roundTrip Boolean @default(false)
+
+  returnPickupLocation String?
   returnDropoffLocation String?
-  returnPickupDate      String?
-  returnPickupTime      String?
+  returnPickupDate String?
+  returnPickupTime String?
 
-  paymentStatus         String   @default("pending")
+  totalUSD Float?
+  totalMXN Float?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  paymentStatus String @default("pending")
+  tripStatus String @default("pending")
 
-  payments              Payment[]
-}
+  airline String?
+  flightNumber String?
 
-model Payment {
-  id              Int      @id @default(autoincrement())
+  notes String? @db.Text
+  driverNotes String? @db.Text
 
-  bookingId       Int?
-
-  mercadopagoId   String?
-  status          String
-
-  totalUSD        Float
-  totalMXN        Float
-  exchangeRate    Float
-
-  createdAt       DateTime @default(now())
-
-  booking         Booking? @relation(fields: [bookingId], references: [id])
-}
-
-model Zone {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
   createdAt DateTime @default(now())
-}
+  updatedAt DateTime @updatedAt
 
-model Price {
-  id             Int      @id @default(autoincrement())
-
-  fromZone       String
-  toZone         String
-
-  suvPrice       Float
-  vanPrice       Float
-  sprinterPrice  Float
-
-  createdAt      DateTime @default(now())
+  payments Payment[]
 }
