@@ -78,7 +78,8 @@ export default function CheckoutForm({
       // ✅ Construcción del payload con todos los campos requeridos
       const bookingPayload = buildBookingPayload({
         transaction_amount: priceUSD,
-        name: `${formData.firstName} ${formData.lastName}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
         summary: tripType === "round" ? `${from} ↔ ${to}` : `${from} → ${to}`,
@@ -255,8 +256,9 @@ export default function CheckoutForm({
                   placeholder=" "
                 />
                 <label className="label-line">Arrival Time</label>
+              </div>
 
-                <div className="col-span-2">
+              <div className="col-span-2">
                   <label className="block mb-2 text-sm font-medium text-gray-700">
                     Special Requests
                   </label>
@@ -274,8 +276,6 @@ export default function CheckoutForm({
                     placeholder="Baby seat, wheelchair, extra luggage, grocery stop, surfboards, etc."
                     className="w-full border rounded-lg p-3"
                   />
-                </div>
-
               </div>
 
               {/* ✅ Campos de regreso dentro del grid (con corrección visual) */}
