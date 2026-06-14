@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+interface Zone {
+  id: number;
+  name: string;
+}
+
 export default function ZonesPage() {
-  const [zones, setZones] = useState<any[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
   const [name, setName] = useState("");
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const loadZones = async () => {
     const res = await fetch("/api/zones");
@@ -43,6 +51,35 @@ export default function ZonesPage() {
     loadZones();
   };
 
+  const startEditing = (zone: Zone) => {
+    setEditingId(zone.id);
+    setEditingName(zone.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  const saveZone = async (id: number) => {
+    if (!editingName.trim()) return;
+
+    await fetch(`/api/zones/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: editingName,
+      }),
+    });
+
+    setEditingId(null);
+    setEditingName("");
+
+    loadZones();
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">
@@ -69,16 +106,55 @@ export default function ZonesPage() {
         {zones.map((zone) => (
           <div
             key={zone.id}
-            className="border rounded p-4 flex justify-between"
+            className="border rounded p-4 flex justify-between items-center"
           >
-            <span>{zone.name}</span>
+            {editingId === zone.id ? (
+              <>
+                <input
+                  value={editingName}
+                  onChange={(e) =>
+                    setEditingName(e.target.value)
+                  }
+                  className="border px-3 py-2 rounded flex-1 mr-4"
+                />
 
-            <button
-              onClick={() => deleteZone(zone.id)}
-              className="bg-red-600 text-white px-3 py-1 rounded"
-            >
-              Delete
-            </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => saveZone(zone.id)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded"
+                  >
+                    Save
+                  </button>
+
+                  <button
+                    onClick={cancelEditing}
+                    className="bg-gray-500 text-white px-3 py-1 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <span>{zone.name}</span>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => startEditing(zone)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => deleteZone(zone.id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>

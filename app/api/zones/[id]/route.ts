@@ -15,3 +15,21 @@ export async function DELETE(
     success: true,
   });
 }
+
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const body = await req.json();
+
+  const zone = await prisma.zone.update({
+    where: {
+      id: Number(params.id),
+    },
+    data: {
+      name: body.name,
+    },
+  });
+
+  return NextResponse.json(zone);
+}
