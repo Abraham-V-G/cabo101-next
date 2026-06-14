@@ -1,7 +1,5 @@
 // app/admin/page.tsx
 
-// app/admin/page.tsx
-
 "use client";
 
 import { useState, useCallback } from "react";
@@ -13,7 +11,8 @@ export default function AdminDashboard() {
   const [transactionAmount, setTransactionAmount] = useState("");
   const [email, setEmail] = useState("");
   const [summary, setSummary] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupLocation, setPickupLocation] = useState("");
   const [dropoffLocation, setDropoffLocation] = useState("");
@@ -49,7 +48,8 @@ export default function AdminDashboard() {
           transaction_amount: Number(transactionAmount),
           email,
           summary,
-          name,
+          firstName,
+          lastName,
           phone,
           pickupLocation,
           dropoffLocation,
@@ -85,7 +85,8 @@ export default function AdminDashboard() {
     if (!transactionAmount) return alert("❌ El monto es obligatorio");
     const payload = buildBookingPayload({
       transaction_amount: Number(transactionAmount),
-      name: name || "Admin Payment",
+      firstName: firstName || "Admin",
+      lastName: lastName || "Payment",
       email: email || "admin@cabo101.com",
       phone,
       summary: summary || "Transportation Service",
@@ -130,7 +131,8 @@ export default function AdminDashboard() {
     async (data: any) => {
       const payload = buildBookingPayload({
         transaction_amount: Number(transactionAmount),
-        name: name || "Admin Payment",
+        firstName: firstName || "Admin",
+        lastName: lastName || "Payment",
         email: email || "admin@cabo101.com",
         phone,
         summary: summary || "Transportation Service",
@@ -171,7 +173,8 @@ export default function AdminDashboard() {
     },
     [
       transactionAmount,
-      name,
+      firstName,
+      lastName,
       email,
       summary,
       phone,
@@ -239,9 +242,19 @@ export default function AdminDashboard() {
                   <label className="text-xs font-medium text-gray-500">Nombre</label>
                   <input
                     type="text"
-                    placeholder="Nombre del cliente"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nombre"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">Apellido</label>
+                  <input
+                    type="text"
+                    placeholder="Apellido"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
                   />
                 </div>

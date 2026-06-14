@@ -1,4 +1,4 @@
-//app/api/process-payment/route.ts
+// app/api/process-payment/route.ts
 
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
@@ -41,6 +41,11 @@ export async function POST(req: Request) {
 
     if (!data.email) {
       return NextResponse.json({ error: "Customer email missing" }, { status: 400 });
+    }
+
+    // Validación opcional: al menos nombre o apellido
+    if (!data.firstName && !data.lastName) {
+      return NextResponse.json({ error: "Customer name missing (firstName or lastName)" }, { status: 400 });
     }
 
     const totalUSD = Number(data.transaction_amount);
@@ -108,15 +113,13 @@ export async function POST(req: Request) {
         paymentId: result.id,
       });
 
-      // ✅ Construcción del templateData con todos los campos
+      // ✅ Construcción del templateData con firstName + lastName
       const templateData: BookingEmailData = {
         pickupDate: data.pickupDate,
         id: result.id,
         roundTrip: data.roundTrip,
 
-        name: [data.firstName, data.lastName]
-        .filter(Boolean)
-        .join(" "),
+        name: [data.firstName, data.lastName].filter(Boolean).join(" "), // nombre completo
         phone: data.phone,
         email: data.email,
 
@@ -128,15 +131,15 @@ export async function POST(req: Request) {
 
         pickupTime: data.pickupTime,
 
-        airline: data.airline,      // ✅ agregado
-        flight: data.flight,        // ✅ agregado
-        arrival: data.arrival,      // ✅ agregado
+        airline: data.airline,
+        flight: data.flight,
+        arrival: data.arrival,
 
         returnPickupLocation: data.returnPickupLocation,
         returnDropoffLocation: data.returnDropoffLocation,
         returnPickupTime: data.returnPickupTime,
         returnPickupDate: data.returnPickupDate,
-        returnFlight: data.returnFlight,  // ✅ agregado
+        returnFlight: data.returnFlight,
 
         subtotal,
         additionalService,
@@ -145,7 +148,6 @@ export async function POST(req: Request) {
         toPay,
       };
 
-      // 🔍 LOG PARA VERIFICAR QUE LLEGAN LOS CAMPOS DE VUELO
       console.log("📧 EMAIL DATA (templateData):");
       console.log(JSON.stringify(templateData, null, 2));
 
@@ -189,20 +191,18 @@ export async function POST(req: Request) {
           notes: data.notes,
         },
       });
+
       await prisma.payment.create({
         data: {
           bookingId: booking.id,
-
           mercadopagoId: String(result.id),
-
           status: String(result.status),
-
           totalUSD,
           totalMXN,
-
           exchangeRate: USD_TO_MXN_RATE,
         },
       });
+
       const html = bookingConfirmationTemplate(templateData);
 
       try {
