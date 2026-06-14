@@ -114,7 +114,9 @@ export async function POST(req: Request) {
         id: result.id,
         roundTrip: data.roundTrip,
 
-        name: `${data.firstName} ${data.lastName}`,
+        name: [data.firstName, data.lastName]
+        .filter(Boolean)
+        .join(" "),
         phone: data.phone,
         email: data.email,
 
