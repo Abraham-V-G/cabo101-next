@@ -45,6 +45,7 @@ export default function CheckoutForm({
     pickupTime: "",
     returnFlight: "",
     returnPickupTime: "",
+    notes: "",
   });
 
   const [showPayment, setShowPayment] = useState(false);
@@ -96,6 +97,7 @@ export default function CheckoutForm({
         airline: formData.airline,
         flight: formData.flight,
         arrival: formData.arrival,
+        notes: formData.notes,
       });
 
       const payload = {
@@ -253,6 +255,27 @@ export default function CheckoutForm({
                   placeholder=" "
                 />
                 <label className="label-line">Arrival Time</label>
+
+                <div className="col-span-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Special Requests
+                  </label>
+
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        notes: e.target.value,
+                      }))
+                    }
+                    rows={4}
+                    placeholder="Baby seat, wheelchair, extra luggage, grocery stop, surfboards, etc."
+                    className="w-full border rounded-lg p-3"
+                  />
+                </div>
+
               </div>
 
               {/* ✅ Campos de regreso dentro del grid (con corrección visual) */}

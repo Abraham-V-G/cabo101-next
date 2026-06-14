@@ -3,34 +3,50 @@
 
 type BookingInput = {
   transaction_amount: number;
-  name: string;
+
+  firstName: string;
+  lastName: string;
+
   email: string;
   phone: string;
+
   summary: string;
+
   pickupLocation: string;
   dropoffLocation: string;
+
   passengers: string | number;
+
   vehicleType: string;
+
   pickupDate: string;
   pickupTime: string;
+
   roundTrip: boolean;
-  returnFlight: string;               // ✅ corregido
+
+  returnFlight: string;
+
   returnPickupLocation: string;
   returnDropoffLocation: string;
   returnPickupDate: string;
   returnPickupTime: string;
+
   airline?: string;
   flight?: string;
   arrival?: string;
+
   additionalService?: number;
   paidAmount?: number;
+
+  notes?: string;
 };
 
 export function buildBookingPayload(input: BookingInput) {
   return {
     // Datos de la reserva (raíz)
     transaction_amount: input.transaction_amount,
-    name: input.name,
+    firstName: input.firstName,
+    lastName: input.lastName,
     email: input.email,
     phone: input.phone,
     pickupLocation: input.pickupLocation,
@@ -47,13 +63,14 @@ export function buildBookingPayload(input: BookingInput) {
     airline: input.airline,
     flight: input.flight,
     arrival: input.arrival,
+
     additionalService: input.additionalService,
     paidAmount: input.paidAmount,
 
-    description: input.summary,
+    notes: input.notes,
 
     payer: {
-      name: input.name,
+      name: input.firstName,
       email: input.email,
       phone: {
         number: input.phone,
@@ -79,6 +96,7 @@ export function buildBookingPayload(input: BookingInput) {
         returnFlight: input.returnFlight,        // ✅ agregado
         additionalService: input.additionalService,
         paidAmount: input.paidAmount,
+        notes: input.notes,
       },
     },
   };

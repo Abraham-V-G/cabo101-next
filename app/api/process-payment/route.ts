@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
+import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { bookingConfirmationTemplate, BookingEmailData } from "@/lib/emailTemplates/bookingConfirmation";
 
@@ -30,8 +31,9 @@ export async function POST(req: Request) {
 
     console.log("DATOS RECIBIDOS:", {
       transaction_amount: data.transaction_amount,
+      firstName: data.firstName,
+      lastName: data.lastName,
       email: data.email,
-      name: data.name,
       pickupLocation: data.pickupLocation,
       token: !!data.token,
       payment_method_id: data.payment_method_id,
@@ -95,7 +97,8 @@ export async function POST(req: Request) {
       const folio = `#${result.id?.toString().slice(-6) || "000000"}`;
 
       console.log("RESERVA APROBADA:", {
-        name: data.name,
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
         amountUSD: totalUSD,
         amountMXN: totalMXN,
@@ -111,7 +114,7 @@ export async function POST(req: Request) {
         id: result.id,
         roundTrip: data.roundTrip,
 
-        name: data.name,
+        name: `${data.firstName} ${data.lastName}`,
         phone: data.phone,
         email: data.email,
 
@@ -144,6 +147,60 @@ export async function POST(req: Request) {
       console.log("📧 EMAIL DATA (templateData):");
       console.log(JSON.stringify(templateData, null, 2));
 
+      const booking = await prisma.booking.create({
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+
+          email: data.email,
+          phone: data.phone,
+
+          pickupLocation: data.pickupLocation,
+          dropoffLocation: data.dropoffLocation,
+
+          passengers: Number(data.passengers),
+          vehicleType: data.vehicleType,
+
+          pickupDate: data.pickupDate,
+          pickupTime: data.pickupTime,
+
+          roundTrip: Boolean(data.roundTrip),
+
+          returnPickupLocation: data.returnPickupLocation,
+          returnDropoffLocation: data.returnDropoffLocation,
+          returnPickupDate: data.returnPickupDate,
+          returnPickupTime: data.returnPickupTime,
+
+          totalUSD,
+          totalMXN,
+
+          paymentStatus: "paid",
+          tripStatus: "pending",
+
+          airline: data.airline,
+          flightNumber: data.flight,
+
+          arrivalTime: data.arrival,
+
+          returnFlightNumber: data.returnFlight,
+
+          notes: data.notes,
+        },
+      });
+      await prisma.payment.create({
+        data: {
+          bookingId: booking.id,
+
+          mercadopagoId: String(result.id),
+
+          status: String(result.status),
+
+          totalUSD,
+          totalMXN,
+
+          exchangeRate: USD_TO_MXN_RATE,
+        },
+      });
       const html = bookingConfirmationTemplate(templateData);
 
       try {
