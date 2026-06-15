@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 export function middleware(req: NextRequest) {
+  console.log("PATH:", req.nextUrl.pathname);
+
   const token = req.cookies.get("admin_token")?.value;
+
+  console.log("TOKEN EXISTS:", !!token);
 
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
 

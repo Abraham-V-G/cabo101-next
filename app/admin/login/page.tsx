@@ -13,6 +13,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     const res = await fetch("/api/login", {
       method: "POST",
+      credentials: "include",  // ← Agregado para enviar y recibir cookies
       headers: {
         "Content-Type": "application/json",
       },
