@@ -23,7 +23,11 @@ export default function LoginPage() {
     });
 
     const data = await res.json();
-
+    console.log("LOGIN ATTEMPT");
+    console.log("EMAIL RECEIVED:", email);
+    console.log("ADMIN_EMAIL:", process.env.ADMIN_EMAIL);
+    console.log("PASSWORD RECEIVED:", password);
+    console.log("ADMIN_PASSWORD:", process.env.ADMIN_PASSWORD);
     if (data.success) {
       router.push("/admin");
     } else {
