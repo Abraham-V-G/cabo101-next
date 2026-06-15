@@ -1,58 +1,65 @@
+//components/PopularTransfers.tsx
+
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 
+interface Transfer {
+  title: string;
+  slug: string;
+  subtitle: string;
+  price: string;
+  tag: string | null;
+  image: string;
+}
+
 export default function PopularTransfers() {
   const router = useRouter();
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const transfers = [
-    {
-      title: "San José del Cabo",
-      subtitle: "15 min from airport",
-      price: "$90 USD",
-      tag: "Most Popular",
-      image: "/images/san jose del cabo.jpg",
-    },
-    {
-      title: "Cabo San Lucas",
-      subtitle: "45 min from airport",
-      price: "$110 USD",
-      tag: null,
-      image: "/images/cabo san lucas.jpg",
-    },
-    {
-      title: "Todos Santos",
-      subtitle: "1 hr from airport",
-      price: "$210 USD",
-      tag: null,
-      image: "/images/todos santos.jpg",
-    },
-    {
-      title: "La Paz",
-      subtitle: "2 hrs from airport",
-      price: "$250 USD",
-      tag: null,
-      image: "/images/la paz.jpg",
-    },
-  ];
+  useEffect(() => {
+    fetch("/api/popular-transfers")
+      .then((res) => res.json())
+      .then((data) => {
+        setTransfers(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error loading transfers:", error);
+        setLoading(false);
+      });
+  }, []);
 
-  const handleBooking = (destination) => {
+  const handleBooking = (destinationName: string) => {
     const query = new URLSearchParams({
       from: "Airport",
-      to: destination,
+      to: destinationName,
       passengers: "1",
     }).toString();
     router.push(`/booking?${query}`);
   };
 
+  if (loading) {
+    return (
+      <section className="py-16 md:py-24 px-4 bg-white">
+        <div className="max-w-7xl mx-auto text-center">Cargando destinos...</div>
+      </section>
+    );
+  }
+
+  if (transfers.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-16 md:py-24 px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 bg-white">
       <div className="max-w-7xl mx-auto">
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
@@ -77,9 +84,9 @@ export default function PopularTransfers() {
           spaceBetween={20}
           slidesPerView={1.1}
           breakpoints={{
-            480:  { slidesPerView: 1.3, spaceBetween: 16 },
-            640:  { slidesPerView: 1.8, spaceBetween: 20 },
-            768:  { slidesPerView: 2.2, spaceBetween: 20 },
+            480: { slidesPerView: 1.3, spaceBetween: 16 },
+            640: { slidesPerView: 1.8, spaceBetween: 20 },
+            768: { slidesPerView: 2.2, spaceBetween: 20 },
             1024: { slidesPerView: 2.8, spaceBetween: 24 },
             1280: { slidesPerView: 3.2, spaceBetween: 24 },
           }}
@@ -87,12 +94,15 @@ export default function PopularTransfers() {
           {transfers.map((item, index) => (
             <SwiperSlide key={index}>
               <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-[380px] sm:h-[420px] shadow-sm hover:shadow-xl transition-shadow duration-500">
-
                 {/* Background image */}
                 <img
                   src={item.image}
                   alt={item.title}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  onError={(e) => {
+                    // Fallback image si no existe
+                    (e.target as HTMLImageElement).src = "/images/fallback.jpg";
+                  }}
                 />
 
                 {/* Gradient overlay */}
@@ -133,22 +143,12 @@ export default function PopularTransfers() {
                   <h3 className="text-white text-xl font-bold leading-tight mb-0.5">
                     {item.title}
                   </h3>
-                  <p className="text-white/60 text-xs mb-4">
-                    {item.subtitle}
-                  </p>
+                  <p className="text-white/60 text-xs mb-4">{item.subtitle}</p>
 
                   {/* Book button */}
                   <button
                     onClick={() => handleBooking(item.title)}
-                    className="
-                      w-full
-                      bg-white text-gray-900
-                      hover:bg-teal-500 hover:text-white
-                      text-sm font-semibold
-                      py-3 rounded-xl
-                      transition-all duration-300
-                      flex items-center justify-center gap-2
-                    "
+                    className="w-full bg-white text-gray-900 hover:bg-teal-500 hover:text-white text-sm font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     Book this transfer
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,12 +156,10 @@ export default function PopularTransfers() {
                     </svg>
                   </button>
                 </div>
-
               </div>
             </SwiperSlide>
           ))}
         </Swiper>
-
       </div>
     </section>
   );
