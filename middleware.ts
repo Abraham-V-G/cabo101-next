@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-export function middleware(req: NextRequest) {
-  console.log("PATH:", req.nextUrl.pathname);
-
+export async function middleware(req: NextRequest) {
   const token = req.cookies.get("admin_token")?.value;
 
-  console.log("TOKEN EXISTS:", !!token);
-
-  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+  const isAdminRoute =
+    req.nextUrl.pathname.startsWith("/admin");
 
   const isLoginPage =
     req.nextUrl.pathname === "/admin/login";
@@ -28,24 +25,20 @@ export function middleware(req: NextRequest) {
   }
 
   try {
-    const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET!
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET
     );
 
-    console.log("JWT VALID");
-    console.log(decoded);
+    await jwtVerify(token, secret);
 
     return NextResponse.next();
-
-    } catch (error) {
-    console.log("JWT INVALID");
-    console.error(error);
+  } catch (error) {
+    console.error("JWT INVALID", error);
 
     return NextResponse.redirect(
-        new URL("/admin/login", req.url)
+      new URL("/admin/login", req.url)
     );
-    }
+  }
 }
 
 export const config = {
