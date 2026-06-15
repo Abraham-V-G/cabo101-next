@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import PaymentBrick from "@/components/PaymentBrick";
 import { buildBookingPayload } from "@/lib/buildBookingPayload";
 
@@ -26,8 +27,6 @@ export default function AdminDashboard() {
   const [returnPickupTime, setReturnPickupTime] = useState("");
   const [returnPickupDate, setReturnPickupDate] = useState("");
   const [additionalService, setAdditionalService] = useState("0");
-
-  // ✈️ Nuevos estados para campos de vuelo
   const [airline, setAirline] = useState("");
   const [flight, setFlight] = useState("");
   const [arrival, setArrival] = useState("");
@@ -63,7 +62,6 @@ export default function AdminDashboard() {
           returnPickupTime,
           returnPickupDate,
           additionalService: Number(additionalService),
-          // ✈️ Campos de vuelo
           airline,
           flight,
           arrival,
@@ -101,7 +99,6 @@ export default function AdminDashboard() {
       returnDropoffLocation,
       returnPickupDate,
       returnPickupTime,
-      // ✈️ Campos de vuelo
       airline,
       flight,
       arrival,
@@ -147,7 +144,6 @@ export default function AdminDashboard() {
         returnDropoffLocation,
         returnPickupDate,
         returnPickupTime,
-        // ✈️ Campos de vuelo
         airline,
         flight,
         arrival,
@@ -190,7 +186,6 @@ export default function AdminDashboard() {
       returnPickupTime,
       returnPickupDate,
       additionalService,
-      // ✈️ Nuevas dependencias
       airline,
       flight,
       arrival,
@@ -212,10 +207,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-
         {/* ── Crear reserva ── */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-
           {/* Card header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
@@ -228,7 +221,6 @@ export default function AdminDashboard() {
           </div>
 
           <div className="p-6 space-y-8">
-
             {/* ── Sección 1: Cliente ── */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -538,7 +530,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Card footer con acciones */}
@@ -577,27 +568,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── Secciones adicionales ── */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        {/* ── Tarjetas de acceso rápido ── */}
+        <div className="grid md:grid-cols-4 gap-4">
+          <Link href="/admin/bookings" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                  <line x1="1" y1="10" x2="23" y2="10"/>
-                </svg>
-              </div>
-              <h3 className="text-sm font-semibold text-gray-800">Ver pagos</h3>
-            </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Listado de todos los pagos realizados y su estado.
-            </p>
-            <p className="text-[11px] text-gray-300 mt-3 italic">Próximamente...</p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center group-hover:bg-teal-100 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
@@ -608,32 +583,55 @@ export default function AdminDashboard() {
               </div>
               <h3 className="text-sm font-semibold text-gray-800">Ver reservas</h3>
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Reservas de transporte registradas en el sistema.
-            </p>
-            <p className="text-[11px] text-gray-300 mt-3 italic">Próximamente...</p>
-          </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Listado de todas las reservas de transporte.</p>
+          </Link>
 
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <Link href="/admin/prices" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">Precios</h3>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Gestionar tarifas por ruta y tipo de vehículo.</p>
+          </Link>
+
+          <Link href="/admin/zones" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center group-hover:bg-amber-100 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-800">Viajes</h3>
+              <h3 className="text-sm font-semibold text-gray-800">Zonas</h3>
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Próximos viajes y rutas programadas.
-            </p>
-            <p className="text-[11px] text-gray-300 mt-3 italic">Próximamente...</p>
-          </div>
-        </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Configurar áreas geográficas y coordenadas.</p>
+          </Link>
 
+          <Link href="/admin/vehicles" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center group-hover:bg-purple-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="2" ry="2"/>
+                  <circle cx="8" cy="15" r="2"/>
+                  <circle cx="16" cy="15" r="2"/>
+                  <path d="M4 12h16"/>
+                  <path d="M8 6v4"/>
+                  <path d="M16 6v4"/>
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">Vehículos</h3>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Administrar tipos de vehículos y su capacidad.</p>
+          </Link>
+        </div>
       </div>
 
-      {/* Payment Brick Modal (simplificado) */}
+      {/* Payment Brick Modal */}
       {showBrick && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
