@@ -75,9 +75,25 @@ export default function PopularTransfersAdmin() {
     }
     const url = "/api/admin/popular-transfers";
     const method = editingId ? "PUT" : "POST";
+    
+    // Construir el body explícitamente para evitar duplicación de 'id'
     const body = editingId
-      ? { id: editingId, ...form, zoneId: Number(form.zoneId), vehicleId: Number(form.vehicleId), sortOrder: Number(form.sortOrder) }
-      : { ...form, zoneId: Number(form.zoneId), vehicleId: Number(form.vehicleId), sortOrder: Number(form.sortOrder) };
+      ? {
+          id: editingId,
+          zoneId: Number(form.zoneId),
+          vehicleId: Number(form.vehicleId),
+          travelTime: form.travelTime,
+          sortOrder: Number(form.sortOrder),
+          active: form.active,
+        }
+      : {
+          zoneId: Number(form.zoneId),
+          vehicleId: Number(form.vehicleId),
+          travelTime: form.travelTime,
+          sortOrder: Number(form.sortOrder),
+          active: form.active,
+        };
+
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
