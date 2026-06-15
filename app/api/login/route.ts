@@ -6,6 +6,12 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
+  console.log("EMAIL RECIBIDO:", email);
+  console.log("EMAIL ENV:", process.env.ADMIN_EMAIL);
+
+  console.log("PASSWORD RECIBIDO:", password);
+  console.log("PASSWORD ENV:", process.env.ADMIN_PASSWORD);
+
   if (
     email !== process.env.ADMIN_EMAIL ||
     password !== process.env.ADMIN_PASSWORD
