@@ -1,45 +1,33 @@
-// lib/getPrice.ts
+import { prisma } from './prisma'
 
-import { pricingMatrix } from "./pricingMatrix";
+export type VehicleName = 'SUV' | 'VAN' | 'SPRINTER' // puedes ampliarlo después
 
-export type VehicleType =
-  | "SUV"
-  | "VAN"
-  | "SPRINTER";
-
-type PriceType = {
-  oneWay: number;
-  roundTrip: number;
-};
-
-type VehiclePrices = {
-  SUV: PriceType;
-  VAN: PriceType;
-  SPRINTER: PriceType;
-};
-
-export function getPrice(
+export async function getPriceFromDB(
   fromZone: string,
   toZone: string,
-  vehicle: VehicleType,
-  tripType: "oneway" | "round"
-): number | null {
+  vehicleName: VehicleName,
+  tripType: 'oneway' | 'round'
+): Promise<number | null> {
+  if (fromZone === toZone) return null
 
-  // misma zona
-  if (fromZone === toZone) {
-    return null;
-  }
+  // Buscar el vehículo por nombre
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { name: vehicleName }
+  })
+  if (!vehicle) return null
 
-  // buscar directa o inversa
-  const route =
-    pricingMatrix[fromZone]?.[toZone] ||
-    pricingMatrix[toZone]?.[fromZone];
+  // Buscar el precio en cualquiera de las dos direcciones
+  const price = await prisma.price.findFirst({
+    where: {
+      vehicleId: vehicle.id,
+      OR: [
+        { fromZone, toZone },
+        { fromZone: toZone, toZone: fromZone }
+      ]
+    }
+  })
 
-  if (!route) {
-    return null;
-  }
+  if (!price) return null
 
-  return tripType === "round"
-    ? route[vehicle].roundTrip
-    : route[vehicle].oneWay;
+  return tripType === 'round' ? price.roundTrip : price.oneWay
 }
