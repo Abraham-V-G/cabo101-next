@@ -9,14 +9,14 @@ export async function PUT(
 ) {
   const body = await req.json();
 
+  // Construir objeto data solo con los campos presentes
+  const data: any = {};
+  if (body.tripStatus !== undefined) data.tripStatus = body.tripStatus;
+  if (body.driverNotes !== undefined) data.driverNotes = body.driverNotes;
+
   const booking = await prisma.booking.update({
-    where: {
-      id: Number(params.id),
-    },
-    data: {
-      tripStatus: body.tripStatus,
-      driverNotes: body.driverNotes,
-    },
+    where: { id: Number(params.id) },
+    data,
   });
 
   return NextResponse.json(booking);

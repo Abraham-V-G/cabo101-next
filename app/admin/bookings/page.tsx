@@ -2,9 +2,16 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { format, isToday, isTomorrow, isThisWeek, parseISO } from "date-fns";
+import { useEffect, useState } from "react";
+import { format, isToday, isTomorrow, isFuture, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
+
+interface Payment {
+  id: number;
+  status: string;
+  totalUSD: number;
+  mercadopagoId?: string;
+}
 
 interface Booking {
   id: number;
@@ -24,7 +31,6 @@ interface Booking {
   returnPickupDate?: string;
   returnPickupTime?: string;
   totalUSD: number | null;
-  totalMXN: number | null;
   paymentStatus: string;
   tripStatus: string;
   airline?: string;
@@ -34,49 +40,45 @@ interface Booking {
   notes?: string;
   driverNotes?: string;
   createdAt: string;
-  updatedAt: string;
-  payments?: any[];
+  payments: Payment[];
 }
 
-type FilterType =
-  | "all"
-  | "upcoming"
-  | "today"
-  | "tomorrow"
-  | "thisWeek"
-  | "paymentPending"
-  | "paymentCompleted"
-  | "tripPending"
-  | "inProgress"
-  | "completed"
-  | "highestRevenue"
-  | "mostRecent";
-
-type SortField = "pickupDate" | "totalUSD" | "createdAt" | "firstName";
-type SortOrder = "asc" | "desc";
+type FilterType = {
+  dateRange: "all" | "upcoming" | "today" | "tomorrow" | "thisWeek";
+  paymentStatus: "all" | "paid" | "pending";
+  tripStatus: "all" | "pending" | "in_progress" | "completed";
+  sortBy: "mostRecent" | "highestRevenue" | "priceAsc" | "priceDesc" | "dateAsc" | "alphaAsc";
+  searchTerm: string;
+};
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [driverNotes, setDriverNotes] = useState("");
   const [updating, setUpdating] = useState(false);
-
-  // Filtros y ordenamiento
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [sortField, setSortField] = useState<SortField>("pickupDate");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<FilterType>({
+    dateRange: "all",
+    paymentStatus: "all",
+    tripStatus: "all",
+    sortBy: "mostRecent",
+    searchTerm: "",
+  });
 
   const loadBookings = async () => {
     try {
-      const res = await fetch("/api/bookings", { credentials: "include" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setLoading(true);
+      const res = await fetch("/api/bookings");
+      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
       const data = await res.json();
       setBookings(data);
+      setError(null);
     } catch (err: any) {
-      setError(err.message);
+      console.error(err);
+      setError(err.message || "No se pudieron cargar las reservas");
     } finally {
       setLoading(false);
     }
@@ -86,383 +88,424 @@ export default function BookingsPage() {
     loadBookings();
   }, []);
 
-  // Actualizar estado del viaje o notas del conductor
-  const updateBooking = async (id: number, tripStatus?: string, driverNotes?: string) => {
-    setUpdating(true);
-    try {
-      const res = await fetch(`/api/bookings/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...(tripStatus && { tripStatus }),
-          ...(driverNotes !== undefined && { driverNotes }),
-        }),
-      });
-      if (!res.ok) throw new Error("Error al actualizar");
-      await loadBookings();
-      if (selectedBooking && selectedBooking.id === id) {
-        setSelectedBooking((prev) => prev ? { ...prev, tripStatus: tripStatus || prev.tripStatus, driverNotes: driverNotes !== undefined ? driverNotes : prev.driverNotes } : null);
-      }
-    } catch (err) {
-      alert("Error al actualizar la reserva");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleSaveDriverNotes = async () => {
-    if (!selectedBooking) return;
-    await updateBooking(selectedBooking.id, undefined, driverNotes);
-  };
-
-  // Lógica de filtrado
-  const filteredBookings = useMemo(() => {
+  // Aplicar filtros y ordenamiento
+  useEffect(() => {
     let result = [...bookings];
 
-    // Búsqueda por nombre, email, teléfono, ubicaciones
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+    if (filters.searchTerm.trim() !== "") {
+      const term = filters.searchTerm.toLowerCase();
       result = result.filter(
         (b) =>
           b.firstName.toLowerCase().includes(term) ||
           b.lastName.toLowerCase().includes(term) ||
           b.email.toLowerCase().includes(term) ||
-          b.phone.includes(term) ||
           b.pickupLocation.toLowerCase().includes(term) ||
           b.dropoffLocation.toLowerCase().includes(term)
       );
     }
 
-    // Filtros predefinidos
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    switch (filter) {
-      case "upcoming":
-        result = result.filter((b) => new Date(b.pickupDate) >= today);
-        break;
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    switch (filters.dateRange) {
       case "today":
-        result = result.filter((b) => isToday(parseISO(b.pickupDate)));
+        result = result.filter((b) => isToday(new Date(b.pickupDate)));
         break;
       case "tomorrow":
-        result = result.filter((b) => isTomorrow(parseISO(b.pickupDate)));
+        result = result.filter((b) => isTomorrow(new Date(b.pickupDate)));
         break;
-      case "thisWeek":
-        result = result.filter((b) => isThisWeek(parseISO(b.pickupDate), { weekStartsOn: 1 }));
+      case "thisWeek": {
+        const start = startOfWeek(todayDate, { weekStartsOn: 1 });
+        const end = endOfWeek(todayDate, { weekStartsOn: 1 });
+        result = result.filter((b) =>
+          isWithinInterval(new Date(b.pickupDate), { start, end })
+        );
         break;
-      case "paymentPending":
-        result = result.filter((b) => b.paymentStatus === "pending");
-        break;
-      case "paymentCompleted":
-        result = result.filter((b) => b.paymentStatus === "paid");
-        break;
-      case "tripPending":
-        result = result.filter((b) => b.tripStatus === "pending");
-        break;
-      case "inProgress":
-        result = result.filter((b) => b.tripStatus === "in_progress");
-        break;
-      case "completed":
-        result = result.filter((b) => b.tripStatus === "completed");
-        break;
-      case "highestRevenue":
-        result = [...result].sort((a, b) => (b.totalUSD || 0) - (a.totalUSD || 0));
-        break;
-      case "mostRecent":
-        result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      case "upcoming":
+        result = result.filter((b) => isFuture(new Date(b.pickupDate)));
         break;
       default:
         break;
     }
 
-    // Ordenamiento (si no es uno de los casos especiales que ya ordenaron)
-    if (!["highestRevenue", "mostRecent"].includes(filter)) {
-      result.sort((a, b) => {
-        let valA: any, valB: any;
-        switch (sortField) {
-          case "pickupDate":
-            valA = new Date(a.pickupDate).getTime();
-            valB = new Date(b.pickupDate).getTime();
-            break;
-          case "totalUSD":
-            valA = a.totalUSD || 0;
-            valB = b.totalUSD || 0;
-            break;
-          case "createdAt":
-            valA = new Date(a.createdAt).getTime();
-            valB = new Date(b.createdAt).getTime();
-            break;
-          case "firstName":
-            valA = a.firstName.toLowerCase();
-            valB = b.firstName.toLowerCase();
-            break;
-          default:
-            return 0;
-        }
-        if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-        if (valA > valB) return sortOrder === "asc" ? 1 : -1;
-        return 0;
-      });
+    if (filters.paymentStatus !== "all") {
+      result = result.filter((b) => b.paymentStatus === filters.paymentStatus);
     }
 
-    return result;
-  }, [bookings, filter, sortField, sortOrder, searchTerm]);
+    if (filters.tripStatus !== "all") {
+      result = result.filter((b) => b.tripStatus === filters.tripStatus);
+    }
+
+    switch (filters.sortBy) {
+      case "mostRecent":
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case "highestRevenue":
+        result.sort((a, b) => (b.totalUSD || 0) - (a.totalUSD || 0));
+        break;
+      case "priceAsc":
+        result.sort((a, b) => (a.totalUSD || 0) - (b.totalUSD || 0));
+        break;
+      case "priceDesc":
+        result.sort((a, b) => (b.totalUSD || 0) - (a.totalUSD || 0));
+        break;
+      case "dateAsc":
+        result.sort((a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime());
+        break;
+      case "alphaAsc":
+        result.sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+        break;
+      default:
+        break;
+    }
+
+    setFilteredBookings(result);
+  }, [bookings, filters]);
+
+  const openModal = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setDriverNotes(booking.driverNotes || "");
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedBooking(null);
+    setDriverNotes("");
+  };
+
+  const updateBooking = async (tripStatus?: string, notes?: string) => {
+    if (!selectedBooking) return;
+    setUpdating(true);
+    try {
+      const payload: any = {};
+      if (tripStatus !== undefined) payload.tripStatus = tripStatus;
+      if (notes !== undefined) payload.driverNotes = notes;
+
+      const res = await fetch(`/api/bookings/${selectedBooking.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Error al actualizar");
+
+      // Recargar toda la lista
+      await loadBookings();
+
+      // Actualizar el estado local del booking seleccionado
+      if (tripStatus !== undefined && selectedBooking) {
+        setSelectedBooking({ ...selectedBooking, tripStatus });
+      }
+      if (notes !== undefined && selectedBooking) {
+        setSelectedBooking({ ...selectedBooking, driverNotes: notes });
+        setDriverNotes(notes);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo actualizar la reserva");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const saveDriverNotes = async () => {
+    await updateBooking(undefined, driverNotes);
+  };
+
+  const changeTripStatus = async (newStatus: string) => {
+    await updateBooking(newStatus, undefined);
+  };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "-";
     try {
-      return format(parseISO(dateStr), "PPP", { locale: es });
+      return format(new Date(dateStr), "PPP", { locale: es });
     } catch {
       return dateStr;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "in_progress": return "bg-blue-100 text-blue-800";
-      case "completed": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getPaymentColor = (status: string) => {
-    return status === "paid" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
-  };
-
-  if (loading) return <div className="p-8 text-center">Cargando reservas...</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Cargando reservas...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">Error: {error}</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-8 py-4 flex flex-wrap justify-between items-center gap-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-800">Gestión de Reservas</h1>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Buscar por nombre, email, teléfono..."
-            className="border rounded-lg px-4 py-2 w-64 text-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button
-            onClick={loadBookings}
-            className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-teal-700"
-          >
-            Actualizar
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Administración de Reservas</h1>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Filtros rápidos */}
-        <div className="bg-white rounded-xl shadow p-4 mb-6">
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-sm font-semibold text-gray-700 mr-2">Filtros:</span>
-            {[
-              { label: "Todas", value: "all" },
-              { label: "Próximas", value: "upcoming" },
-              { label: "Hoy", value: "today" },
-              { label: "Mañana", value: "tomorrow" },
-              { label: "Esta semana", value: "thisWeek" },
-              { label: "Pago pendiente", value: "paymentPending" },
-              { label: "Pago completado", value: "paymentCompleted" },
-              { label: "Viaje pendiente", value: "tripPending" },
-              { label: "En progreso", value: "inProgress" },
-              { label: "Completado", value: "completed" },
-              { label: "Mayor ingreso", value: "highestRevenue" },
-              { label: "Más recientes", value: "mostRecent" },
-            ].map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value as FilterType)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                  filter === f.value
-                    ? "bg-teal-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Ordenar por:</span>
+        {/* Filtros */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-6 space-y-4">
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Buscar</label>
+              <input
+                type="text"
+                placeholder="Nombre, email, destino..."
+                value={filters.searchTerm}
+                onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
               <select
-                value={sortField}
-                onChange={(e) => setSortField(e.target.value as SortField)}
-                className="border rounded-lg px-2 py-1 text-sm"
+                value={filters.dateRange}
+                onChange={(e) => setFilters({ ...filters, dateRange: e.target.value as any })}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
               >
-                <option value="pickupDate">Fecha de recogida</option>
-                <option value="totalUSD">Monto</option>
-                <option value="createdAt">Fecha de creación</option>
-                <option value="firstName">Nombre</option>
+                <option value="all">Todas</option>
+                <option value="upcoming">Próximas</option>
+                <option value="today">Hoy</option>
+                <option value="tomorrow">Mañana</option>
+                <option value="thisWeek">Esta semana</option>
               </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                className="text-sm bg-gray-100 px-2 py-1 rounded"
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Pago</label>
+              <select
+                value={filters.paymentStatus}
+                onChange={(e) => setFilters({ ...filters, paymentStatus: e.target.value as any })}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
               >
-                {sortOrder === "asc" ? "↑ Asc" : "↓ Desc"}
-              </button>
+                <option value="all">Todos</option>
+                <option value="paid">Pagado</option>
+                <option value="pending">Pendiente</option>
+              </select>
             </div>
-            <div className="text-sm text-gray-500">
-              {filteredBookings.length} reserva(s)
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Estado del viaje</label>
+              <select
+                value={filters.tripStatus}
+                onChange={(e) => setFilters({ ...filters, tripStatus: e.target.value as any })}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+              >
+                <option value="all">Todos</option>
+                <option value="pending">Pendiente</option>
+                <option value="in_progress">En progreso</option>
+                <option value="completed">Completado</option>
+              </select>
             </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Ordenar por</label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+              >
+                <option value="mostRecent">Más reciente</option>
+                <option value="highestRevenue">Mayor ingreso</option>
+                <option value="priceAsc">Precio: menor a mayor</option>
+                <option value="priceDesc">Precio: mayor a menor</option>
+                <option value="dateAsc">Fecha más próxima</option>
+                <option value="alphaAsc">Alfabético (cliente)</option>
+              </select>
+            </div>
+          </div>
+          <div className="text-xs text-gray-400">
+            Mostrando {filteredBookings.length} de {bookings.length} reservas
           </div>
         </div>
 
         {/* Lista de reservas */}
         <div className="space-y-4">
-          {filteredBookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition cursor-pointer"
-              onClick={() => {
-                setSelectedBooking(booking);
-                setDriverNotes(booking.driverNotes || "");
-              }}
-            >
-              <div className="flex flex-wrap justify-between items-start gap-3">
-                <div>
-                  <h3 className="font-bold text-lg">{booking.firstName} {booking.lastName}</h3>
-                  <p className="text-sm text-gray-500">{booking.email} | {booking.phone}</p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-sm">
-                    <span className="bg-gray-100 px-2 py-1 rounded">{booking.vehicleType}</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">{booking.passengers} pasajeros</span>
-                    <span className={`px-2 py-1 rounded ${getPaymentColor(booking.paymentStatus)}`}>
-                      Pago: {booking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}
-                    </span>
-                    <span className={`px-2 py-1 rounded ${getStatusColor(booking.tripStatus)}`}>
-                      Viaje: {booking.tripStatus === "pending" ? "Pendiente" : booking.tripStatus === "in_progress" ? "En progreso" : "Completado"}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold text-teal-700">${booking.totalUSD} USD</div>
-                  <div className="text-xs text-gray-400">
-                    {formatDate(booking.pickupDate)} a las {booking.pickupTime}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 text-sm text-gray-600 flex items-center gap-2">
-                <span className="truncate">{booking.pickupLocation}</span>
-                <span>→</span>
-                <span className="truncate">{booking.dropoffLocation}</span>
-              </div>
+          {filteredBookings.length === 0 ? (
+            <div className="bg-white rounded-xl p-8 text-center text-gray-400">
+              No se encontraron reservas con los filtros actuales.
             </div>
-          ))}
-          {filteredBookings.length === 0 && (
-            <div className="text-center py-12 text-gray-400">No hay reservas con los filtros actuales.</div>
+          ) : (
+            filteredBookings.map((booking) => (
+              <div
+                key={booking.id}
+                onClick={() => openModal(booking)}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition cursor-pointer"
+              >
+                <div className="flex flex-wrap justify-between items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-lg text-gray-900">
+                        {booking.firstName} {booking.lastName}
+                      </h3>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          booking.paymentStatus === "paid"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {booking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          booking.tripStatus === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : booking.tripStatus === "in_progress"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {booking.tripStatus === "completed"
+                          ? "Completado"
+                          : booking.tripStatus === "in_progress"
+                          ? "En curso"
+                          : "Pendiente"}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {booking.pickupLocation} → {booking.dropoffLocation}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-2">
+                      {formatDate(booking.pickupDate)} a las {booking.pickupTime} · {booking.vehicleType} · {booking.passengers} pasajeros
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-gray-900">
+                      ${booking.totalUSD?.toFixed(2) ?? "—"} USD
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Ref: #{booking.id}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
 
-      {/* Modal de detalles */}
-      {selectedBooking && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedBooking(null)}>
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Detalle de Reserva #{selectedBooking.id}</h2>
-              <button onClick={() => setSelectedBooking(null)} className="text-gray-500 hover:text-gray-700">✖</button>
+      {/* Modal */}
+      {isModalOpen && selectedBooking && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">Detalle de la reserva</h2>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
+                ×
+              </button>
             </div>
+
             <div className="p-6 space-y-6">
-              {/* Información del cliente */}
+              {/* Cliente */}
               <div>
-                <h3 className="font-semibold text-lg mb-2">Cliente</h3>
+                <h3 className="font-semibold text-gray-700 mb-2">Cliente</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="font-medium">Nombre:</span> {selectedBooking.firstName} {selectedBooking.lastName}</div>
-                  <div><span className="font-medium">Email:</span> {selectedBooking.email}</div>
-                  <div><span className="font-medium">Teléfono:</span> {selectedBooking.phone}</div>
+                  <div><span className="text-gray-500">Nombre:</span> {selectedBooking.firstName} {selectedBooking.lastName}</div>
+                  <div><span className="text-gray-500">Email:</span> {selectedBooking.email}</div>
+                  <div><span className="text-gray-500">Teléfono:</span> {selectedBooking.phone}</div>
                 </div>
               </div>
+
               {/* Viaje */}
               <div>
-                <h3 className="font-semibold text-lg mb-2">Detalles del viaje</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="font-medium">Origen:</span> {selectedBooking.pickupLocation}</div>
-                  <div><span className="font-medium">Destino:</span> {selectedBooking.dropoffLocation}</div>
-                  <div><span className="font-medium">Fecha recogida:</span> {formatDate(selectedBooking.pickupDate)}</div>
-                  <div><span className="font-medium">Hora recogida:</span> {selectedBooking.pickupTime}</div>
-                  <div><span className="font-medium">Vehículo:</span> {selectedBooking.vehicleType}</div>
-                  <div><span className="font-medium">Pasajeros:</span> {selectedBooking.passengers}</div>
+                <h3 className="font-semibold text-gray-700 mb-2">Viaje</h3>
+                <div className="space-y-1 text-sm">
+                  <div><span className="text-gray-500">Origen:</span> {selectedBooking.pickupLocation}</div>
+                  <div><span className="text-gray-500">Destino:</span> {selectedBooking.dropoffLocation}</div>
+                  <div><span className="text-gray-500">Fecha/Hora:</span> {formatDate(selectedBooking.pickupDate)} a las {selectedBooking.pickupTime}</div>
                   {selectedBooking.roundTrip && (
-                    <>
-                      <div><span className="font-medium">Regreso desde:</span> {selectedBooking.returnPickupLocation}</div>
-                      <div><span className="font-medium">Regreso hasta:</span> {selectedBooking.returnDropoffLocation}</div>
-                      <div><span className="font-medium">Fecha regreso:</span> {formatDate(selectedBooking.returnPickupDate || "")}</div>
-                      <div><span className="font-medium">Hora regreso:</span> {selectedBooking.returnPickupTime}</div>
-                    </>
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <div className="text-gray-700 font-medium">Regreso</div>
+                      <div>Origen: {selectedBooking.returnPickupLocation}</div>
+                      <div>Destino: {selectedBooking.returnDropoffLocation}</div>
+                      <div>Fecha: {selectedBooking.returnPickupDate && formatDate(selectedBooking.returnPickupDate)} a las {selectedBooking.returnPickupTime}</div>
+                    </div>
                   )}
+                  <div className="mt-2"><span className="text-gray-500">Vehículo:</span> {selectedBooking.vehicleType} · {selectedBooking.passengers} pasajeros</div>
                 </div>
               </div>
-              {/* Vuelos */}
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Información de vuelo</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="font-medium">Aerolínea:</span> {selectedBooking.airline || "-"}</div>
-                  <div><span className="font-medium">Vuelo ida:</span> {selectedBooking.flightNumber || "-"}</div>
-                  <div><span className="font-medium">Hora llegada:</span> {selectedBooking.arrivalTime || "-"}</div>
-                  <div><span className="font-medium">Vuelo regreso:</span> {selectedBooking.returnFlightNumber || "-"}</div>
+
+              {/* Vuelo */}
+              {(selectedBooking.airline || selectedBooking.flightNumber) && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">Vuelo</h3>
+                  <div className="text-sm">
+                    {selectedBooking.airline && <div>Aerolínea: {selectedBooking.airline}</div>}
+                    {selectedBooking.flightNumber && <div>Número: {selectedBooking.flightNumber}</div>}
+                    {selectedBooking.arrivalTime && <div>Llegada: {selectedBooking.arrivalTime}</div>}
+                    {selectedBooking.returnFlightNumber && <div>Vuelo regreso: {selectedBooking.returnFlightNumber}</div>}
+                  </div>
                 </div>
-              </div>
+              )}
+
               {/* Notas del cliente */}
               {selectedBooking.notes && (
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Notas del cliente</h3>
-                  <p className="bg-gray-50 p-3 rounded text-sm">{selectedBooking.notes}</p>
+                  <h3 className="font-semibold text-gray-700 mb-2">Notas del cliente</h3>
+                  <div className="bg-gray-50 p-3 rounded-lg text-sm">{selectedBooking.notes}</div>
                 </div>
               )}
-              {/* Notas del conductor (editable) */}
+
+              {/* Notas del conductor */}
               <div>
-                <h3 className="font-semibold text-lg mb-2">Notas del conductor</h3>
+                <h3 className="font-semibold text-gray-700 mb-2">Notas del conductor</h3>
                 <textarea
-                  className="w-full border rounded-lg p-3 text-sm"
                   rows={3}
                   value={driverNotes}
                   onChange={(e) => setDriverNotes(e.target.value)}
-                  placeholder="Añadir notas internas..."
+                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                  placeholder="Ej. El cliente hizo una parada en la tienda..."
                 />
                 <button
-                  onClick={handleSaveDriverNotes}
+                  onClick={saveDriverNotes}
                   disabled={updating}
-                  className="mt-2 bg-teal-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-teal-700 disabled:opacity-50"
+                  className="mt-2 bg-blue-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Guardar notas
+                  {updating ? "Guardando..." : "Guardar notas"}
                 </button>
               </div>
-              {/* Estado del viaje y acciones */}
-              <div className="border-t pt-4 flex flex-wrap gap-3 justify-between items-center">
-                <div>
-                  <span className="font-medium">Estado actual del viaje:</span>
-                  <span className={`ml-2 px-2 py-1 rounded text-sm ${getStatusColor(selectedBooking.tripStatus)}`}>
-                    {selectedBooking.tripStatus === "pending" ? "Pendiente" : selectedBooking.tripStatus === "in_progress" ? "En progreso" : "Completado"}
-                  </span>
-                </div>
-                <div className="flex gap-2">
+
+              {/* Estado del viaje */}
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">Estado del viaje</h3>
+                <div className="flex gap-3 flex-wrap">
                   <button
-                    onClick={() => updateBooking(selectedBooking.id, "pending")}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-600"
+                    onClick={() => changeTripStatus("pending")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      selectedBooking.tripStatus === "pending"
+                        ? "bg-gray-800 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
                   >
                     Pendiente
                   </button>
                   <button
-                    onClick={() => updateBooking(selectedBooking.id, "in_progress")}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600"
+                    onClick={() => changeTripStatus("in_progress")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      selectedBooking.tripStatus === "in_progress"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
                   >
                     En progreso
                   </button>
                   <button
-                    onClick={() => updateBooking(selectedBooking.id, "completed")}
-                    className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600"
+                    onClick={() => changeTripStatus("completed")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      selectedBooking.tripStatus === "completed"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
                   >
                     Completado
                   </button>
                 </div>
               </div>
+
+              {/* Pago */}
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">Pago</h3>
+                <div className="text-sm space-y-1">
+                  <div>Monto: ${selectedBooking.totalUSD?.toFixed(2)} USD</div>
+                  <div>Estado: {selectedBooking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}</div>
+                  {selectedBooking.payments.length > 0 && (
+                    <div>ID de transacción: {selectedBooking.payments[0].mercadopagoId || "—"}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button onClick={closeModal} className="bg-gray-300 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-400">
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
