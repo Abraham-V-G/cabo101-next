@@ -206,7 +206,7 @@ export default function AdminDashboard() {
         <span className="text-xs text-gray-400 uppercase tracking-widest font-medium">Dashboard</span>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         {/* ── Crear reserva ── */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           {/* Card header */}
@@ -568,8 +568,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── Tarjetas de acceso rápido ── */}
-        <div className="grid md:grid-cols-4 gap-4">
+        {/* ── Tarjetas de acceso rápido (5 columnas en pantallas grandes) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {/* Reservas */}
           <Link href="/admin/bookings" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center group-hover:bg-teal-100 transition">
@@ -586,6 +587,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-gray-400 leading-relaxed">Listado de todas las reservas de transporte.</p>
           </Link>
 
+          {/* Precios */}
           <Link href="/admin/prices" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition">
@@ -599,6 +601,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-gray-400 leading-relaxed">Gestionar tarifas por ruta y tipo de vehículo.</p>
           </Link>
 
+          {/* Zonas */}
           <Link href="/admin/zones" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center group-hover:bg-amber-100 transition">
@@ -612,6 +615,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-gray-400 leading-relaxed">Configurar áreas geográficas y coordenadas.</p>
           </Link>
 
+          {/* Vehículos */}
           <Link href="/admin/vehicles" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center group-hover:bg-purple-100 transition">
@@ -627,6 +631,19 @@ export default function AdminDashboard() {
               <h3 className="text-sm font-semibold text-gray-800">Vehículos</h3>
             </div>
             <p className="text-xs text-gray-400 leading-relaxed">Administrar tipos de vehículos y su capacidad.</p>
+          </Link>
+
+          {/* Viajes Populares (nuevo) */}
+          <Link href="/admin/popular-transfers" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center group-hover:bg-pink-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L15 8.5L22 9.5L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9.5L9 8.5L12 2z" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">Viajes Populares</h3>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Destinos destacados en la página de inicio.</p>
           </Link>
         </div>
       </div>
