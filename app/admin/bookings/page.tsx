@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { format, isToday, isTomorrow, isFuture, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
 
+// Interfaces
 interface Payment {
   id: number;
   status: string;
@@ -68,6 +69,7 @@ export default function BookingsPage() {
     searchTerm: "",
   });
 
+  // Cargar reservas desde la API
   const loadBookings = async () => {
     try {
       setLoading(true);
@@ -92,6 +94,7 @@ export default function BookingsPage() {
   useEffect(() => {
     let result = [...bookings];
 
+    // Búsqueda
     if (filters.searchTerm.trim() !== "") {
       const term = filters.searchTerm.toLowerCase();
       result = result.filter(
@@ -104,6 +107,7 @@ export default function BookingsPage() {
       );
     }
 
+    // Filtro de fecha
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
     switch (filters.dateRange) {
@@ -128,14 +132,17 @@ export default function BookingsPage() {
         break;
     }
 
+    // Estado de pago
     if (filters.paymentStatus !== "all") {
       result = result.filter((b) => b.paymentStatus === filters.paymentStatus);
     }
 
+    // Estado del viaje
     if (filters.tripStatus !== "all") {
       result = result.filter((b) => b.tripStatus === filters.tripStatus);
     }
 
+    // Ordenamiento
     switch (filters.sortBy) {
       case "mostRecent":
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -174,6 +181,7 @@ export default function BookingsPage() {
     setDriverNotes("");
   };
 
+  // Función central para actualizar reserva (estado y/o notas)
   const updateBooking = async (tripStatus?: string, notes?: string) => {
     if (!selectedBooking) return;
     setUpdating(true);
@@ -189,17 +197,16 @@ export default function BookingsPage() {
       });
       if (!res.ok) throw new Error("Error al actualizar");
 
-      // Recargar toda la lista
-      await loadBookings();
+      const updatedBooking = await res.json();
 
-      // Actualizar el estado local del booking seleccionado
-      if (tripStatus !== undefined && selectedBooking) {
-        setSelectedBooking({ ...selectedBooking, tripStatus });
-      }
-      if (notes !== undefined && selectedBooking) {
-        setSelectedBooking({ ...selectedBooking, driverNotes: notes });
-        setDriverNotes(notes);
-      }
+      // Actualizar la lista completa (para que el filtro también muestre el cambio)
+      setBookings((prev) =>
+        prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
+      );
+
+      // Actualizar el booking seleccionado en el modal
+      setSelectedBooking(updatedBooking);
+      if (notes !== undefined) setDriverNotes(updatedBooking.driverNotes || "");
     } catch (err) {
       console.error(err);
       alert("No se pudo actualizar la reserva");
@@ -360,9 +367,7 @@ export default function BookingsPage() {
                     <div className="text-xl font-bold text-gray-900">
                       ${booking.totalUSD?.toFixed(2) ?? "—"} USD
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      Ref: #{booking.id}
-                    </div>
+                    <div className="text-xs text-gray-400 mt-1">Ref: #{booking.id}</div>
                   </div>
                 </div>
               </div>
@@ -495,8 +500,8 @@ export default function BookingsPage() {
                 <div className="text-sm space-y-1">
                   <div>Monto: ${selectedBooking.totalUSD?.toFixed(2)} USD</div>
                   <div>Estado: {selectedBooking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}</div>
-                  {selectedBooking.payments.length > 0 && (
-                    <div>ID de transacción: {selectedBooking.payments[0].mercadopagoId || "—"}</div>
+                  {selectedBooking.payments.length > 0 && selectedBooking.payments[0].mercadopagoId && (
+                    <div>ID de transacción: {selectedBooking.payments[0].mercadopagoId}</div>
                   )}
                 </div>
               </div>
