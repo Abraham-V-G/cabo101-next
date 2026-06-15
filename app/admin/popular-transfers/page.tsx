@@ -5,8 +5,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-interface Zone { id: number; name: string; slug: string; }
-interface Vehicle { id: number; name: string; capacity: number; }
+interface Zone {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface Vehicle {
+  id: number;
+  name: string;
+  capacity: number;
+}
 
 interface PopularTransfer {
   id: number;
@@ -44,7 +53,8 @@ export default function PopularTransfersAdmin() {
     const zonesData = await zonesRes.json();
     const vehiclesData = await vehiclesRes.json();
     setTransfers(transfersData);
-    setZones(zonesData.filter((z: Zone) => !z.isAirport)); // excluir aeropuerto
+    // Excluir el aeropuerto (asumiendo que su slug es "airport")
+    setZones(zonesData.filter((z: Zone) => z.slug !== "airport"));
     setVehicles(vehiclesData);
     setLoading(false);
   };
