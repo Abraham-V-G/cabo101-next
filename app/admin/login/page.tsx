@@ -13,13 +13,18 @@ export default function LoginPage() {
   const handleLogin = async () => {
     const res = await fetch("/api/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
 
     const data = await res.json();
 
-    if (data.token) {
-      localStorage.setItem("token", data.token);
+    if (data.success) {
       router.push("/admin");
     } else {
       alert("Login failed");

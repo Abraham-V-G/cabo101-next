@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
+
+export function middleware(req: NextRequest) {
+  const token = req.cookies.get("admin_token")?.value;
+
+  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+
+  const isLoginPage =
+    req.nextUrl.pathname === "/admin/login";
+
+  if (!isAdminRoute) {
+    return NextResponse.next();
+  }
+
+  if (isLoginPage) {
+    return NextResponse.next();
+  }
+
+  if (!token) {
+    return NextResponse.redirect(
+      new URL("/admin/login", req.url)
+    );
+  }
+
+  try {
+    jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    );
+
+    return NextResponse.next();
+  } catch {
+    return NextResponse.redirect(
+      new URL("/admin/login", req.url)
+    );
+  }
+}
+
+export const config = {
+  matcher: ["/admin/:path*"],
+};
