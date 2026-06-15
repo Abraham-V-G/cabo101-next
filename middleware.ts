@@ -28,17 +28,24 @@ export function middleware(req: NextRequest) {
   }
 
   try {
-    jwt.verify(
-      token,
-      process.env.JWT_SECRET!
+    const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET!
     );
 
+    console.log("JWT VALID");
+    console.log(decoded);
+
     return NextResponse.next();
-  } catch {
+
+    } catch (error) {
+    console.log("JWT INVALID");
+    console.error(error);
+
     return NextResponse.redirect(
-      new URL("/admin/login", req.url)
+        new URL("/admin/login", req.url)
     );
-  }
+    }
 }
 
 export const config = {
