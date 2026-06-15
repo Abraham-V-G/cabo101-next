@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { format, isToday, isTomorrow, isFuture, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
 
-// Interfaces
 interface Payment {
   id: number;
   status: string;
@@ -41,7 +40,7 @@ interface Booking {
   notes?: string;
   driverNotes?: string;
   createdAt: string;
-  payments: Payment[];
+  payments?: Payment[]; // puede ser opcional por si la API no lo incluye
 }
 
 type FilterType = {
@@ -69,18 +68,25 @@ export default function BookingsPage() {
     searchTerm: "",
   });
 
-  // Cargar reservas desde la API
   const loadBookings = async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/bookings");
       if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
       const data = await res.json();
-      setBookings(data);
+      // ✅ Validación: asegurar que data es un array
+      if (Array.isArray(data)) {
+        setBookings(data);
+      } else {
+        console.error("La API no devolvió un array:", data);
+        setBookings([]);
+        setError("Formato de datos inválido");
+      }
       setError(null);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "No se pudieron cargar las reservas");
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -92,6 +98,10 @@ export default function BookingsPage() {
 
   // Aplicar filtros y ordenamiento
   useEffect(() => {
+    if (!Array.isArray(bookings)) {
+      setFilteredBookings([]);
+      return;
+    }
     let result = [...bookings];
 
     // Búsqueda
@@ -99,11 +109,11 @@ export default function BookingsPage() {
       const term = filters.searchTerm.toLowerCase();
       result = result.filter(
         (b) =>
-          b.firstName.toLowerCase().includes(term) ||
-          b.lastName.toLowerCase().includes(term) ||
-          b.email.toLowerCase().includes(term) ||
-          b.pickupLocation.toLowerCase().includes(term) ||
-          b.dropoffLocation.toLowerCase().includes(term)
+          b.firstName?.toLowerCase().includes(term) ||
+          b.lastName?.toLowerCase().includes(term) ||
+          b.email?.toLowerCase().includes(term) ||
+          b.pickupLocation?.toLowerCase().includes(term) ||
+          b.dropoffLocation?.toLowerCase().includes(term)
       );
     }
 
@@ -181,7 +191,6 @@ export default function BookingsPage() {
     setDriverNotes("");
   };
 
-  // Función central para actualizar reserva (estado y/o notas)
   const updateBooking = async (tripStatus?: string, notes?: string) => {
     if (!selectedBooking) return;
     setUpdating(true);
@@ -199,11 +208,10 @@ export default function BookingsPage() {
 
       const updatedBooking = await res.json();
 
-      // Actualizar la lista completa (para que el filtro también muestre el cambio)
+      // Actualizar la lista completa
       setBookings((prev) =>
         prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
       );
-
       // Actualizar el booking seleccionado en el modal
       setSelectedBooking(updatedBooking);
       if (notes !== undefined) setDriverNotes(updatedBooking.driverNotes || "");
@@ -500,7 +508,7 @@ export default function BookingsPage() {
                 <div className="text-sm space-y-1">
                   <div>Monto: ${selectedBooking.totalUSD?.toFixed(2)} USD</div>
                   <div>Estado: {selectedBooking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}</div>
-                  {selectedBooking.payments.length > 0 && selectedBooking.payments[0].mercadopagoId && (
+                  {selectedBooking.payments && selectedBooking.payments.length > 0 && selectedBooking.payments[0].mercadopagoId && (
                     <div>ID de transacción: {selectedBooking.payments[0].mercadopagoId}</div>
                   )}
                 </div>
