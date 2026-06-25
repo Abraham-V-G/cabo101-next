@@ -13,7 +13,8 @@ export default function PayContent() {
 
   const transactionAmount = Number(params.get("transaction_amount") || 0);
   const summary = params.get("summary") || "Transportation Service";
-  const nameParam = params.get("name") || "";
+  const firstNameParam = params.get("firstName") || "";
+  const lastNameParam = params.get("lastName") || "";
   const emailParam = params.get("email") || "";
   const phoneParam = params.get("phone") || "";
   const pickupLocation = params.get("pickupLocation") || "";
@@ -29,7 +30,8 @@ export default function PayContent() {
   const returnPickupDate = params.get("returnPickupDate") || "";
   const additionalService = Number(params.get("additionalService") || 0);
 
-  const [name, setName] = useState(nameParam);
+  const [firstName, setFirstName] = useState(firstNameParam);
+  const [lastName, setLastName] = useState(lastNameParam);
   const [email, setEmail] = useState(emailParam);
   const [showPayment, setShowPayment] = useState(false);
 
@@ -43,7 +45,8 @@ export default function PayContent() {
         body: JSON.stringify({
           ...data,
           transaction_amount: transactionAmount,
-          name,
+          firstName,
+          lastName,
           email,
           summary,
           phone: phoneParam,
@@ -74,7 +77,8 @@ export default function PayContent() {
       if (result.status === "approved") {
         const successParams = new URLSearchParams({
           transaction_amount: transactionAmount.toString(),
-          name: name,
+          firstName: firstName,
+          lastName: lastName,
           email: email,
           vehicle: vehicleType,
           from: pickupLocation,
@@ -97,7 +101,6 @@ export default function PayContent() {
       } else if (result.status === "pending" || result.status === "in_process") {
         router.push(`/success?status=pending&transaction_amount=${transactionAmount}&email=${encodeURIComponent(email)}`);
       } else if (result.status === "rejected") {
-        // 🔥 Manejo específico para rechazos
         const detail = result.status_detail || "unknown";
         router.push(`/error?type=rejected&detail=${encodeURIComponent(detail)}`);
       } else {
@@ -108,7 +111,8 @@ export default function PayContent() {
     },
     [
       transactionAmount,
-      name,
+      firstName,
+      lastName,
       email,
       phoneParam,
       pickupLocation,
@@ -124,6 +128,7 @@ export default function PayContent() {
       returnPickupDate,
       additionalService,
       router,
+      summary,
     ]
   );
 
@@ -151,9 +156,16 @@ export default function PayContent() {
             >
               <input
                 type="text"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full border-2 border-[#4ccb8c] rounded-2xl px-4 py-3 bg-white text-black"
+              />
+              <input
+                type="text"
+                placeholder="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="w-full border-2 border-[#4ccb8c] rounded-2xl px-4 py-3 bg-white text-black"
               />
               <input
@@ -169,8 +181,8 @@ export default function PayContent() {
               </div>
               <button
                 onClick={() => {
-                  if (!name || !email) {
-                    alert("Please complete name and email");
+                  if (!firstName || !lastName || !email) {
+                    alert("Please complete first name, last name and email");
                     return;
                   }
                   setShowPayment(true);
