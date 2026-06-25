@@ -15,18 +15,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* GOOGLE MAPS */}
         <script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&libraries=places`}
           async
         ></script>
       </head>
-
       <body className={manrope.className}>
-        
-        {/* 🔥 INIT MERCADOPAGO GLOBAL */}
-        <MercadoPagoProvider />
-
+        <MercadoPagoProvider /> {/* Inicializa MercadoPago */}
         {children}
       </body>
     </html>
