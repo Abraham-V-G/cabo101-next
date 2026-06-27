@@ -13,13 +13,13 @@ export default function Hero() {
     fetch("/api/media")
       .then(res => res.json())
       .then(data => {
-        const heroVideo = data.find((item: any) => item.section === "hero" && item.url.endsWith(".mp4"));
+        const heroVideo = data.find(item => item.section === "hero" && item.url.endsWith(".mp4"));
         if (heroVideo) setVideoUrl(heroVideo.url);
       })
       .catch(console.error);
   }, []);
 
-  const handleTripTypeChange = (type: string) => {
+  const handleTripTypeChange = (type) => {
     setTripType(type);
   };
 

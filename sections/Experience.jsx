@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export default function Experience() {
-  const [perks, setPerks] = useState<any[]>([]);
+  const [perks, setPerks] = useState([]);
   const [videoUrl, setVideoUrl] = useState("/images/experience-preview.mp4");
 
   useEffect(() => {
@@ -11,7 +11,7 @@ export default function Experience() {
       .then(res => res.json())
       .then(data => {
         // Íconos de experiencia
-        const icons = data.filter((item: any) => item.section === "experience-icons");
+        const icons = data.filter(item => item.section === "experience-icons");
         setPerks(icons.map(p => ({
           icon: p.url,
           title: p.caption || "Title",
@@ -19,7 +19,7 @@ export default function Experience() {
         })));
 
         // Video de experiencia
-        const video = data.find((item: any) => item.section === "experience-video");
+        const video = data.find(item => item.section === "experience-video");
         if (video) setVideoUrl(video.url);
       })
       .catch(console.error);
