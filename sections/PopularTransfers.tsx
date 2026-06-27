@@ -1,4 +1,4 @@
-//components/PopularTransfers.tsx
+// components/PopularTransfers.tsx
 
 "use client";
 
@@ -45,6 +45,17 @@ export default function PopularTransfers() {
     router.push(`/booking?${query}`);
   };
 
+  // Función para manejar el error de imagen sin bucle
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const img = e.currentTarget;
+    // Si ya tiene el fallback, no hacer nada para evitar bucle
+    if (img.src.includes("fallback.jpg")) return;
+    // Intentar usar una imagen de placeholder confiable (puedes poner una URL externa)
+    img.src = "https://placehold.co/600x400/1a1a2e/ffffff?text=No+Image";
+    // O si tienes una imagen local que existe, puedes usarla:
+    // img.src = "/images/no-image.jpg";
+  };
+
   if (loading) {
     return (
       <section className="py-16 md:py-24 px-4 bg-white">
@@ -75,7 +86,6 @@ export default function PopularTransfers() {
           </p>
         </div>
 
-        {/* Swiper */}
         <Swiper
           modules={[Navigation, Autoplay]}
           navigation
@@ -94,38 +104,27 @@ export default function PopularTransfers() {
           {transfers.map((item, index) => (
             <SwiperSlide key={index}>
               <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-[380px] sm:h-[420px] shadow-sm hover:shadow-xl transition-shadow duration-500">
-                {/* Background image */}
                 <img
                   src={item.image}
                   alt={item.title}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  onError={(e) => {
-                    // Fallback image si no existe
-                    (e.target as HTMLImageElement).src = "/images/fallback.jpg";
-                  }}
+                  onError={handleImageError}
                 />
 
-                {/* Gradient overlay */}
+                {/* Resto del contenido... */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                {/* Tag badge */}
                 {item.tag && (
                   <div className="absolute top-4 left-4 bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                     {item.tag}
                   </div>
                 )}
-
-                {/* Price badge */}
                 <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-xl shadow-sm">
                   {item.price}
                   <span className="block text-[10px] font-normal text-gray-500 leading-none mt-0.5 text-center">
                     Round Trip
                   </span>
                 </div>
-
-                {/* Bottom content */}
                 <div className="absolute bottom-0 left-0 right-0 p-5">
-                  {/* Route info */}
                   <div className="flex items-center gap-1.5 text-white/60 text-xs mb-2">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -139,13 +138,10 @@ export default function PopularTransfers() {
                     </svg>
                     <span className="text-white/80">{item.title}</span>
                   </div>
-
                   <h3 className="text-white text-xl font-bold leading-tight mb-0.5">
                     {item.title}
                   </h3>
                   <p className="text-white/60 text-xs mb-4">{item.subtitle}</p>
-
-                  {/* Book button */}
                   <button
                     onClick={() => handleBooking(item.title)}
                     className="w-full bg-white text-gray-900 hover:bg-teal-500 hover:text-white text-sm font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
