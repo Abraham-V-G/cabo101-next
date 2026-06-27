@@ -4,7 +4,7 @@ import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/rendere
 Font.register({
   family: "Helvetica",
   fonts: [
-    { src: "https://fonts.gstatic.com/s/helvetica/v1/Helvetica.ttf" }, // ejemplo
+    { src: "https://fonts.gstatic.com/s/helvetica/v1/Helvetica.ttf" },
   ],
 });
 
@@ -33,31 +33,6 @@ const styles = StyleSheet.create({
   },
   value: {
     flex: 1,
-  },
-  table: {
-    display: "flex",
-    flexDirection: "column",
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    paddingVertical: 4,
-  },
-  tableHeader: {
-    fontWeight: "bold",
-    backgroundColor: "#f0f0f0",
-  },
-  col: {
-    flex: 1,
-  },
-  total: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "right",
   },
   footer: {
     marginTop: 30,
@@ -90,16 +65,16 @@ type VoucherData = {
   additionalService?: number;
   totalAmount: number;
   paidAmount?: number;
-  balance?: number;
   notes?: string;
   voucherNumber?: string;
 };
 
 export default function VoucherDocument({ data }: { data: VoucherData }) {
-  const voucherNumber = data.voucherNumber || `V-${Date.now().toString().slice(-6)}`;
-  const total = data.totalAmount || 0;
-  const paid = data.paidAmount || 0;
+  const total = typeof data.totalAmount === 'number' ? data.totalAmount : Number(data.totalAmount) || 0;
+  const paid = typeof data.paidAmount === 'number' ? data.paidAmount : Number(data.paidAmount) || 0;
+  const addService = typeof data.additionalService === 'number' ? data.additionalService : Number(data.additionalService) || 0;
   const balance = (total - paid).toFixed(2);
+  const voucherNumber = data.voucherNumber || `V-${Date.now().toString().slice(-6)}`;
 
   return (
     <Document>
@@ -211,10 +186,10 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
             <Text style={styles.label}>Total:</Text>
             <Text style={styles.value}>${total.toFixed(2)} USD</Text>
           </View>
-          {data.additionalService !== undefined && data.additionalService > 0 && (
+          {addService > 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>Servicio adicional:</Text>
-              <Text style={styles.value}>${data.additionalService.toFixed(2)} USD</Text>
+              <Text style={styles.value}>${addService.toFixed(2)} USD</Text>
             </View>
           )}
           {paid > 0 && (
