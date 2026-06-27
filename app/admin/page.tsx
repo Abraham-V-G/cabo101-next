@@ -1,5 +1,7 @@
 // app/admin/page.tsx
 
+// app/admin/page.tsx
+
 "use client";
 
 import { useState, useCallback } from "react";
@@ -568,7 +570,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── Tarjetas de acceso rápido (5 columnas en pantallas grandes) ── */}
+        {/* ── Tarjetas de acceso rápido ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Reservas */}
           <Link href="/admin/bookings" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
@@ -633,7 +635,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-gray-400 leading-relaxed">Administrar tipos de vehículos y su capacidad.</p>
           </Link>
 
-          {/* Viajes Populares (nuevo) */}
+          {/* Viajes Populares */}
           <Link href="/admin/popular-transfers" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center group-hover:bg-pink-100 transition">
@@ -644,6 +646,38 @@ export default function AdminDashboard() {
               <h3 className="text-sm font-semibold text-gray-800">Viajes Populares</h3>
             </div>
             <p className="text-xs text-gray-400 leading-relaxed">Destinos destacados en la página de inicio.</p>
+          </Link>
+
+          {/* 👇 NUEVO: Generar Voucher */}
+          <Link href="/admin/voucher" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">Generar Voucher</h3>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Crear voucher PDF manual para cobros en efectivo o externos.</p>
+          </Link>
+
+          {/* 👇 NUEVO: Gestión de Fotos */}
+          <Link href="/admin/photos" className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition group">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center group-hover:bg-rose-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">Gestión de Fotos</h3>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Administrar imágenes por sección (hero, galería, etc.).</p>
           </Link>
         </div>
       </div>
