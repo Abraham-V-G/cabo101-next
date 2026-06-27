@@ -23,13 +23,15 @@ export async function GET() {
         },
       });
       const roundTripPrice = price?.roundTrip ?? null;
+      // Usar la imagen del registro si existe, sino un fallback
+      const image = item.image || `/images/${item.zone.name.toLowerCase().replace(/ /g, '-')}.jpg`;
       return {
         title: item.zone.name,
         slug: item.zone.slug,
         subtitle: item.travelTime,
         price: roundTripPrice ? `$${roundTripPrice} USD` : 'Consultar',
-        tag: null, // Puedes agregar lógica para destacar si es popular
-        image: `/images/${item.zone.name.toLowerCase().replace(/ /g, ' ')}.jpg`,
+        tag: null,
+        image, // 👈 ahora usa el campo de la BD
       };
     })
   );

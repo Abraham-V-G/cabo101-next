@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Zone {
   id: number;
@@ -24,6 +25,7 @@ interface PopularTransfer {
   travelTime: string;
   sortOrder: number;
   active: boolean;
+  image: string | null;
   zone?: Zone;
   vehicle?: Vehicle;
 }
@@ -32,16 +34,19 @@ export default function PopularTransfersAdmin() {
   const [transfers, setTransfers] = useState<PopularTransfer[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
   const [form, setForm] = useState({
-    id: "",
     zoneId: "",
     vehicleId: "",
     travelTime: "",
     sortOrder: "0",
     active: true,
+    image: "",
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const loadData = async () => {
     const [transfersRes, zonesRes, vehiclesRes] = await Promise.all([
@@ -65,7 +70,9 @@ export default function PopularTransfersAdmin() {
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ id: "", zoneId: "", vehicleId: "", travelTime: "", sortOrder: "0", active: true });
+    setForm({ zoneId: "", vehicleId: "", travelTime: "", sortOrder: "0", active: true, image: "" });
+    setImageFile(null);
+    setPreview(null);
   };
 
   const handleSubmit = async () => {
@@ -73,32 +80,45 @@ export default function PopularTransfersAdmin() {
       alert("Zona, vehículo y tiempo de viaje son obligatorios");
       return;
     }
+
+    let finalImage = form.image;
+
+    // Si hay un archivo nuevo, subirlo
+    if (imageFile) {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", imageFile);
+      uploadFormData.append("section", "popular-transfers");
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+      if (!uploadRes.ok) {
+        alert("Error al subir la imagen");
+        return;
+      }
+      const uploadData = await uploadRes.json();
+      finalImage = uploadData.url;
+    }
+
+    const payload = {
+      zoneId: Number(form.zoneId),
+      vehicleId: Number(form.vehicleId),
+      travelTime: form.travelTime,
+      sortOrder: Number(form.sortOrder),
+      active: form.active,
+      image: finalImage,
+    };
+
     const url = "/api/admin/popular-transfers";
     const method = editingId ? "PUT" : "POST";
-    
-    // Construir el body explícitamente para evitar duplicación de 'id'
-    const body = editingId
-      ? {
-          id: editingId,
-          zoneId: Number(form.zoneId),
-          vehicleId: Number(form.vehicleId),
-          travelTime: form.travelTime,
-          sortOrder: Number(form.sortOrder),
-          active: form.active,
-        }
-      : {
-          zoneId: Number(form.zoneId),
-          vehicleId: Number(form.vehicleId),
-          travelTime: form.travelTime,
-          sortOrder: Number(form.sortOrder),
-          active: form.active,
-        };
+    const body = editingId ? { ...payload, id: editingId } : payload;
 
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+
     if (res.ok) {
       resetForm();
       loadData();
@@ -111,13 +131,15 @@ export default function PopularTransfersAdmin() {
   const startEdit = (item: PopularTransfer) => {
     setEditingId(item.id);
     setForm({
-      id: String(item.id),
       zoneId: String(item.zoneId),
       vehicleId: String(item.vehicleId),
       travelTime: item.travelTime,
       sortOrder: String(item.sortOrder),
       active: item.active,
+      image: item.image || "",
     });
+    setPreview(item.image || null);
+    setImageFile(null);
   };
 
   const deleteItem = async (id: number) => {
@@ -143,7 +165,6 @@ export default function PopularTransfersAdmin() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Viajes Populares</h1>
 
-        {/* Formulario de creación/edición */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
           <h2 className="text-lg font-semibold mb-4">{editingId ? "Editar" : "Agregar"} viaje popular</h2>
           <div className="grid md:grid-cols-2 gap-4">
@@ -192,7 +213,7 @@ export default function PopularTransfersAdmin() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 col-span-2">
               <input
                 type="checkbox"
                 id="active"
@@ -201,6 +222,32 @@ export default function PopularTransfersAdmin() {
                 className="w-4 h-4"
               />
               <label htmlFor="active" className="text-sm text-gray-700">Activo</label>
+            </div>
+
+            {/* 👇 NUEVO: Imagen */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (opcional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setImageFile(file);
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => setPreview(ev.target?.result as string);
+                    reader.readAsDataURL(file);
+                  } else {
+                    setPreview(form.image || null);
+                  }
+                }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              />
+              {preview && (
+                <div className="mt-2">
+                  <Image src={preview} alt="preview" width={150} height={100} className="object-cover rounded border" />
+                </div>
+              )}
             </div>
           </div>
           <div className="flex gap-3 mt-5">
@@ -218,14 +265,14 @@ export default function PopularTransfersAdmin() {
           </div>
         </div>
 
-        {/* Lista de viajes populares */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Imagen</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zona</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehículo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiempo de viaje</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiempo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orden</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activo</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
@@ -234,6 +281,13 @@ export default function PopularTransfersAdmin() {
             <tbody className="divide-y divide-gray-100">
               {transfers.map((item) => (
                 <tr key={item.id}>
+                  <td className="px-6 py-4">
+                    {item.image ? (
+                      <Image src={item.image} alt={item.zone?.name || ""} width={60} height={40} className="object-cover rounded" />
+                    ) : (
+                      <span className="text-gray-400 text-xs">Sin imagen</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-900">{item.zone?.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-700">{item.vehicle?.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-700">{item.travelTime}</td>
@@ -252,7 +306,7 @@ export default function PopularTransfersAdmin() {
             </tbody>
           </table>
           {transfers.length === 0 && (
-            <div className="text-center text-gray-400 py-8">No hay viajes populares. Crea uno con el formulario de arriba.</div>
+            <div className="text-center text-gray-400 py-8">No hay viajes populares. Crea uno con el formulario.</div>
           )}
         </div>
       </div>
