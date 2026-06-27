@@ -29,7 +29,7 @@ export async function GET() {
         subtitle: item.travelTime,
         price: roundTripPrice ? `$${roundTripPrice} USD` : 'Consultar',
         tag: null,
-        image: item.image || `/images/${item.zone.name.toLowerCase().replace(/ /g, '-')}.jpg`, // fallback
+        image: item.image || '/images/san jose del cabo.jpg'
       };
     })
   );
