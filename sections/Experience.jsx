@@ -10,6 +10,8 @@ export default function Experience() {
     fetch("/api/media")
       .then(res => res.json())
       .then(data => {
+        console.log("📦 Datos de Experience:", data);
+        
         // Íconos de experiencia
         const icons = data.filter(item => item.section === "experience-icons");
         setPerks(icons.map(p => ({
@@ -19,8 +21,12 @@ export default function Experience() {
         })));
 
         // Video de experiencia
-        const video = data.find(item => item.section === "experience-video");
-        if (video) setVideoUrl(video.url);
+        const video = data.find(item => item.section === "experience-video" && item.url.endsWith(".mp4"));
+        console.log("🎬 Video de Experience encontrado:", video);
+        if (video) {
+          setVideoUrl(video.url);
+          console.log("✅ Video de Experience actualizado a:", video.url);
+        }
       })
       .catch(console.error);
   }, []);
@@ -66,6 +72,12 @@ export default function Experience() {
                   src={perk.icon}
                   alt={perk.title}
                   className="w-8 h-8 object-contain flex-shrink-0 mt-0.5"
+                  onError={(e) => {
+                    // Si el ícono falla, no entra en bucle
+                    if (!e.currentTarget.src.includes("placehold")) {
+                      e.currentTarget.src = "https://placehold.co/32x32/cccccc/ffffff?text=?";
+                    }
+                  }}
                 />
                 <div>
                   <p className="text-gray-900 font-semibold text-sm mb-0.5">
@@ -81,10 +93,14 @@ export default function Experience() {
         </div>
         <div className="rounded-2xl overflow-hidden shadow-lg aspect-video">
           <video
+            key={videoUrl} // 👈 FORZA RE-RENDER CUANDO CAMBIA LA URL
             src={videoUrl}
             poster="/images/cabo san lucas.jpg"
             className="w-full h-full object-cover"
             controls
+            onLoadedData={() => console.log("✅ Video Experience cargado:", videoUrl)}
+            onError={(e) => console.error("❌ Error cargando video Experience:", e)}
+            preload="auto"
           />
         </div>
       </div>

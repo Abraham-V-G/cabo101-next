@@ -40,6 +40,7 @@ export default function Hero() {
           className="w-full h-full object-cover"
           onLoadedData={() => console.log("✅ Video cargado correctamente:", videoUrl)}
           onError={(e) => console.error("❌ Error cargando video:", e)}
+          preload="auto"
         >
           <source src={videoUrl} type="video/mp4" />
         </video>
