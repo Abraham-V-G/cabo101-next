@@ -1,192 +1,222 @@
-"use client";
+import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 
-import { useState } from "react";
-import { pdf } from "@react-pdf/renderer";
-import VoucherDocument from "@/components/VoucherDocument";
+// Registrar fuente (opcional, usar la que quieras)
+Font.register({
+  family: "Helvetica",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/helvetica/v1/Helvetica.ttf" },
+  ],
+});
 
-export default function VoucherPage() {
-  // Estado similar al formulario de admin/page.tsx
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    pickupLocation: "",
-    dropoffLocation: "",
-    passengers: "",
-    vehicleType: "",
-    pickupDate: "",
-    pickupTime: "",
-    roundTrip: false,
-    returnPickupLocation: "",
-    returnDropoffLocation: "",
-    returnPickupDate: "",
-    returnPickupTime: "",
-    airline: "",
-    flight: "",
-    arrival: "",
-    returnFlight: "",
-    totalAmount: 0,
-    paidAmount: 0,
-    additionalService: 0,
-    notes: "",
-  });
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontSize: 12,
+    fontFamily: "Helvetica",
+  },
+  header: {
+    fontSize: 20,
+    marginBottom: 20,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  section: {
+    marginBottom: 10,
+  },
+  label: {
+    fontWeight: "bold",
+    marginRight: 5,
+  },
+  row: {
+    flexDirection: "row",
+    marginBottom: 4,
+  },
+  value: {
+    flex: 1,
+  },
+  footer: {
+    marginTop: 30,
+    textAlign: "center",
+    fontSize: 10,
+    color: "#999",
+  },
+});
 
-  const [loading, setLoading] = useState(false);
+type VoucherData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  passengers: string;
+  vehicleType: string;
+  pickupDate: string;
+  pickupTime: string;
+  roundTrip: boolean;
+  returnPickupLocation?: string;
+  returnDropoffLocation?: string;
+  returnPickupDate?: string;
+  returnPickupTime?: string;
+  airline?: string;
+  flight?: string;
+  arrival?: string;
+  returnFlight?: string;
+  additionalService?: number;
+  totalAmount: number;
+  paidAmount?: number;
+  notes?: string;
+  voucherNumber?: string;
+};
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    setFormData((prev) => ({ ...prev, [name]: val }));
-  };
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    try {
-      const doc = <VoucherDocument data={{ ...formData, voucherNumber: `V-${Date.now().toString().slice(-6)}` }} />;
-      const blob = await pdf(doc).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `voucher-${formData.firstName}-${formData.lastName}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error generando PDF:", error);
-      alert("Error al generar el voucher");
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function VoucherDocument({ data }: { data: VoucherData }) {
+  // Conversión segura a números
+  const total = typeof data.totalAmount === 'number' ? data.totalAmount : Number(data.totalAmount) || 0;
+  const paid = typeof data.paidAmount === 'number' ? data.paidAmount : Number(data.paidAmount) || 0;
+  const addService = typeof data.additionalService === 'number' ? data.additionalService : Number(data.additionalService) || 0;
+  const balance = (total - paid).toFixed(2);
+  const voucherNumber = data.voucherNumber || `V-${Date.now().toString().slice(-6)}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Generar Voucher</h1>
-        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Encabezado */}
+        <View style={styles.header}>
+          <Text>VOUCHER DE TRANSPORTE</Text>
+          <Text style={{ fontSize: 10, fontWeight: "normal", marginTop: 4 }}>
+            N° {voucherNumber}
+          </Text>
+        </View>
 
-          {/* Aquí puedes reutilizar el mismo formulario que usas en admin/page.tsx */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nombre</label>
-              <input name="firstName" value={formData.firstName} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Apellido</label>
-              <input name="lastName" value={formData.lastName} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <input name="email" value={formData.email} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-              <input name="phone" value={formData.phone} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Origen</label>
-              <input name="pickupLocation" value={formData.pickupLocation} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Destino</label>
-              <input name="dropoffLocation" value={formData.dropoffLocation} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Pasajeros</label>
-              <input name="passengers" value={formData.passengers} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tipo de vehículo</label>
-              <input name="vehicleType" value={formData.vehicleType} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Fecha de recogida</label>
-              <input name="pickupDate" type="date" value={formData.pickupDate} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Hora de recogida</label>
-              <input name="pickupTime" type="time" value={formData.pickupTime} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-          </div>
+        {/* Datos del cliente */}
+        <View style={styles.section}>
+          <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Cliente</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Nombre:</Text>
+            <Text style={styles.value}>{data.firstName} {data.lastName}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Email:</Text>
+            <Text style={styles.value}>{data.email}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Teléfono:</Text>
+            <Text style={styles.value}>{data.phone}</Text>
+          </View>
+        </View>
 
-          <div className="mt-4">
-            <label className="flex items-center gap-2">
-              <input name="roundTrip" type="checkbox" checked={formData.roundTrip} onChange={handleChange} />
-              Viaje de regreso
-            </label>
-          </div>
+        {/* Detalles del viaje */}
+        <View style={styles.section}>
+          <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Detalles del viaje</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Origen:</Text>
+            <Text style={styles.value}>{data.pickupLocation}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Destino:</Text>
+            <Text style={styles.value}>{data.dropoffLocation}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Fecha de recogida:</Text>
+            <Text style={styles.value}>{data.pickupDate}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Hora de recogida:</Text>
+            <Text style={styles.value}>{data.pickupTime}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Pasajeros:</Text>
+            <Text style={styles.value}>{data.passengers}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Vehículo:</Text>
+            <Text style={styles.value}>{data.vehicleType}</Text>
+          </View>
+        </View>
 
-          {formData.roundTrip && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 rounded-xl">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Origen de regreso</label>
-                <input name="returnPickupLocation" value={formData.returnPickupLocation} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Destino de regreso</label>
-                <input name="returnDropoffLocation" value={formData.returnDropoffLocation} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Fecha de regreso</label>
-                <input name="returnPickupDate" type="date" value={formData.returnPickupDate} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Hora de regreso</label>
-                <input name="returnPickupTime" type="time" value={formData.returnPickupTime} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-              </div>
-            </div>
+        {/* Viaje de regreso (si aplica) */}
+        {data.roundTrip && (
+          <View style={styles.section}>
+            <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Viaje de regreso</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Origen de regreso:</Text>
+              <Text style={styles.value}>{data.returnPickupLocation || "-"}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Destino de regreso:</Text>
+              <Text style={styles.value}>{data.returnDropoffLocation || "-"}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Fecha de regreso:</Text>
+              <Text style={styles.value}>{data.returnPickupDate || "-"}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Hora de regreso:</Text>
+              <Text style={styles.value}>{data.returnPickupTime || "-"}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Información de vuelo */}
+        <View style={styles.section}>
+          <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Información de vuelo</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Aerolínea:</Text>
+            <Text style={styles.value}>{data.airline || "-"}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Número de vuelo:</Text>
+            <Text style={styles.value}>{data.flight || "-"}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Hora de llegada:</Text>
+            <Text style={styles.value}>{data.arrival || "-"}</Text>
+          </View>
+          {data.returnFlight && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Vuelo de regreso:</Text>
+              <Text style={styles.value}>{data.returnFlight}</Text>
+            </View>
           )}
+        </View>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Aerolínea</label>
-              <input name="airline" value={formData.airline} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Número de vuelo</label>
-              <input name="flight" value={formData.flight} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Hora de llegada</label>
-              <input name="arrival" type="time" value={formData.arrival} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            {formData.roundTrip && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Vuelo de regreso</label>
-                <input name="returnFlight" value={formData.returnFlight} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-              </div>
-            )}
-          </div>
+        {/* Resumen de costos */}
+        <View style={styles.section}>
+          <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Resumen de pago</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Total:</Text>
+            <Text style={styles.value}>${total.toFixed(2)} USD</Text>
+          </View>
+          {addService > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Servicio adicional:</Text>
+              <Text style={styles.value}>${addService.toFixed(2)} USD</Text>
+            </View>
+          )}
+          {paid > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Pagado:</Text>
+              <Text style={styles.value}>${paid.toFixed(2)} USD</Text>
+            </View>
+          )}
+          <View style={styles.row}>
+            <Text style={styles.label}>Saldo pendiente:</Text>
+            <Text style={styles.value}>${balance} USD</Text>
+          </View>
+        </View>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Total (USD)</label>
-              <input name="totalAmount" type="number" value={formData.totalAmount} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Pagado (USD)</label>
-              <input name="paidAmount" type="number" value={formData.paidAmount} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Servicio adicional (USD)</label>
-              <input name="additionalService" type="number" value={formData.additionalService} onChange={handleChange} className="border rounded-lg px-3 py-2 w-full" />
-            </div>
-          </div>
+        {/* Notas */}
+        {data.notes && (
+          <View style={styles.section}>
+            <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Notas</Text>
+            <Text>{data.notes}</Text>
+          </View>
+        )}
 
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700">Notas</label>
-            <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="border rounded-lg px-3 py-2 w-full" />
-          </div>
-
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Generando..." : "Generar Voucher PDF"}
-          </button>
-        </div>
-      </div>
-    </div>
+        <View style={styles.footer}>
+          <Text>Gracias por confiar en Cabo 101 • www.cabo101.com.mx</Text>
+        </View>
+      </Page>
+    </Document>
   );
 }
