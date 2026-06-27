@@ -13,8 +13,13 @@ export default function Hero() {
     fetch("/api/media")
       .then(res => res.json())
       .then(data => {
+        console.log("📦 Datos de /api/media:", data);
         const heroVideo = data.find(item => item.section === "hero" && item.url.endsWith(".mp4"));
-        if (heroVideo) setVideoUrl(heroVideo.url);
+        console.log("🎬 Video encontrado:", heroVideo);
+        if (heroVideo) {
+          setVideoUrl(heroVideo.url);
+          console.log("✅ Video actualizado a:", heroVideo.url);
+        }
       })
       .catch(console.error);
   }, []);
@@ -26,7 +31,16 @@ export default function Hero() {
   return (
     <section className="relative min-h-[90vh] sm:min-h-[85vh] md:min-h-[80vh] flex flex-col px-4 sm:px-6 md:px-10 lg:px-20 py-4 sm:py-6 md:py-10">
       <div className="absolute inset-0 -z-10">
-        <video autoPlay loop muted playsInline className="w-full h-full object-cover">
+        <video 
+          key={videoUrl} // 👈 FORZA RE-RENDER CUANDO CAMBIA LA URL
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+          onLoadedData={() => console.log("✅ Video cargado correctamente:", videoUrl)}
+          onError={(e) => console.error("❌ Error cargando video:", e)}
+        >
           <source src={videoUrl} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 from-[10%] via-black/25 via-[20%] to-transparent" />
