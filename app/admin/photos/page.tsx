@@ -22,16 +22,19 @@ export default function PhotosPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const loadPhotos = async () => {
-    const res = await fetch("/api/photos");
-    const data = await res.json();
-    setPhotos(data);
+    try {
+      const res = await fetch("/api/photos");
+      const data = await res.json();
+      setPhotos(data);
+    } catch (err) {
+      console.error("Error loading photos:", err);
+    }
   };
 
   useEffect(() => {
     loadPhotos();
   }, []);
 
-  // Previsualización del archivo seleccionado
   useEffect(() => {
     if (file) {
       const reader = new FileReader();
@@ -50,6 +53,9 @@ export default function PhotosPage() {
       return;
     }
 
+    // Mostrar tamaño para depuración
+    console.log(`Subiendo archivo de ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -57,22 +63,38 @@ export default function PhotosPage() {
       formData.append("section", section);
       if (caption) formData.append("caption", caption);
 
-      // 1. Subir archivo
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
 
+      // Si la respuesta no es JSON, puede ser HTML de error (por ejemplo, 413)
+      const contentType = uploadRes.headers.get("content-type") || "";
+      let errorMessage = "Error desconocido";
+
       if (!uploadRes.ok) {
-        const errorData = await uploadRes.json();
-        setErrorMsg(errorData.error || "Error al subir el archivo");
+        if (uploadRes.status === 413) {
+          setErrorMsg("El archivo es demasiado grande. El límite máximo es 100MB. Contacta al administrador.");
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const errorData = await uploadRes.json();
+          errorMessage = errorData.error || "Error al subir el archivo";
+        } catch (parseError) {
+          // Si no es JSON, intentamos leer el texto
+          const text = await uploadRes.text();
+          errorMessage = `Error ${uploadRes.status}: ${text.substring(0, 100)}`;
+        }
+        setErrorMsg(errorMessage);
         setLoading(false);
         return;
       }
 
       const data = await uploadRes.json();
 
-      // 2. Guardar referencia en la base de datos
+      // Guardar en BD
       const saveRes = await fetch("/api/photos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,7 +131,6 @@ export default function PhotosPage() {
     loadPhotos();
   };
 
-  // Determinar si el archivo es video para mostrar previsualización
   const isVideo = file?.type.startsWith("video/");
 
   return (
@@ -117,7 +138,6 @@ export default function PhotosPage() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Gestor de Multimedia</h1>
 
-        {/* Formulario de subida */}
         <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
           <h2 className="text-xl font-semibold mb-4">Subir nuevo archivo</h2>
           {errorMsg && (
@@ -183,7 +203,6 @@ export default function PhotosPage() {
           </form>
         </div>
 
-        {/* Lista de archivos subidos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {photos.map((photo) => (
             <div key={photo.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
