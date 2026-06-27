@@ -1,4 +1,4 @@
-//app/api/popular-transfers/route.ts
+// app/api/popular-transfers/route.ts
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -23,15 +23,13 @@ export async function GET() {
         },
       });
       const roundTripPrice = price?.roundTrip ?? null;
-      // Usar la imagen del registro si existe, sino un fallback
-      const image = item.image || `/images/${item.zone.name.toLowerCase().replace(/ /g, '-')}.jpg`;
       return {
         title: item.zone.name,
         slug: item.zone.slug,
         subtitle: item.travelTime,
         price: roundTripPrice ? `$${roundTripPrice} USD` : 'Consultar',
         tag: null,
-        image, // 👈 ahora usa el campo de la BD
+        image: item.image || `/images/${item.zone.name.toLowerCase().replace(/ /g, '-')}.jpg`, // fallback
       };
     })
   );
