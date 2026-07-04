@@ -1,8 +1,10 @@
+import type { ReactNode } from "react";
 import {
   Document,
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Svg,
   Rect,
@@ -10,6 +12,15 @@ import {
   LinearGradient,
   Stop,
 } from "@react-pdf/renderer";
+
+// Reemplaza estos imports con los archivos reales (logo oficial de Cabo 101
+// y los íconos de métodos de pago con licencia de uso). No se pueden generar
+// aquí por tratarse de marcas registradas de terceros.
+// import cabo101Logo from "./assets/cabo101-logo.png";
+// import applePayIcon from "./assets/apple-pay.png";
+// import amexIcon from "./assets/amex.png";
+// import mastercardIcon from "./assets/mastercard.png";
+// import visaIcon from "./assets/visa.png";
 
 // Paleta de colores basada en el voucher de referencia
 const COLORS = {
@@ -22,40 +33,48 @@ const COLORS = {
   white: "#ffffff",
 };
 
+// Rejilla de 12 columnas sobre el área de contenido (Letter: 612pt de ancho,
+// márgenes de 40pt a cada lado => 532pt de contenido).
+const GRID = {
+  left: 40,
+  content: 532,
+  col: 44.33, // 532 / 12
+};
+
+// Componente reutilizable para separar bloques verticalmente sin depender
+// del cálculo de márgenes de React PDF.
+function Spacer({ h }: { h: number }) {
+  return <View style={{ height: h }} />;
+}
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 0,
     paddingBottom: 0,
-    paddingHorizontal: 40,
+    paddingHorizontal: GRID.left,
     fontSize: 9,
     fontFamily: "Helvetica",
     color: COLORS.textDark,
   },
   gradientBar: {
     width: "100%",
-    height: 14,
+    height: 16,
   },
   contentWrap: {
     paddingTop: 18,
     paddingBottom: 18,
-    flex: 1,
   },
-  topRow: {
+  row: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 14,
   },
+
+  // --- Panel de datos del cliente + logo ---
   infoPanel: {
     backgroundColor: COLORS.panelGreen,
     borderRadius: 4,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    width: 280,
-  },
-  infoRow: {
-    flexDirection: "row",
-    marginBottom: 3,
+    width: 300, // GRID: ~6.7 columnas
   },
   infoLabel: {
     width: 130,
@@ -64,11 +83,11 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
   infoValue: {
-    flex: 1,
+    width: 128, // 300 - 28(padding) - 130(label) - 8(margin) - 6 margen de seguridad
     fontFamily: "Helvetica-Bold",
   },
   infoValueLink: {
-    flex: 1,
+    width: 128,
     fontFamily: "Helvetica-Bold",
     color: COLORS.midGreen,
   },
@@ -83,7 +102,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     alignItems: "center",
-    marginBottom: 4,
+    width: 95,
+  },
+  logoImage: {
+    width: 95,
+    height: 110,
   },
   logoText1: {
     fontFamily: "Helvetica-Bold",
@@ -104,142 +127,113 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   contactLine: {
-    marginBottom: 2,
     color: COLORS.textGray,
   },
-  sectionTitleBar: {
-    marginTop: 16,
-    marginBottom: 10,
-  },
+
+  // --- Barras de título con degradado ---
   sectionTitleText: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     color: COLORS.darkGreen,
     textAlign: "center",
   },
-  subSectionHeader: {
-    backgroundColor: COLORS.panelGreen,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-    marginTop: 10,
-    marginBottom: 6,
-  },
   subSectionHeaderText: {
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
     color: COLORS.textDark,
+    paddingLeft: 6,
   },
-  fromToRow: {
-    flexDirection: "row",
-    marginBottom: 6,
-  },
+
+  // --- From / To (2 columnas de ancho fijo) ---
   fromToCol: {
-    flex: 1,
+    width: 260,
   },
   smallLabel: {
     color: COLORS.textGray,
-    marginBottom: 2,
   },
   boldValue: {
     fontFamily: "Helvetica-Bold",
     fontSize: 9.5,
   },
-  detailsRow: {
-    flexDirection: "row",
-  },
+
+  // --- Passengers / Vehicle / Date / Pickup time (4 columnas iguales) ---
   detailsCol: {
-    flex: 1,
+    width: 133,
   },
-  additionalServiceBlock: {
-    marginTop: 12,
-  },
+
   additionalServiceLabel: {
     fontFamily: "Helvetica-Bold",
-    marginBottom: 2,
   },
-  bottomRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginTop: 18,
-  },
+
+  // --- Tabla de costos: columnas fijas, sin space-between ---
   costBox: {
     width: 230,
-  },
-  costHeader: {
-    backgroundColor: COLORS.panelGreen,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    marginBottom: 6,
   },
   costHeaderText: {
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
     textAlign: "center",
-  },
-  costRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 3,
-    paddingHorizontal: 4,
+    paddingVertical: 3,
   },
   costLabel: {
+    width: 150,
     color: COLORS.textDark,
   },
   costValue: {
+    width: 66,
     textAlign: "right",
   },
   costValueUnderline: {
+    width: 66,
     textAlign: "right",
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.textDark,
     paddingBottom: 1,
-    minWidth: 55,
-  },
-  costRowBold: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 3,
-    paddingHorizontal: 4,
   },
   costLabelBold: {
+    width: 150,
     fontFamily: "Helvetica-Bold",
   },
   costValueBold: {
+    width: 66,
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
   },
-  weAcceptBlock: {
-    alignItems: "flex-end",
-  },
+
   weAcceptLabel: {
     fontFamily: "Helvetica-Bold",
     fontSize: 9,
-    marginBottom: 6,
-  },
-  paymentIconsRow: {
-    flexDirection: "row",
+    textAlign: "right",
   },
   paymentIcon: {
+    width: 44,
+    height: 26,
+    marginLeft: 4,
+  },
+  paymentIconPlaceholder: {
+    width: 44,
+    height: 26,
+    marginLeft: 4,
     borderWidth: 0.5,
     borderColor: "#999999",
     borderRadius: 3,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-    marginLeft: 4,
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    alignItems: "center",
+    justifyContent: "center",
   },
+  paymentIconPlaceholderText: {
+    fontSize: 5.5,
+    fontFamily: "Helvetica-Bold",
+    textAlign: "center",
+  },
+
   termsBox: {
     backgroundColor: COLORS.panelGreenLight,
     borderRadius: 4,
     padding: 12,
-    marginTop: 20,
   },
   termsTitle: {
     fontFamily: "Helvetica-Bold",
     fontSize: 9.5,
-    marginBottom: 6,
   },
   termsText: {
     fontSize: 7.5,
@@ -248,24 +242,84 @@ const styles = StyleSheet.create({
   },
 });
 
-// Barra con degradado verde -> blanco, usada arriba y abajo de la página
-function GradientBar({ flip = false }: { flip?: boolean }) {
+// Barra superior/inferior de la página: degradado simétrico de 5 paradas
+// (verde 25% -> verde claro -> blanco -> verde claro -> verde 25%),
+// igual al acabado "difuminado" del PDF original.
+function GradientBar() {
   return (
-    <Svg style={styles.gradientBar} viewBox="0 0 612 14">
+    <Svg style={styles.gradientBar} viewBox="0 0 612 16">
       <Defs>
-        <LinearGradient
-          id="grad"
-          x1={flip ? "1" : "0"}
-          y1="0"
-          x2={flip ? "0" : "1"}
-          y2="0"
-        >
-          <Stop offset="0" stopColor={COLORS.panelGreen} stopOpacity={1} />
-          <Stop offset="1" stopColor={COLORS.white} stopOpacity={1} />
+        <LinearGradient id="edgeGrad" x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0%" stopColor="#d2efde" stopOpacity={1} />
+          <Stop offset="25%" stopColor="#e6f6ed" stopOpacity={1} />
+          <Stop offset="50%" stopColor="#ffffff" stopOpacity={1} />
+          <Stop offset="75%" stopColor="#e6f6ed" stopOpacity={1} />
+          <Stop offset="100%" stopColor="#d2efde" stopOpacity={1} />
         </LinearGradient>
       </Defs>
-      <Rect x="0" y="0" width="612" height="14" fill="url(#grad)" />
+      <Rect x="0" y="0" width="612" height="16" fill="url(#edgeGrad)" />
     </Svg>
+  );
+}
+
+// Barra de degradado para encabezados de sección (Outbound, Return,
+// Cost USD, Transportation Service). Hecha con Svg/Rect en vez de
+// backgroundColor plano, para lograr el mismo acabado difuminado.
+function GradientBand({
+  id,
+  width,
+  height,
+}: {
+  id: string;
+  width: number;
+  height: number;
+}) {
+  return (
+    <Svg
+      style={{ width, height, position: "absolute", top: 0, left: 0 }}
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      <Defs>
+        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0%" stopColor="#c7e8d4" stopOpacity={1} />
+          <Stop offset="60%" stopColor="#dcf1e4" stopOpacity={1} />
+          <Stop offset="100%" stopColor="#f4faf6" stopOpacity={1} />
+        </LinearGradient>
+      </Defs>
+      <Rect x="0" y="0" width={width} height={height} fill={`url(#${id})`} />
+    </Svg>
+  );
+}
+
+// Envuelve un texto de encabezado con su franja de degradado detrás,
+// usando posicionamiento relativo/absoluto (sin backgroundColor).
+function SectionBand({
+  id,
+  width,
+  height,
+  children,
+}: {
+  id: string;
+  width: number;
+  height: number;
+  children: ReactNode;
+}) {
+  return (
+    <View style={{ width, height, position: "relative" }}>
+      <GradientBand id={id} width={width} height={height} />
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width,
+          height,
+          justifyContent: "center",
+        }}
+      >
+        {children}
+      </View>
+    </View>
   );
 }
 
@@ -319,94 +373,130 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
   const balance = (grandTotal - paid).toFixed(2);
   const folio = data.folio || data.voucherNumber || "025";
 
+  // Set a esto a true una vez que hayas conectado los assets reales
+  // (logo de Cabo 101 e íconos de pago) para que se rendericen como
+  // <Image> en lugar del marcador de texto de respaldo.
+  const HAS_REAL_ASSETS = false;
+
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
         <GradientBar />
 
         <View style={styles.contentWrap}>
-          {/* Encabezado: panel de info + logo */}
-          <View style={styles.topRow}>
+          {/* Encabezado: panel de info (300pt) + separador (122pt) + logo (110pt) = 532pt */}
+          <View style={styles.row}>
             <View style={styles.infoPanel}>
-              <View style={styles.infoRow}>
+              <View style={styles.row}>
                 <Text style={styles.infoLabel}>Folio</Text>
                 <Text style={styles.infoValue}>{folio}</Text>
               </View>
-              <View style={styles.infoRow}>
+              <Spacer h={3} />
+              <View style={styles.row}>
                 <Text style={styles.infoLabel}>Client name</Text>
                 <Text style={styles.infoValue}>
                   {data.firstName} {data.lastName}
                 </Text>
               </View>
-              <View style={styles.infoRow}>
+              <Spacer h={3} />
+              <View style={styles.row}>
                 <Text style={styles.infoLabel}>Client phone number</Text>
                 <Text style={styles.infoValue}>{data.phone}</Text>
               </View>
-              <View style={styles.infoRow}>
+              <Spacer h={3} />
+              <View style={styles.row}>
                 <Text style={styles.infoLabel}>Service type</Text>
                 <Text style={styles.infoValue}>
                   {data.serviceType || (data.roundTrip ? "Round trip" : "One way")}
                 </Text>
               </View>
-              <View style={styles.infoRow}>
+              <Spacer h={3} />
+              <View style={styles.row}>
                 <Text style={styles.infoLabel}>E-mail</Text>
                 <Text style={styles.infoValueLink}>{data.email}</Text>
               </View>
-              <View style={styles.infoRow}>
+              <Spacer h={3} />
+              <View style={styles.row}>
                 <Text style={styles.infoLabel}>Date</Text>
                 <Text style={styles.infoValue}>{data.date || "-"}</Text>
               </View>
             </View>
 
+            <View style={{ width: 122 }} />
+
             <View style={styles.logoBox}>
-              <View style={styles.logoBadge}>
-                <Text style={styles.logoText1}>CABO</Text>
-                <Text style={styles.logoText2}>101</Text>
-              </View>
-              <Text style={styles.logoSubtitle}>TRAVEL GUIDE</Text>
+              {HAS_REAL_ASSETS ? (
+                // <Image src={cabo101Logo} style={styles.logoImage} />
+                <View style={styles.logoImage} />
+              ) : (
+                <>
+                  <View style={styles.logoBadge}>
+                    <Text style={styles.logoText1}>CABO</Text>
+                    <Text style={styles.logoText2}>101</Text>
+                  </View>
+                  <Spacer h={4} />
+                  <Text style={styles.logoSubtitle}>TRAVEL GUIDE</Text>
+                </>
+              )}
             </View>
           </View>
+
+          <Spacer h={14} />
 
           {/* Contacto */}
           <Text style={styles.contactLine}>
             Contact us: +52 (624) 320-98-77 or +52 (624) 174-63-53
           </Text>
+          <Spacer h={2} />
           <Text style={styles.contactLine}>E-mail: booking@cabo101.com.mx</Text>
 
-          {/* Título de sección */}
-          <View style={styles.sectionTitleBar}>
+          <Spacer h={16} />
+
+          {/* Título de sección: franja con degradado, ancho completo (532pt) */}
+          <SectionBand id="gradTitle" width={GRID.content} height={20}>
             <Text style={styles.sectionTitleText}>TRANSPORTATION SERVICE</Text>
-          </View>
+          </SectionBand>
+
+          <Spacer h={10} />
 
           {/* Outbound */}
-          <View style={styles.subSectionHeader}>
+          <SectionBand id="gradOutbound" width={GRID.content} height={16}>
             <Text style={styles.subSectionHeaderText}>Outbound</Text>
-          </View>
-          <View style={styles.fromToRow}>
+          </SectionBand>
+          <Spacer h={6} />
+          <View style={styles.row}>
             <View style={styles.fromToCol}>
               <Text style={styles.smallLabel}>From:</Text>
+              <Spacer h={2} />
               <Text style={styles.boldValue}>{data.pickupLocation}</Text>
             </View>
+            <View style={{ width: 12 }} />
             <View style={styles.fromToCol}>
               <Text style={styles.smallLabel}>To:</Text>
+              <Spacer h={2} />
               <Text style={styles.boldValue}>{data.dropoffLocation}</Text>
             </View>
           </View>
-          <View style={styles.detailsRow}>
+          <Spacer h={8} />
+          <View style={styles.row}>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Passengers:</Text>
+              <Spacer h={2} />
               <Text style={styles.boldValue}>{data.passengers}</Text>
             </View>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Vehicle:</Text>
+              <Spacer h={2} />
               <Text style={styles.boldValue}>{data.vehicleType}</Text>
             </View>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Date:</Text>
+              <Spacer h={2} />
               <Text style={styles.boldValue}>{data.pickupDate}</Text>
             </View>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Pickup time:</Text>
+              <Spacer h={2} />
               <Text style={styles.boldValue}>{data.pickupTime || "Pend"}</Text>
             </View>
           </View>
@@ -414,40 +504,50 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
           {/* Return */}
           {data.roundTrip && (
             <>
-              <View style={styles.subSectionHeader}>
+              <Spacer h={14} />
+              <SectionBand id="gradReturn" width={GRID.content} height={16}>
                 <Text style={styles.subSectionHeaderText}>Return</Text>
-              </View>
-              <View style={styles.fromToRow}>
+              </SectionBand>
+              <Spacer h={6} />
+              <View style={styles.row}>
                 <View style={styles.fromToCol}>
                   <Text style={styles.smallLabel}>From:</Text>
+                  <Spacer h={2} />
                   <Text style={styles.boldValue}>
                     {data.returnPickupLocation || "-"}
                   </Text>
                 </View>
+                <View style={{ width: 12 }} />
                 <View style={styles.fromToCol}>
                   <Text style={styles.smallLabel}>To:</Text>
+                  <Spacer h={2} />
                   <Text style={styles.boldValue}>
                     {data.returnDropoffLocation || "-"}
                   </Text>
                 </View>
               </View>
-              <View style={styles.detailsRow}>
+              <Spacer h={8} />
+              <View style={styles.row}>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Passengers</Text>
+                  <Spacer h={2} />
                   <Text style={styles.boldValue}>{data.passengers}</Text>
                 </View>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Vehicle</Text>
+                  <Spacer h={2} />
                   <Text style={styles.boldValue}>{data.vehicleType}</Text>
                 </View>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Date</Text>
+                  <Spacer h={2} />
                   <Text style={styles.boldValue}>
                     {data.returnPickupDate || "-"}
                   </Text>
                 </View>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Pickup time</Text>
+                  <Spacer h={2} />
                   <Text style={styles.boldValue}>
                     {data.returnPickupTime || "Pend"}
                   </Text>
@@ -456,60 +556,102 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
             </>
           )}
 
-          {/* Servicio adicional */}
-          <View style={styles.additionalServiceBlock}>
-            <Text style={styles.additionalServiceLabel}>Additional service</Text>
-            <Text>{data.additionalServiceNotes || "N/A"}</Text>
-          </View>
+          <Spacer h={14} />
 
-          {/* Costos + métodos de pago */}
-          <View style={styles.bottomRow}>
+          {/* Servicio adicional */}
+          <Text style={styles.additionalServiceLabel}>Additional service</Text>
+          <Spacer h={2} />
+          <Text>{data.additionalServiceNotes || "N/A"}</Text>
+
+          <Spacer h={18} />
+
+          {/* Costos (230pt) + separador (172pt) + métodos de pago (130pt) = 532pt */}
+          <View style={styles.row}>
             <View style={styles.costBox}>
-              <View style={styles.costHeader}>
+              <SectionBand id="gradCostHeader" width={230} height={16}>
                 <Text style={styles.costHeaderText}>Cost USD</Text>
-              </View>
-              <View style={styles.costRow}>
+              </SectionBand>
+              <Spacer h={6} />
+
+              <View style={styles.row}>
                 <Text style={styles.costLabel}>Subtotal</Text>
                 <Text style={styles.costValue}>${subtotal.toFixed(2)}</Text>
               </View>
-              <View style={styles.costRow}>
+              <Spacer h={4} />
+              <View style={styles.row}>
                 <Text style={styles.costLabel}>Additional service</Text>
                 <Text style={styles.costValueUnderline}>
                   ${addService.toFixed(2)}
                 </Text>
               </View>
-              <View style={styles.costRowBold}>
+              <Spacer h={4} />
+              <View style={styles.row}>
                 <Text style={styles.costLabelBold}>Total</Text>
                 <Text style={styles.costValueBold}>
                   ${grandTotal.toFixed(2)}
                 </Text>
               </View>
-              <View style={styles.costRow}>
+              <Spacer h={4} />
+              <View style={styles.row}>
                 <Text style={styles.costLabel}>
                   Paid amount with {data.paidMethod || "N/A"}
                 </Text>
                 <Text style={styles.costValueUnderline}>${paid.toFixed(2)}</Text>
               </View>
-              <View style={styles.costRowBold}>
+              <Spacer h={4} />
+              <View style={styles.row}>
                 <Text style={styles.costLabelBold}>To pay</Text>
                 <Text style={styles.costValueBold}>${balance}</Text>
               </View>
             </View>
 
-            <View style={styles.weAcceptBlock}>
+            <View style={{ width: 172 }} />
+
+            <View style={{ width: 130 }}>
               <Text style={styles.weAcceptLabel}>We accept</Text>
-              <View style={styles.paymentIconsRow}>
-                <Text style={styles.paymentIcon}>Apple Pay</Text>
-                <Text style={styles.paymentIcon}>AMEX</Text>
-                <Text style={styles.paymentIcon}>Mastercard</Text>
-                <Text style={styles.paymentIcon}>VISA</Text>
+              <Spacer h={6} />
+              <View style={[styles.row, { justifyContent: "flex-end" }]}>
+                {HAS_REAL_ASSETS ? (
+                  <>
+                    {/* <Image src={applePayIcon} style={styles.paymentIcon} />
+                    <Image src={amexIcon} style={styles.paymentIcon} />
+                    <Image src={mastercardIcon} style={styles.paymentIcon} />
+                    <Image src={visaIcon} style={styles.paymentIcon} /> */}
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.paymentIconPlaceholder}>
+                      <Text style={styles.paymentIconPlaceholderText}>
+                        Apple Pay
+                      </Text>
+                    </View>
+                    <View style={styles.paymentIconPlaceholder}>
+                      <Text style={styles.paymentIconPlaceholderText}>
+                        AMEX
+                      </Text>
+                    </View>
+                    <View style={styles.paymentIconPlaceholder}>
+                      <Text style={styles.paymentIconPlaceholderText}>
+                        Mastercard
+                      </Text>
+                    </View>
+                    <View style={styles.paymentIconPlaceholder}>
+                      <Text style={styles.paymentIconPlaceholderText}>
+                        VISA
+                      </Text>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </View>
 
+          <Spacer h={20} />
+
           {/* Términos y condiciones */}
           <View style={styles.termsBox}>
             <Text style={styles.termsTitle}>Terms & Conditions</Text>
+            <Spacer h={6} />
             <Text style={styles.termsText}>
               This ticket is personal and non-transferable. Must be presented at
               boarding. Lost or damaged tickets may be considered invalid. Valid
@@ -529,7 +671,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
           </View>
         </View>
 
-        <GradientBar flip />
+        <GradientBar />
       </Page>
     </Document>
   );
