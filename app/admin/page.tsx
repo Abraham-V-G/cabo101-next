@@ -1,7 +1,5 @@
 // app/admin/page.tsx
 
-// app/admin/page.tsx
-
 "use client";
 
 import { useState, useCallback } from "react";
@@ -130,9 +128,9 @@ export default function AdminDashboard() {
     async (data: any) => {
       const payload = buildBookingPayload({
         transaction_amount: Number(transactionAmount),
-        firstName: firstName || "Admin",
-        lastName: lastName || "Payment",
-        email: email || "admin@cabo101.com",
+        firstName: firstName || "",
+        lastName: lastName || "",
+        email: email || "",
         phone,
         summary: summary || "Transportation Service",
         pickupLocation,
