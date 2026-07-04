@@ -83,9 +83,9 @@ export default function AdminDashboard() {
     if (!transactionAmount) return alert("❌ El monto es obligatorio");
     const payload = buildBookingPayload({
       transaction_amount: Number(transactionAmount),
-      firstName: firstName || "Admin",
-      lastName: lastName || "Payment",
-      email: email || "admin@cabo101.com",
+      firstName: firstName || "",
+      lastName: lastName || "",
+      email: email || "",
       phone,
       summary: summary || "Transportation Service",
       pickupLocation,
