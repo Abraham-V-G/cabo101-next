@@ -2,6 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// IMPORTANTE: sin esto, Next.js puede cachear la respuesta de este GET
+// (Full Route Cache) y servir siempre el mismo resultado hasta que el
+// proceso se reinicie (por eso "solo se veía tras pm2 restart"). Estas
+// dos líneas fuerzan a que cada request consulte la base de datos real.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function POST(req: NextRequest) {
   try {
     const { url, section, caption } = await req.json();
@@ -35,5 +42,9 @@ export async function GET(req: NextRequest) {
     orderBy: { order: "asc" },
   });
 
-  return NextResponse.json(photos);
+  return NextResponse.json(photos, {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
 }
