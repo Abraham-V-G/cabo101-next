@@ -60,15 +60,12 @@ export default function OurTeam() {
     <section className="py-16 md:py-24 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 mb-10 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Nuestro Equipo
+          This is Cabo 101
         </h2>
-        <p className="text-gray-500 mt-2">
-          Conoce a las personas detrás de cada viaje
-        </p>
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-400">Cargando...</p>
+        <p className="text-center text-gray-400">Loading...</p>
       ) : (
         <div
           className="relative w-full"

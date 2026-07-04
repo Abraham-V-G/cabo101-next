@@ -33,7 +33,7 @@ export default function Experience() {
 
   const defaultPerks = [
     {
-      icon: "/images/grocery.png",
+      icon: "/images/Grocery.png",
       title: "Grocery stop",
       description: "We'll swing by the market on the way — arrive stocked and ready.",
     },
