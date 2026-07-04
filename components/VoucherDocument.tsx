@@ -26,18 +26,27 @@ import {
 //
 // import { Font } from "@react-pdf/renderer";
 // Font.register({
-//   family: "Helvetica",
+//   family: "Roboto",
 //   src: "https://TU-DOMINIO-CONFIABLE/fonts/Roboto-Regular.ttf",
 // });
 // Font.register({
-//   family: "Helvetica-Bold",
+//   family: "Roboto-Bold",
 //   src: "https://TU-DOMINIO-CONFIABLE/fonts/Roboto-Bold.ttf",
 // });
 
-// Reemplaza estos imports con los archivos reales (logo oficial de Cabo 101
-// y los íconos de métodos de pago con licencia de uso). No se pueden generar
-// aquí por tratarse de marcas registradas de terceros.
-// import cabo101Logo from "./assets/cabo101-logo.png";
+// Logo oficial de Cabo 101. Se referencia como ruta de archivo estático
+// (típico de una carpeta /public en Next.js/CRA/Vite) en vez de un
+// import de módulo, ya que react-pdf's <Image> acepta directamente una
+// URL o ruta y la resuelve contra el origen actual del sitio.
+const cabo101Logo = "/images/logo-correo.png";
+
+// Íconos de métodos de pago (Visa, Mastercard, Amex, Apple Pay): son
+// marcas registradas de terceros, así que no se pueden generar ni
+// dibujar aquí (ni siquiera como SVG "hecho a mano" — sigue siendo una
+// reproducción de la marca). Descarga los assets oficiales desde los
+// sitios de marca de cada red (brand.visa.com, brand.mastercard.com,
+// el portal de comercio de Amex, y las guías de Apple Pay para
+// desarrolladores) y colócalos aquí:
 // import applePayIcon from "./assets/apple-pay.png";
 // import amexIcon from "./assets/amex.png";
 // import mastercardIcon from "./assets/mastercard.png";
@@ -130,6 +139,7 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 130,
     height: 140,
+    objectFit: "contain",
   },
   logoText1: {
     fontFamily: "Helvetica-Bold",
@@ -434,10 +444,11 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
   const balance = (grandTotal - paid).toFixed(2);
   const folio = data.folio || data.voucherNumber || "025";
 
-  // Set a esto a true una vez que hayas conectado los assets reales
-  // (logo de Cabo 101 e íconos de pago) para que se rendericen como
-  // <Image> en lugar del marcador de texto de respaldo.
-  const HAS_REAL_ASSETS = false;
+  // El logo ya está conectado (ver import de cabo101Logo arriba).
+  const HAS_LOGO = true;
+  // Los íconos de pago siguen pendientes: coloca los assets oficiales de
+  // cada marca y cambia esto a true (ver comentario junto a los imports).
+  const HAS_PAYMENT_ICONS = false;
 
   return (
     <Document>
@@ -486,9 +497,11 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
             <View style={{ width: 90 }} />
 
             <View style={styles.logoBox}>
-              {HAS_REAL_ASSETS ? (
-                // <Image src={cabo101Logo} style={styles.logoImage} />
-                <View style={styles.logoImage} />
+              {HAS_LOGO ? (
+                <Image
+                  src={cabo101Logo}
+                  style={styles.logoImage}
+                />
               ) : (
                 <>
                   <View style={styles.logoBadge}>
@@ -663,7 +676,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
               <Text style={styles.weAcceptLabel}>We accept</Text>
               <Spacer h={6} />
               <View style={[styles.row, { justifyContent: "flex-end" }]}>
-                {HAS_REAL_ASSETS ? (
+                {HAS_PAYMENT_ICONS ? (
                   <>
                     {/* <Image src={applePayIcon} style={styles.paymentIcon} />
                     <Image src={amexIcon} style={styles.paymentIcon} />
