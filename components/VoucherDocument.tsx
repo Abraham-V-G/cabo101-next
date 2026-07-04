@@ -11,21 +11,28 @@ import {
   Defs,
   LinearGradient,
   Stop,
-  Font,
 } from "@react-pdf/renderer";
 
-// Fuente tipo Arial/Calibri (Helvetica por defecto de React PDF se ve
-// notablemente distinta al PDF original, que usa una sans-serif más
-// redondeada). Roboto es la alternativa más cercana disponible como
-// webfont libre.
-Font.register({
-  family: "Roboto",
-  src: "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.ttf",
-});
-Font.register({
-  family: "Roboto-Bold",
-  src: "https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAw.ttf",
-});
+// NOTA sobre tipografía: se probó registrar Roboto vía Font.register()
+// para acercarse más a Arial/Calibri, pero eso requiere que el entorno
+// donde se renderiza el PDF pueda hacer fetch a fonts.gstatic.com — en
+// muchos entornos (funciones serverless, sandboxes, sin acceso a
+// internet saliente) esa petición falla con 404/timeout y el PDF nunca
+// se genera. Por eso usamos las 14 fuentes estándar embebidas en el
+// formato PDF (Helvetica / Helvetica-Bold), que no requieren red y
+// siempre están disponibles. Si tu entorno SÍ tiene salida a internet
+// (o puedes alojar el .ttf tú mismo) puedes volver a registrar una
+// fuente propia, ver ejemplo comentado abajo.
+//
+// import { Font } from "@react-pdf/renderer";
+// Font.register({
+//   family: "Helvetica",
+//   src: "https://TU-DOMINIO-CONFIABLE/fonts/Roboto-Regular.ttf",
+// });
+// Font.register({
+//   family: "Helvetica-Bold",
+//   src: "https://TU-DOMINIO-CONFIABLE/fonts/Roboto-Bold.ttf",
+// });
 
 // Reemplaza estos imports con los archivos reales (logo oficial de Cabo 101
 // y los íconos de métodos de pago con licencia de uso). No se pueden generar
@@ -67,7 +74,7 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     paddingHorizontal: GRID.left,
     fontSize: 9,
-    fontFamily: "Roboto",
+    fontFamily: "Helvetica",
     color: COLORS.textDark,
   },
   gradientBar: {
@@ -98,11 +105,11 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     width: 140,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
   },
   infoValueLink: {
     width: 140,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     color: COLORS.midGreen,
   },
   logoBox: {
@@ -125,20 +132,20 @@ const styles = StyleSheet.create({
     height: 140,
   },
   logoText1: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 26,
     color: COLORS.darkGreen,
     letterSpacing: 0.5,
   },
   logoText2: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 26,
     color: COLORS.darkGreen,
     letterSpacing: 0.5,
   },
   logoSubtitle: {
     fontSize: 8,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     color: COLORS.darkGreen,
     letterSpacing: 1.2,
   },
@@ -149,12 +156,12 @@ const styles = StyleSheet.create({
   // --- Barras de título con degradado ---
   sectionTitleText: {
     fontSize: 11,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     color: COLORS.darkGreen,
     textAlign: "center",
   },
   subSectionHeaderText: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 10,
     color: COLORS.textDark,
     paddingLeft: 6,
@@ -168,7 +175,7 @@ const styles = StyleSheet.create({
     color: COLORS.textGray,
   },
   boldValue: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 9.5,
   },
 
@@ -178,7 +185,7 @@ const styles = StyleSheet.create({
   },
 
   additionalServiceLabel: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
   },
 
   // --- Tabla de costos: columnas fijas, sin space-between ---
@@ -186,7 +193,7 @@ const styles = StyleSheet.create({
     width: 230,
   },
   costHeaderText: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 10,
     textAlign: "center",
     paddingVertical: 3,
@@ -210,16 +217,16 @@ const styles = StyleSheet.create({
   },
   costLabelBold: {
     width: 150,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
   },
   costValueBold: {
     width: 66,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     textAlign: "right",
   },
 
   weAcceptLabel: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 9,
     textAlign: "right",
   },
@@ -240,7 +247,7 @@ const styles = StyleSheet.create({
   },
   paymentIconPlaceholderText: {
     fontSize: 5.5,
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     textAlign: "center",
   },
 
@@ -250,7 +257,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   termsTitle: {
-    fontFamily: "Roboto-Bold",
+    fontFamily: "Helvetica-Bold",
     fontSize: 9.5,
   },
   termsText: {
