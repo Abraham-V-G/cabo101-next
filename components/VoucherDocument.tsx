@@ -11,7 +11,21 @@ import {
   Defs,
   LinearGradient,
   Stop,
+  Font,
 } from "@react-pdf/renderer";
+
+// Fuente tipo Arial/Calibri (Helvetica por defecto de React PDF se ve
+// notablemente distinta al PDF original, que usa una sans-serif más
+// redondeada). Roboto es la alternativa más cercana disponible como
+// webfont libre.
+Font.register({
+  family: "Roboto",
+  src: "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.ttf",
+});
+Font.register({
+  family: "Roboto-Bold",
+  src: "https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAw.ttf",
+});
 
 // Reemplaza estos imports con los archivos reales (logo oficial de Cabo 101
 // y los íconos de métodos de pago con licencia de uso). No se pueden generar
@@ -53,7 +67,7 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     paddingHorizontal: GRID.left,
     fontSize: 9,
-    fontFamily: "Helvetica",
+    fontFamily: "Roboto",
     color: COLORS.textDark,
   },
   gradientBar: {
@@ -74,7 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    width: 300, // GRID: ~6.7 columnas
+    width: 312, // GRID: ~7 columnas
   },
   infoLabel: {
     width: 130,
@@ -83,48 +97,50 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
   infoValue: {
-    width: 128, // 300 - 28(padding) - 130(label) - 8(margin) - 6 margen de seguridad
-    fontFamily: "Helvetica-Bold",
+    width: 140,
+    fontFamily: "Roboto-Bold",
   },
   infoValueLink: {
-    width: 128,
-    fontFamily: "Helvetica-Bold",
+    width: 140,
+    fontFamily: "Roboto-Bold",
     color: COLORS.midGreen,
   },
   logoBox: {
     alignItems: "center",
-    width: 110,
+    width: 130,
   },
   logoBadge: {
     borderWidth: 2,
     borderColor: COLORS.darkGreen,
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     alignItems: "center",
-    width: 95,
+    width: 118,
+    height: 100,
+    justifyContent: "center",
   },
   logoImage: {
-    width: 95,
-    height: 110,
+    width: 130,
+    height: 140,
   },
   logoText1: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 20,
+    fontFamily: "Roboto-Bold",
+    fontSize: 26,
     color: COLORS.darkGreen,
     letterSpacing: 0.5,
   },
   logoText2: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 20,
+    fontFamily: "Roboto-Bold",
+    fontSize: 26,
     color: COLORS.darkGreen,
     letterSpacing: 0.5,
   },
   logoSubtitle: {
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    fontFamily: "Roboto-Bold",
     color: COLORS.darkGreen,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
   contactLine: {
     color: COLORS.textGray,
@@ -133,12 +149,12 @@ const styles = StyleSheet.create({
   // --- Barras de título con degradado ---
   sectionTitleText: {
     fontSize: 11,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     color: COLORS.darkGreen,
     textAlign: "center",
   },
   subSectionHeaderText: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     fontSize: 10,
     color: COLORS.textDark,
     paddingLeft: 6,
@@ -152,7 +168,7 @@ const styles = StyleSheet.create({
     color: COLORS.textGray,
   },
   boldValue: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     fontSize: 9.5,
   },
 
@@ -162,7 +178,7 @@ const styles = StyleSheet.create({
   },
 
   additionalServiceLabel: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
   },
 
   // --- Tabla de costos: columnas fijas, sin space-between ---
@@ -170,7 +186,7 @@ const styles = StyleSheet.create({
     width: 230,
   },
   costHeaderText: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     fontSize: 10,
     textAlign: "center",
     paddingVertical: 3,
@@ -186,22 +202,24 @@ const styles = StyleSheet.create({
   costValueUnderline: {
     width: 66,
     textAlign: "right",
+  },
+  costUnderline: {
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.textDark,
     paddingBottom: 1,
   },
   costLabelBold: {
     width: 150,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
   },
   costValueBold: {
     width: 66,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     textAlign: "right",
   },
 
   weAcceptLabel: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     fontSize: 9,
     textAlign: "right",
   },
@@ -222,22 +240,22 @@ const styles = StyleSheet.create({
   },
   paymentIconPlaceholderText: {
     fontSize: 5.5,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     textAlign: "center",
   },
 
   termsBox: {
     backgroundColor: COLORS.panelGreenLight,
-    borderRadius: 4,
-    padding: 12,
+    borderRadius: 2,
+    padding: 16,
   },
   termsTitle: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Roboto-Bold",
     fontSize: 9.5,
   },
   termsText: {
     fontSize: 7.5,
-    lineHeight: 1.5,
+    lineHeight: 1.7,
     color: COLORS.textDark,
   },
 });
@@ -250,11 +268,13 @@ function GradientBar() {
     <Svg style={styles.gradientBar} viewBox="0 0 612 16">
       <Defs>
         <LinearGradient id="edgeGrad" x1="0" y1="0" x2="1" y2="0">
-          <Stop offset="0%" stopColor="#d2efde" stopOpacity={1} />
-          <Stop offset="25%" stopColor="#e6f6ed" stopOpacity={1} />
-          <Stop offset="50%" stopColor="#ffffff" stopOpacity={1} />
-          <Stop offset="75%" stopColor="#e6f6ed" stopOpacity={1} />
-          <Stop offset="100%" stopColor="#d2efde" stopOpacity={1} />
+          <Stop offset="0%" stopColor="#bddfc8" stopOpacity={1} />
+          <Stop offset="15%" stopColor="#cae8d4" stopOpacity={1} />
+          <Stop offset="35%" stopColor="#d9efe1" stopOpacity={1} />
+          <Stop offset="50%" stopColor="#eef8f2" stopOpacity={1} />
+          <Stop offset="65%" stopColor="#d9efe1" stopOpacity={1} />
+          <Stop offset="85%" stopColor="#cae8d4" stopOpacity={1} />
+          <Stop offset="100%" stopColor="#bddfc8" stopOpacity={1} />
         </LinearGradient>
       </Defs>
       <Rect x="0" y="0" width="612" height="16" fill="url(#edgeGrad)" />
@@ -264,7 +284,8 @@ function GradientBar() {
 
 // Barra de degradado para encabezados de sección (Outbound, Return,
 // Cost USD, Transportation Service). Hecha con Svg/Rect en vez de
-// backgroundColor plano, para lograr el mismo acabado difuminado.
+// backgroundColor plano, con varias paradas para lograr un difuminado
+// suave en vez de un corte lineal de dos colores.
 function GradientBand({
   id,
   width,
@@ -281,9 +302,11 @@ function GradientBand({
     >
       <Defs>
         <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
-          <Stop offset="0%" stopColor="#c7e8d4" stopOpacity={1} />
-          <Stop offset="60%" stopColor="#dcf1e4" stopOpacity={1} />
-          <Stop offset="100%" stopColor="#f4faf6" stopOpacity={1} />
+          <Stop offset="0%" stopColor="#b9dfc7" stopOpacity={1} />
+          <Stop offset="20%" stopColor="#c9e9d4" stopOpacity={1} />
+          <Stop offset="45%" stopColor="#ddf1e3" stopOpacity={1} />
+          <Stop offset="70%" stopColor="#eef8f2" stopOpacity={1} />
+          <Stop offset="100%" stopColor="#f7fcf9" stopOpacity={1} />
         </LinearGradient>
       </Defs>
       <Rect x="0" y="0" width={width} height={height} fill={`url(#${id})`} />
@@ -319,6 +342,37 @@ function SectionBand({
       >
         {children}
       </View>
+    </View>
+  );
+}
+
+// Fila de la tabla de costos con ancho fijo garantizado para label y valor,
+// para que Subtotal / Additional service / Total / Paid / To pay queden
+// todos perfectamente alineados sin depender de justify-content.
+function CostRow({
+  label,
+  value,
+  bold = false,
+  underline = false,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  underline?: boolean;
+}) {
+  return (
+    <View style={styles.row}>
+      <Text style={bold ? styles.costLabelBold : styles.costLabel}>
+        {label}
+      </Text>
+      <Text
+        style={[
+          bold ? styles.costValueBold : styles.costValue,
+          underline ? styles.costUnderline : {},
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -384,7 +438,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
         <GradientBar />
 
         <View style={styles.contentWrap}>
-          {/* Encabezado: panel de info (300pt) + separador (122pt) + logo (110pt) = 532pt */}
+          {/* Encabezado: panel de info (312pt) + separador (90pt) + logo (130pt) = 532pt */}
           <View style={styles.row}>
             <View style={styles.infoPanel}>
               <View style={styles.row}>
@@ -422,7 +476,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
               </View>
             </View>
 
-            <View style={{ width: 122 }} />
+            <View style={{ width: 90 }} />
 
             <View style={styles.logoBox}>
               {HAS_REAL_ASSETS ? (
@@ -441,7 +495,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
             </View>
           </View>
 
-          <Spacer h={14} />
+          <Spacer h={10} />
 
           {/* Contacto */}
           <Text style={styles.contactLine}>
@@ -450,53 +504,53 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
           <Spacer h={2} />
           <Text style={styles.contactLine}>E-mail: booking@cabo101.com.mx</Text>
 
-          <Spacer h={16} />
+          <Spacer h={12} />
 
           {/* Título de sección: franja con degradado, ancho completo (532pt) */}
           <SectionBand id="gradTitle" width={GRID.content} height={20}>
             <Text style={styles.sectionTitleText}>TRANSPORTATION SERVICE</Text>
           </SectionBand>
 
-          <Spacer h={10} />
+          <Spacer h={8} />
 
           {/* Outbound */}
           <SectionBand id="gradOutbound" width={GRID.content} height={16}>
             <Text style={styles.subSectionHeaderText}>Outbound</Text>
           </SectionBand>
-          <Spacer h={6} />
+          <Spacer h={5} />
           <View style={styles.row}>
             <View style={styles.fromToCol}>
               <Text style={styles.smallLabel}>From:</Text>
-              <Spacer h={2} />
+              <Spacer h={1} />
               <Text style={styles.boldValue}>{data.pickupLocation}</Text>
             </View>
             <View style={{ width: 12 }} />
             <View style={styles.fromToCol}>
               <Text style={styles.smallLabel}>To:</Text>
-              <Spacer h={2} />
+              <Spacer h={1} />
               <Text style={styles.boldValue}>{data.dropoffLocation}</Text>
             </View>
           </View>
-          <Spacer h={8} />
+          <Spacer h={6} />
           <View style={styles.row}>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Passengers:</Text>
-              <Spacer h={2} />
+              <Spacer h={1} />
               <Text style={styles.boldValue}>{data.passengers}</Text>
             </View>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Vehicle:</Text>
-              <Spacer h={2} />
+              <Spacer h={1} />
               <Text style={styles.boldValue}>{data.vehicleType}</Text>
             </View>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Date:</Text>
-              <Spacer h={2} />
+              <Spacer h={1} />
               <Text style={styles.boldValue}>{data.pickupDate}</Text>
             </View>
             <View style={styles.detailsCol}>
               <Text style={styles.smallLabel}>Pickup time:</Text>
-              <Spacer h={2} />
+              <Spacer h={1} />
               <Text style={styles.boldValue}>{data.pickupTime || "Pend"}</Text>
             </View>
           </View>
@@ -504,15 +558,15 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
           {/* Return */}
           {data.roundTrip && (
             <>
-              <Spacer h={14} />
+              <Spacer h={10} />
               <SectionBand id="gradReturn" width={GRID.content} height={16}>
                 <Text style={styles.subSectionHeaderText}>Return</Text>
               </SectionBand>
-              <Spacer h={6} />
+              <Spacer h={5} />
               <View style={styles.row}>
                 <View style={styles.fromToCol}>
                   <Text style={styles.smallLabel}>From:</Text>
-                  <Spacer h={2} />
+                  <Spacer h={1} />
                   <Text style={styles.boldValue}>
                     {data.returnPickupLocation || "-"}
                   </Text>
@@ -520,34 +574,34 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
                 <View style={{ width: 12 }} />
                 <View style={styles.fromToCol}>
                   <Text style={styles.smallLabel}>To:</Text>
-                  <Spacer h={2} />
+                  <Spacer h={1} />
                   <Text style={styles.boldValue}>
                     {data.returnDropoffLocation || "-"}
                   </Text>
                 </View>
               </View>
-              <Spacer h={8} />
+              <Spacer h={6} />
               <View style={styles.row}>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Passengers</Text>
-                  <Spacer h={2} />
+                  <Spacer h={1} />
                   <Text style={styles.boldValue}>{data.passengers}</Text>
                 </View>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Vehicle</Text>
-                  <Spacer h={2} />
+                  <Spacer h={1} />
                   <Text style={styles.boldValue}>{data.vehicleType}</Text>
                 </View>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Date</Text>
-                  <Spacer h={2} />
+                  <Spacer h={1} />
                   <Text style={styles.boldValue}>
                     {data.returnPickupDate || "-"}
                   </Text>
                 </View>
                 <View style={styles.detailsCol}>
                   <Text style={styles.smallLabel}>Pickup time</Text>
-                  <Spacer h={2} />
+                  <Spacer h={1} />
                   <Text style={styles.boldValue}>
                     {data.returnPickupTime || "Pend"}
                   </Text>
@@ -556,14 +610,14 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
             </>
           )}
 
-          <Spacer h={14} />
+          <Spacer h={10} />
 
           {/* Servicio adicional */}
           <Text style={styles.additionalServiceLabel}>Additional service</Text>
           <Spacer h={2} />
           <Text>{data.additionalServiceNotes || "N/A"}</Text>
 
-          <Spacer h={18} />
+          <Spacer h={12} />
 
           {/* Costos (230pt) + separador (172pt) + métodos de pago (130pt) = 532pt */}
           <View style={styles.row}>
@@ -573,36 +627,27 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
               </SectionBand>
               <Spacer h={6} />
 
-              <View style={styles.row}>
-                <Text style={styles.costLabel}>Subtotal</Text>
-                <Text style={styles.costValue}>${subtotal.toFixed(2)}</Text>
-              </View>
+              <CostRow label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
               <Spacer h={4} />
-              <View style={styles.row}>
-                <Text style={styles.costLabel}>Additional service</Text>
-                <Text style={styles.costValueUnderline}>
-                  ${addService.toFixed(2)}
-                </Text>
-              </View>
+              <CostRow
+                label="Additional service"
+                value={`$${addService.toFixed(2)}`}
+                underline
+              />
               <Spacer h={4} />
-              <View style={styles.row}>
-                <Text style={styles.costLabelBold}>Total</Text>
-                <Text style={styles.costValueBold}>
-                  ${grandTotal.toFixed(2)}
-                </Text>
-              </View>
+              <CostRow
+                label="Total"
+                value={`$${grandTotal.toFixed(2)}`}
+                bold
+              />
               <Spacer h={4} />
-              <View style={styles.row}>
-                <Text style={styles.costLabel}>
-                  Paid amount with {data.paidMethod || "N/A"}
-                </Text>
-                <Text style={styles.costValueUnderline}>${paid.toFixed(2)}</Text>
-              </View>
+              <CostRow
+                label={`Paid amount with ${data.paidMethod || "N/A"}`}
+                value={`$${paid.toFixed(2)}`}
+                underline
+              />
               <Spacer h={4} />
-              <View style={styles.row}>
-                <Text style={styles.costLabelBold}>To pay</Text>
-                <Text style={styles.costValueBold}>${balance}</Text>
-              </View>
+              <CostRow label="To pay" value={`$${balance}`} bold />
             </View>
 
             <View style={{ width: 172 }} />
@@ -646,7 +691,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
             </View>
           </View>
 
-          <Spacer h={20} />
+          <Spacer h={14} />
 
           {/* Términos y condiciones */}
           <View style={styles.termsBox}>
