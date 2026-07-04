@@ -255,20 +255,11 @@ export default function PayContent() {
                   setShowPayment(true);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="w-full bg-[#2d6cdf] text-white py-4 rounded-2xl font-semibold shadow-md hover:opacity-90 transition"
+                className="w-full bg-[#2d6cdf] text-white py-4 rounded-2xl font-semibold shadow-md hover:border-black transition"
               >
                 Pay
               </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="payment"
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
-            >
-              {/* Leyenda antes de pagar: recordatorio para revisar la
-                  tarjeta y evitar rechazos evitables. */}
+
               <div className="flex gap-3 border-2 border-[#2d6cdf]/30 bg-[#2d6cdf]/5 rounded-2xl p-4">
                 <span className="text-xl leading-none">🔒</span>
                 <p className="text-sm text-gray-700 leading-relaxed">
@@ -278,6 +269,15 @@ export default function PayContent() {
                   declining the charge.
                 </p>
               </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="payment"
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+
 
               {/* Banner de rechazo: aparece solo después de un intento
                   fallido, sin sacar al cliente de esta página. */}
