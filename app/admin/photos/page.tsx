@@ -158,6 +158,7 @@ export default function PhotosPage() {
                 <option value="experience-icons">Experience Icons</option>
                 <option value="popular-transfers">Popular Transfers</option>
                 <option value="testimonials-avatars">Testimonials Avatars</option>
+                <option value="our-team">Our Team (fotos y videos)</option>
                 <option value="gallery">Galería</option>
               </select>
             </div>

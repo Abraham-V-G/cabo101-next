@@ -77,6 +77,18 @@ function Spacer({ h }: { h: number }) {
   return <View style={{ height: h }} />;
 }
 
+// Da formato "June 24, 2026" a una fecha, igual que en el voucher de
+// referencia. Se usa como fallback cuando no se pasa data.date, para que
+// el campo "Date" siempre muestre la fecha de emisión del voucher (hoy)
+// en vez de quedar vacío o mostrando "-".
+function formatIssueDate(d: Date): string {
+  return d.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 0,
@@ -443,6 +455,9 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
   const grandTotal = subtotal + addService;
   const balance = (grandTotal - paid).toFixed(2);
   const folio = data.folio || data.voucherNumber || "025";
+  // Si no se pasa data.date explícitamente, se usa la fecha de generación
+  // del PDF (hoy), formateada igual que en el voucher de referencia.
+  const issueDate = data.date || formatIssueDate(new Date());
 
   // El logo ya está conectado (ver import de cabo101Logo arriba).
   const HAS_LOGO = true;
@@ -490,7 +505,7 @@ export default function VoucherDocument({ data }: { data: VoucherData }) {
               <Spacer h={3} />
               <View style={styles.row}>
                 <Text style={styles.infoLabel}>Date</Text>
-                <Text style={styles.infoValue}>{data.date || "-"}</Text>
+                <Text style={styles.infoValue}>{issueDate}</Text>
               </View>
             </View>
 

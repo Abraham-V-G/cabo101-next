@@ -23,9 +23,17 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+// Soporta un filtro opcional por sección: /api/photos?section=our-team
+// Si no se pasa "section", se comporta exactamente igual que antes (trae
+// todo), para no romper el panel de admin que necesita ver todos los
+// archivos sin importar la sección.
+export async function GET(req: NextRequest) {
+  const section = req.nextUrl.searchParams.get("section");
+
   const photos = await prisma.photo.findMany({
-    orderBy: { order: 'asc' },
+    where: section ? { section } : undefined,
+    orderBy: { order: "asc" },
   });
+
   return NextResponse.json(photos);
 }
