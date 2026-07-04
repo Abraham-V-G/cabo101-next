@@ -7,6 +7,42 @@ import Image from "next/image";
 import PaymentBrick from "@/components/PaymentBrick";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Traduce el status_detail de Mercado Pago a un mensaje entendible para el
+// cliente. "default" cubre cualquier código que no esté en la lista.
+const REJECTION_MESSAGES: Record<string, string> = {
+  cc_rejected_insufficient_amount:
+    "Your card was declined due to insufficient funds. Please try a different card.",
+  cc_rejected_bad_filled_security_code:
+    "The security code (CVV) you entered doesn't match. Please double-check it and try again.",
+  cc_rejected_bad_filled_date:
+    "The expiration date you entered doesn't match your card. Please double-check it and try again.",
+  cc_rejected_bad_filled_other:
+    "Some of your card details appear to be incorrect. Please double-check them and try again.",
+  cc_rejected_call_for_authorize:
+    "Your bank requires phone authorization for this charge. Please contact your bank, or try a different card.",
+  cc_rejected_card_disabled:
+    "This card isn't enabled for online payments. Please contact your bank, or try a different card.",
+  cc_rejected_duplicated_payment:
+    "This looks like a duplicate payment. If you already completed it, please check your email for confirmation before trying again.",
+  cc_rejected_high_risk:
+    "Your bank's fraud prevention system declined this payment. Please try a different card, or contact your bank.",
+  cc_rejected_max_attempts:
+    "You've reached the maximum number of attempts with this card. Please try a different card.",
+  cc_rejected_blacklist:
+    "This card can't be used for this payment. Please try a different card.",
+  cc_rejected_card_type_not_allowed:
+    "This card type isn't accepted for this payment. Please try a different card.",
+  default:
+    "Your payment couldn't be processed. Please double-check your card details, or try a different card.",
+};
+
+function getRejectionMessage(statusDetail?: string) {
+  if (statusDetail && REJECTION_MESSAGES[statusDetail]) {
+    return REJECTION_MESSAGES[statusDetail];
+  }
+  return REJECTION_MESSAGES.default;
+}
+
 export default function PayContent() {
   const params = useSearchParams();
   const router = useRouter();
@@ -35,42 +71,65 @@ export default function PayContent() {
   const [email, setEmail] = useState(emailParam);
   const [showPayment, setShowPayment] = useState(false);
 
+  // Estado del rechazo: se muestra en la misma página en vez de mandar al
+  // cliente a /error, para que pueda intentar con otra tarjeta sin perder
+  // el flujo de pago.
+  const [rejection, setRejection] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  // Cambia la "key" del PaymentBrick para forzar que se remonte limpio en
+  // cada reintento (nuevo formulario de tarjeta, sin datos residuales).
+  const [brickKey, setBrickKey] = useState(0);
+
   const handlePayment = useCallback(
     async (data: any) => {
       console.log("PAYMENT DATA ENVIADO AL BACKEND:", data);
+      setRejection(null);
 
-      const res = await fetch("/api/process-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          transaction_amount: transactionAmount,
-          firstName,
-          lastName,
-          email,
-          summary,
-          phone: phoneParam,
-          pickupLocation,
-          dropoffLocation,
-          passengers,
-          vehicleType,
-          pickupTime,
-          pickupDate,
-          roundTrip,
-          returnPickupLocation,
-          returnDropoffLocation,
-          returnPickupTime,
-          returnPickupDate,
-          additionalService,
-          paidAmount: transactionAmount,
-        }),
-      });
+      let res: Response;
+      try {
+        res = await fetch("/api/process-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            transaction_amount: transactionAmount,
+            firstName,
+            lastName,
+            email,
+            summary,
+            phone: phoneParam,
+            pickupLocation,
+            dropoffLocation,
+            passengers,
+            vehicleType,
+            pickupTime,
+            pickupDate,
+            roundTrip,
+            returnPickupLocation,
+            returnDropoffLocation,
+            returnPickupTime,
+            returnPickupDate,
+            additionalService,
+            paidAmount: transactionAmount,
+          }),
+        });
+      } catch (networkError) {
+        // Error real de red/servidor: aquí sí tiene sentido mandar a /error,
+        // porque no es un rechazo de tarjeta que el cliente pueda resolver
+        // solo, sino una falla de nuestro lado.
+        console.error("NETWORK ERROR:", networkError);
+        router.push(`/error?type=network`);
+        return;
+      }
 
       const result = await res.json();
       console.log("BACKEND RESPONSE:", result);
 
       if (!res.ok) {
-        alert(JSON.stringify(result, null, 2));
+        // Error de validación/servidor (no un rechazo de tarjeta) — sigue
+        // ameritando /error, ya que normalmente indica un problema de
+        // configuración, no algo que el cliente resuelva con otra tarjeta.
+        router.push(`/error?type=server`);
         return;
       }
 
@@ -99,12 +158,20 @@ export default function PayContent() {
 
         router.push(`/success?${successParams.toString()}`);
       } else if (result.status === "pending" || result.status === "in_process") {
-        router.push(`/success?status=pending&transaction_amount=${transactionAmount}&email=${encodeURIComponent(email)}`);
+        router.push(
+          `/success?status=pending&transaction_amount=${transactionAmount}&email=${encodeURIComponent(email)}`
+        );
       } else if (result.status === "rejected") {
-        const detail = result.status_detail || "unknown";
-        router.push(`/error?type=rejected&detail=${encodeURIComponent(detail)}`);
+        // Rechazo de tarjeta: nos quedamos en la misma página, mostramos un
+        // mensaje entendible y dejamos que el cliente intente con otra
+        // tarjeta de inmediato, en vez de mandarlo a /error.
+        setAttempts((a) => a + 1);
+        setRejection(getRejectionMessage(result.status_detail));
+        setBrickKey((k) => k + 1);
       } else {
-        router.push(`/error?type=failed`);
+        setAttempts((a) => a + 1);
+        setRejection(getRejectionMessage(undefined));
+        setBrickKey((k) => k + 1);
       }
 
       return result;
@@ -198,8 +265,55 @@ export default function PayContent() {
               key="payment"
               initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
             >
-              <PaymentBrick amount={transactionAmount} onSubmit={handlePayment} />
+              {/* Leyenda antes de pagar: recordatorio para revisar la
+                  tarjeta y evitar rechazos evitables. */}
+              <div className="flex gap-3 border-2 border-[#2d6cdf]/30 bg-[#2d6cdf]/5 rounded-2xl p-4">
+                <span className="text-xl leading-none">🔒</span>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Please double-check your card number, expiration date, and
+                  CVV before submitting. Make sure your card is enabled for
+                  online and international purchases to avoid your bank
+                  declining the charge.
+                </p>
+              </div>
+
+              {/* Banner de rechazo: aparece solo después de un intento
+                  fallido, sin sacar al cliente de esta página. */}
+              {rejection && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="border-2 border-red-300 bg-red-50 rounded-2xl p-4"
+                >
+                  <p className="text-sm font-semibold text-red-700 mb-1">
+                    Payment declined
+                  </p>
+                  <p className="text-sm text-red-700 leading-relaxed">
+                    {rejection}
+                  </p>
+                  <p className="text-xs text-red-500 mt-2">
+                    You can try again below with a different card.
+                  </p>
+                </motion.div>
+              )}
+
+              {attempts >= 3 && (
+                <div className="border-2 border-amber-300 bg-amber-50 rounded-2xl p-4">
+                  <p className="text-sm text-amber-700 leading-relaxed">
+                    We noticed a few declined attempts. If the problem
+                    continues, please contact your bank, or reach out to us
+                    so we can help you complete this payment another way.
+                  </p>
+                </div>
+              )}
+
+              <PaymentBrick
+                key={brickKey}
+                amount={transactionAmount}
+                onSubmit={handlePayment}
+              />
             </motion.div>
           )}
         </AnimatePresence>
