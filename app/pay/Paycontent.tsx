@@ -226,21 +226,21 @@ export default function PayContent() {
                 placeholder="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border-2 border-0 rounded-2xl px-4 py-3 bg-white text-black"
+                className="w-full border-1 border-transparent rounded-2xl px-4 py-3 bg-white text-black"
               />
               <input
                 type="text"
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full border-2 border-0 rounded-2xl px-4 py-3 bg-white text-black"
+                className="w-full border-1 border-transparent rounded-2xl px-4 py-3 bg-white text-black"
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border-2 border-0 rounded-2xl px-4 py-3 bg-white text-black"
+                className="w-full border-1 border-transparent rounded-2xl px-4 py-3 bg-white text-black"
               />
               <div className="flex justify-between items-center text-xl font-semibold text-black px-1">
                 <span>Total</span>
