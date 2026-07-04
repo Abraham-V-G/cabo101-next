@@ -98,6 +98,24 @@ export async function POST(req: Request) {
       },
     });
 
+    // Siempre logueamos el resultado, sea aprobado o rechazado. Antes solo
+    // se logueaba algo dentro del bloque "if (result.status === 'approved')",
+    // así que un pago rechazado no dejaba ningún rastro del motivo en los
+    // logs de PM2 — solo se veía "AMOUNT: X" y ahí terminaba todo.
+    console.log("MP RESULT:", {
+      id: result.id,
+      status: result.status,
+      status_detail: result.status_detail,
+      payment_method_id: result.payment_method_id,
+      payment_type_id: result.payment_type_id,
+    });
+
+    if (result.status !== "approved") {
+      console.warn(
+        `⚠️ PAGO NO APROBADO — status=${result.status} status_detail=${result.status_detail} email=${data.email} payment_method=${data.payment_method_id}`
+      );
+    }
+
     if (result.status === "approved") {
       const folio = `#${result.id?.toString().slice(-6) || "000000"}`;
 

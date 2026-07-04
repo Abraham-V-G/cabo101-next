@@ -1,259 +1,209 @@
-// app/api/process-payment/route.ts
+//app/pay/Paycontent.tsx
+"use client";
 
-import { NextResponse } from "next/server";
-import { MercadoPagoConfig, Payment } from "mercadopago";
-import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
-import { bookingConfirmationTemplate, BookingEmailData } from "@/lib/emailTemplates/bookingConfirmation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
+import Image from "next/image";
+import PaymentBrick from "@/components/PaymentBrick";
+import { motion, AnimatePresence } from "framer-motion";
 
-if (!process.env.MP_ACCESS_TOKEN) {
-  throw new Error("Missing MP_ACCESS_TOKEN environment variable");
-}
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("Missing RESEND_API_KEY environment variable");
-}
+export default function PayContent() {
+  const params = useSearchParams();
+  const router = useRouter();
 
-const mp = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN,
-});
+  const transactionAmount = Number(params.get("transaction_amount") || 0);
+  const summary = params.get("summary") || "Transportation Service";
+  const firstNameParam = params.get("firstName") || "";
+  const lastNameParam = params.get("lastName") || "";
+  const emailParam = params.get("email") || "";
+  const phoneParam = params.get("phone") || "";
+  const pickupLocation = params.get("pickupLocation") || "";
+  const dropoffLocation = params.get("dropoffLocation") || "";
+  const passengers = params.get("passengers") || "";
+  const vehicleType = params.get("vehicleType") || "";
+  const pickupTime = params.get("pickupTime") || "";
+  const pickupDate = params.get("pickupDate") || "";
+  const roundTrip = params.get("roundTrip") === "true";
+  const returnPickupLocation = params.get("returnPickupLocation") || "";
+  const returnDropoffLocation = params.get("returnDropoffLocation") || "";
+  const returnPickupTime = params.get("returnPickupTime") || "";
+  const returnPickupDate = params.get("returnPickupDate") || "";
+  const additionalService = Number(params.get("additionalService") || 0);
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+  const [firstName, setFirstName] = useState(firstNameParam);
+  const [lastName, setLastName] = useState(lastNameParam);
+  const [email, setEmail] = useState(emailParam);
+  const [showPayment, setShowPayment] = useState(false);
 
-const USD_TO_MXN_RATE = Number(process.env.USD_TO_MXN_RATE ?? 19.25);
+  const handlePayment = useCallback(
+    async (data: any) => {
+      console.log("PAYMENT DATA ENVIADO AL BACKEND:", data);
 
-export async function POST(req: Request) {
-  try {
-    console.log("PROCESS PAYMENT HIT");
-    const body = await req.json();
-
-    const data = body;
-    data.email = data.email || data.payer?.email || "";
-
-    console.log("DATOS RECIBIDOS:", {
-      transaction_amount: data.transaction_amount,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      pickupLocation: data.pickupLocation,
-      token: !!data.token,
-      payment_method_id: data.payment_method_id,
-    });
-
-    if (!data.email) {
-      return NextResponse.json({ error: "Customer email missing" }, { status: 400 });
-    }
-
-    // Validación opcional: al menos nombre o apellido
-    if (!data.firstName && !data.lastName) {
-      return NextResponse.json({ error: "Customer name missing (firstName or lastName)" }, { status: 400 });
-    }
-
-    const totalUSD = Number(data.transaction_amount);
-    if (!Number.isFinite(totalUSD) || totalUSD <= 0) {
-      return NextResponse.json({ error: "Invalid transaction amount (USD)" }, { status: 400 });
-    }
-
-    if (!data.token) {
-      return NextResponse.json({ error: "Payment token missing" }, { status: 400 });
-    }
-
-    if (!data.payment_method_id) {
-      return NextResponse.json({ error: "Payment method missing" }, { status: 400 });
-    }
-
-    const installments = Number(data.installments) > 0 ? Number(data.installments) : 1;
-    const additionalService = Number(data.additionalService) || 0;
-    const subtotal = Math.max(totalUSD - additionalService, 0);
-    const paidAmount = Number(data.paidAmount) || totalUSD;
-    const toPay = Math.max(totalUSD - paidAmount, 0);
-
-    const totalMXN = Math.round(totalUSD * USD_TO_MXN_RATE);
-
-    const payment = new Payment(mp);
-
-    console.log("TOKEN:", data.token);
-    console.log("PAYMENT METHOD:", data.payment_method_id);
-    console.log("ISSUER:", data.issuer_id);
-    console.log("PAYER:", JSON.stringify(data.payer, null, 2));
-    console.log("AMOUNT:", totalMXN);
-
-    const result = await payment.create({
-      body: {
-        transaction_amount: totalMXN,
-        token: data.token,
-        installments,
-        payment_method_id: data.payment_method_id,
-        issuer_id: data.issuer_id,
-        description: data.description || data.summary || "Transportation Service",
-        payer: data.payer,
-        metadata: {
-          ...data.metadata,
-          booking: {
-            ...(data.metadata?.booking || {}),
-            totalUSD,
-            exchangeRate: USD_TO_MXN_RATE,
-          },
-        },
-        binary_mode: true,
-      },
-    });
-
-    // Siempre logueamos el resultado, sea aprobado o rechazado. Antes solo
-    // se logueaba algo dentro del bloque "if (result.status === 'approved')",
-    // así que un pago rechazado no dejaba ningún rastro del motivo en los
-    // logs de PM2 — solo se veía "AMOUNT: X" y ahí terminaba todo.
-    console.log("MP RESULT:", {
-      id: result.id,
-      status: result.status,
-      status_detail: result.status_detail,
-      payment_method_id: result.payment_method_id,
-      payment_type_id: result.payment_type_id,
-    });
-
-    if (result.status !== "approved") {
-      console.warn(
-        `⚠️ PAGO NO APROBADO — status=${result.status} status_detail=${result.status_detail} email=${data.email} payment_method=${data.payment_method_id}`
-      );
-    }
-
-    if (result.status === "approved") {
-      const folio = `#${result.id?.toString().slice(-6) || "000000"}`;
-
-      console.log("RESERVA APROBADA:", {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        amountUSD: totalUSD,
-        amountMXN: totalMXN,
-        pickup: data.pickupLocation,
-        dropoff: data.dropoffLocation,
-        serviceType: data.roundTrip ? "Round Trip" : "One way",
-        paymentId: result.id,
+      const res = await fetch("/api/process-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          transaction_amount: transactionAmount,
+          firstName,
+          lastName,
+          email,
+          summary,
+          phone: phoneParam,
+          pickupLocation,
+          dropoffLocation,
+          passengers,
+          vehicleType,
+          pickupTime,
+          pickupDate,
+          roundTrip,
+          returnPickupLocation,
+          returnDropoffLocation,
+          returnPickupTime,
+          returnPickupDate,
+          additionalService,
+          paidAmount: transactionAmount,
+        }),
       });
 
-      // ✅ Construcción del templateData con firstName + lastName
-      const templateData: BookingEmailData = {
-        pickupDate: data.pickupDate,
-        id: result.id,
-        roundTrip: data.roundTrip,
+      const result = await res.json();
+      console.log("BACKEND RESPONSE:", result);
 
-        name: [data.firstName, data.lastName].filter(Boolean).join(" "), // nombre completo
-        phone: data.phone,
-        email: data.email,
-
-        pickupLocation: data.pickupLocation,
-        dropoffLocation: data.dropoffLocation,
-
-        passengers: data.passengers,
-        vehicleType: data.vehicleType,
-
-        pickupTime: data.pickupTime,
-
-        airline: data.airline,
-        flight: data.flight,
-        arrival: data.arrival,
-
-        returnPickupLocation: data.returnPickupLocation,
-        returnDropoffLocation: data.returnDropoffLocation,
-        returnPickupTime: data.returnPickupTime,
-        returnPickupDate: data.returnPickupDate,
-        returnFlight: data.returnFlight,
-
-        subtotal,
-        additionalService,
-        total: totalUSD,
-        paidAmount,
-        toPay,
-      };
-
-      console.log("📧 EMAIL DATA (templateData):");
-      console.log(JSON.stringify(templateData, null, 2));
-
-      const booking = await prisma.booking.create({
-        data: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-
-          email: data.email,
-          phone: data.phone,
-
-          pickupLocation: data.pickupLocation,
-          dropoffLocation: data.dropoffLocation,
-
-          passengers: Number(data.passengers),
-          vehicleType: data.vehicleType,
-
-          pickupDate: data.pickupDate,
-          pickupTime: data.pickupTime,
-
-          roundTrip: Boolean(data.roundTrip),
-
-          returnPickupLocation: data.returnPickupLocation,
-          returnDropoffLocation: data.returnDropoffLocation,
-          returnPickupDate: data.returnPickupDate,
-          returnPickupTime: data.returnPickupTime,
-
-          totalUSD,
-          totalMXN,
-
-          paymentStatus: "paid",
-          tripStatus: "pending",
-
-          airline: data.airline,
-          flightNumber: data.flight,
-
-          arrivalTime: data.arrival,
-
-          returnFlightNumber: data.returnFlight,
-
-          notes: data.notes,
-        },
-      });
-
-      await prisma.payment.create({
-        data: {
-          bookingId: booking.id,
-          mercadopagoId: String(result.id),
-          status: String(result.status),
-          totalUSD,
-          totalMXN,
-          exchangeRate: USD_TO_MXN_RATE,
-        },
-      });
-
-      const html = bookingConfirmationTemplate(templateData);
-
-      try {
-        await resend.emails.send({
-          from: "Cabo101 <no-reply@cabo101.com.mx>",
-          to: data.email,
-          subject: `Booking Confirmation - ${folio}`,
-          html,
-        });
-        await resend.emails.send({
-          from: "Cabo101 <no-reply@cabo101.com.mx>",
-          to: "cabo101guide@gmail.com",
-          subject: `New Booking - ${folio}`,
-          html,
-        });
-      } catch (emailError) {
-        console.error("EMAIL ERROR (no afecta el pago):", emailError);
+      if (!res.ok) {
+        alert(JSON.stringify(result, null, 2));
+        return;
       }
-    }
 
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("FULL MP ERROR:");
-    console.dir(error, { depth: null });
+      if (result.status === "approved") {
+        const successParams = new URLSearchParams({
+          transaction_amount: transactionAmount.toString(),
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          vehicle: vehicleType,
+          from: pickupLocation,
+          to: dropoffLocation,
+          passengers: passengers,
+          pickupTime: pickupTime,
+          pickupDate: pickupDate,
+          phone: phoneParam,
+          roundTrip: roundTrip.toString(),
+        });
 
-    return NextResponse.json(
-      {
-        error: true,
-        message: error?.message,
-        cause: error?.cause,
-        status: error?.status,
-      },
-      { status: 500 }
-    );
-  }
+        if (roundTrip) {
+          successParams.append("returnPickupLocation", returnPickupLocation);
+          successParams.append("returnDropoffLocation", returnDropoffLocation);
+          successParams.append("returnPickupTime", returnPickupTime);
+          successParams.append("returnPickupDate", returnPickupDate);
+        }
+
+        router.push(`/success?${successParams.toString()}`);
+      } else if (result.status === "pending" || result.status === "in_process") {
+        router.push(`/success?status=pending&transaction_amount=${transactionAmount}&email=${encodeURIComponent(email)}`);
+      } else if (result.status === "rejected") {
+        const detail = result.status_detail || "unknown";
+        router.push(`/error?type=rejected&detail=${encodeURIComponent(detail)}`);
+      } else {
+        router.push(`/error?type=failed`);
+      }
+
+      return result;
+    },
+    [
+      transactionAmount,
+      firstName,
+      lastName,
+      email,
+      phoneParam,
+      pickupLocation,
+      dropoffLocation,
+      passengers,
+      vehicleType,
+      pickupTime,
+      pickupDate,
+      roundTrip,
+      returnPickupLocation,
+      returnDropoffLocation,
+      returnPickupTime,
+      returnPickupDate,
+      additionalService,
+      router,
+      summary,
+    ]
+  );
+
+  return (
+    <div className="min-h-screen flex justify-center bg-[#f5f5f5] px-4 pt-10">
+      <div className="w-full max-w-md space-y-6">
+        <div className="flex justify-center">
+          <Image src="/images/logo-color.png" alt="logo" width={80} height={80} />
+        </div>
+        <h2 className="text-3xl font-semibold text-center text-black">
+          Complete Payment
+        </h2>
+        <div className="border-2 border-[#4ccb8c] rounded-2xl p-4 text-black bg-white text-center">
+          {summary}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {!showPayment ? (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -40 }}
+              className="space-y-4"
+            >
+              <input
+                type="text"
+                placeholder="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full border-2 border-[#4ccb8c] rounded-2xl px-4 py-3 bg-white text-black"
+              />
+              <input
+                type="text"
+                placeholder="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full border-2 border-[#4ccb8c] rounded-2xl px-4 py-3 bg-white text-black"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border-2 border-[#4ccb8c] rounded-2xl px-4 py-3 bg-white text-black"
+              />
+              <div className="flex justify-between items-center text-xl font-semibold text-black px-1">
+                <span>Total</span>
+                <span>${transactionAmount} USD</span>
+              </div>
+              <button
+                onClick={() => {
+                  if (!firstName || !lastName || !email) {
+                    alert("Please complete first name, last name and email");
+                    return;
+                  }
+                  setShowPayment(true);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="w-full bg-[#2d6cdf] text-white py-4 rounded-2xl font-semibold shadow-md hover:opacity-90 transition"
+              >
+                Pay
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="payment"
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <PaymentBrick amount={transactionAmount} onSubmit={handlePayment} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 }
