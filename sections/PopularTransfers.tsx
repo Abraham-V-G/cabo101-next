@@ -59,7 +59,7 @@ export default function PopularTransfers() {
   if (loading) {
     return (
       <section className="py-16 md:py-24 px-4 bg-white">
-        <div className="max-w-7xl mx-auto text-center">Cargando destinos...</div>
+        <div className="max-w-7xl mx-auto text-center">Loading...</div>
       </section>
     );
   }
