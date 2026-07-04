@@ -226,21 +226,21 @@ export default function PayContent() {
                 placeholder="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border-1 border-transparent rounded-2xl px-4 py-3 bg-white text-black"
+                className="w-full border-1 border-transparent hover:border-black rounded-2xl px-4 py-3 bg-white text-black"
               />
               <input
                 type="text"
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full border-1 border-transparent rounded-2xl px-4 py-3 bg-white text-black"
+                className="w-full border-1 border-transparent hover:border-black rounded-2xl px-4 py-3 bg-white text-black"
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border-1 border-transparent rounded-2xl px-4 py-3 bg-white text-black"
+                className="w-full border-1 border-transparent hover:border-black rounded-2xl px-4 py-3 bg-white text-black"
               />
               <div className="flex justify-between items-center text-xl font-semibold text-black px-1">
                 <span>Total</span>
@@ -255,7 +255,7 @@ export default function PayContent() {
                   setShowPayment(true);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="w-full bg-[#2d6cdf] text-white py-4 rounded-2xl font-semibold shadow-md hover:border-black transition"
+                className="w-full bg-[#2d6cdf] text-white py-4 rounded-2xl font-semibold shadow-md hover:opacity-90 transition"
               >
                 Pay
               </button>
