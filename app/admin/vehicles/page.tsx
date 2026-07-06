@@ -1,6 +1,9 @@
+//app/admin/vehicles/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminHeader from "@/components/AdminHeader";
 
 interface Vehicle {
   id: number;
@@ -91,119 +94,121 @@ export default function VehiclesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-teal-700 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs font-bold">C</span>
-          </div>
-          <span className="font-semibold text-gray-900">Cabo 101 · Admin / Vehicles</span>
-        </div>
-        <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700 transition">
-          ← Back to Dashboard
-        </Link>
-      </div>
+      <AdminHeader section="Vehículos" />
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Vehicle Types</h1>
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tipos de vehículo</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Administra los vehículos disponibles y su capacidad.
+          </p>
+        </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {editingId ? "Edit Vehicle" : "Add New Vehicle"}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
+            {editingId ? "Editar vehículo" : "Agregar vehículo"}
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Name *</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Nombre *</label>
               <input
                 type="text"
                 placeholder="e.g., SUV, VAN, SPRINTER"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Capacity (passengers) *</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Capacidad (pasajeros) *</label>
               <input
                 type="number"
                 placeholder="Max passengers"
                 value={form.capacity}
                 onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               />
             </div>
-            <div className="flex items-end gap-2">
-              <label className="flex items-center gap-2 pb-2">
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 pb-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={form.active}
                   onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                  className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500"
+                  className="w-4 h-4 accent-teal-600"
                 />
-                <span className="text-sm text-gray-700">Active</span>
+                <span className="text-sm text-gray-700">Activo</span>
               </label>
             </div>
           </div>
-          <div className="flex gap-3 mt-5">
+          <div className="flex gap-2 mt-5">
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 py-2 rounded-lg transition disabled:opacity-50"
+              className="bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50 transition"
             >
-              {loading ? "Saving..." : editingId ? "Update" : "Create"}
+              {loading ? "Guardando..." : editingId ? "Actualizar" : "Crear"}
             </button>
             {editingId && (
               <button
                 onClick={resetForm}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded-lg transition"
+                className="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
               >
-                Cancel
+                Cancelar
               </button>
             )}
           </div>
         </div>
 
         {/* Lista de vehículos */}
-        <div className="space-y-3">
-          {vehicles.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center hover:shadow-sm transition"
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900 text-lg">{vehicle.name}</span>
-                  {!vehicle.active && (
-                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Inactive</span>
-                  )}
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="text-base font-semibold text-gray-900">
+              Vehículos ({vehicles.length})
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {vehicles.map((vehicle) => (
+              <div
+                key={vehicle.id}
+                className="flex justify-between items-center px-6 py-4 hover:bg-gray-50 transition"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900 text-sm">{vehicle.name}</span>
+                    {!vehicle.active && (
+                      <span className="text-[11px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-100">
+                        Inactivo
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">Capacidad: {vehicle.capacity} pasajeros</div>
                 </div>
-                <div className="text-sm text-gray-500 mt-1">Capacity: {vehicle.capacity} passengers</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => startEdit(vehicle)}
+                    className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-amber-100 transition"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => deleteVehicle(vehicle.id)}
+                    className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100 transition"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => startEdit(vehicle)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-sm transition"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteVehicle(vehicle.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm transition"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-          {vehicles.length === 0 && (
-            <div className="text-center text-gray-400 py-8">No vehicles yet. Create one above.</div>
-          )}
+            ))}
+            {vehicles.length === 0 && (
+              <p className="text-center text-gray-400 py-12">
+                No hay vehículos todavía. Crea uno arriba.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-// Añadir Link import
-import Link from "next/link";

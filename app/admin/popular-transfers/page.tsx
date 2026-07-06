@@ -1,12 +1,10 @@
-//app/admin/popular-transfers/page.tsx
-
 // app/admin/popular-transfers/page.tsx
 
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import AdminHeader from "@/components/AdminHeader";
 
 interface Zone {
   id: number;
@@ -158,166 +156,186 @@ export default function PopularTransfersAdmin() {
     if (res.ok) loadData();
   };
 
-  if (loading) return <div className="p-8 text-center">Cargando...</div>;
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-teal-700 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs font-bold">C</span>
-          </div>
-          <span className="font-semibold text-gray-900">Cabo 101 · Admin / Viajes Populares</span>
+      <AdminHeader section="Viajes Populares" />
+
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Viajes Populares</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Destinos destacados que se muestran en la página de inicio.
+          </p>
         </div>
-        <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">← Volver al Dashboard</Link>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Viajes Populares</h1>
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
+            Cargando...
+          </div>
+        ) : (
+          <>
+            {/* Formulario */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">
+                {editingId ? "Editar" : "Agregar"} viaje popular
+              </h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">Zona</label>
+                  <select
+                    value={form.zoneId}
+                    onChange={(e) => setForm({ ...form, zoneId: e.target.value })}
+                    className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  >
+                    <option value="">Selecciona una zona</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>{zone.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">Vehículo</label>
+                  <select
+                    value={form.vehicleId}
+                    onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
+                    className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  >
+                    <option value="">Selecciona un vehículo</option>
+                    {vehicles.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name} (capacidad {v.capacity})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">Tiempo de viaje</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 15 min from airport"
+                    value={form.travelTime}
+                    onChange={(e) => setForm({ ...form, travelTime: e.target.value })}
+                    className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">Orden</label>
+                  <input
+                    type="number"
+                    value={form.sortOrder}
+                    onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+                    className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
+                  <input
+                    type="checkbox"
+                    checked={form.active}
+                    onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                    className="w-4 h-4 accent-teal-600"
+                  />
+                  <span className="text-sm text-gray-700">Activo</span>
+                </label>
 
-        {/* Formulario */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">{editingId ? "Editar" : "Agregar"} viaje popular</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Zona</label>
-              <select
-                value={form.zoneId}
-                onChange={(e) => setForm({ ...form, zoneId: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              >
-                <option value="">Selecciona una zona</option>
-                {zones.map((zone) => (
-                  <option key={zone.id} value={zone.id}>{zone.name}</option>
-                ))}
-              </select>
+                {/* Campo de imagen */}
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">Imagen (opcional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                  {form.image && !imageFile && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-400 mb-1">Imagen actual:</p>
+                      <img src={form.image} alt="Preview" className="w-32 h-32 object-cover rounded-lg border border-gray-200" />
+                    </div>
+                  )}
+                  {imageFile && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-400 mb-1">Nueva imagen:</p>
+                      <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-32 h-32 object-cover rounded-lg border border-gray-200" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button
+                  onClick={handleSubmit}
+                  disabled={uploading}
+                  className="bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50 transition"
+                >
+                  {uploading ? "Subiendo imagen..." : editingId ? "Actualizar" : "Crear"}
+                </button>
+                {editingId && (
+                  <button
+                    onClick={resetForm}
+                    className="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vehículo</label>
-              <select
-                value={form.vehicleId}
-                onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              >
-                <option value="">Selecciona un vehículo</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name} (capacidad {v.capacity})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tiempo de viaje</label>
-              <input
-                type="text"
-                placeholder="Ej: 15 min from airport"
-                value={form.travelTime}
-                onChange={(e) => setForm({ ...form, travelTime: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Orden</label>
-              <input
-                type="number"
-                value={form.sortOrder}
-                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="active"
-                checked={form.active}
-                onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className="w-4 h-4"
-              />
-              <label htmlFor="active" className="text-sm text-gray-700">Activo</label>
-            </div>
-            {/* Campo de imagen */}
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (opcional)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              />
-              {form.image && !imageFile && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500">Imagen actual:</p>
-                  <img src={form.image} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
+
+            {/* Lista */}
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Imagen</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Zona</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Vehículo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tiempo de viaje</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Orden</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Activo</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {transfers.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 transition">
+                      <td className="px-6 py-4">
+                        {item.image ? (
+                          <img src={item.image} alt={item.zone?.name} className="w-12 h-12 object-cover rounded-lg" />
+                        ) : (
+                          <span className="text-gray-400 text-xs">Sin imagen</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{item.zone?.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{item.vehicle?.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{item.travelTime}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{item.sortOrder}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${item.active ? "bg-teal-50 text-teal-700 border-teal-100" : "bg-red-50 text-red-600 border-red-100"}`}>
+                          {item.active ? "Sí" : "No"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => startEdit(item)}
+                          className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-amber-100 transition mr-2"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100 transition"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {transfers.length === 0 && (
+                <div className="text-center text-gray-400 py-12">
+                  No hay viajes populares. Crea uno con el formulario de arriba.
                 </div>
               )}
-              {imageFile && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500">Nueva imagen:</p>
-                  <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
-                </div>
-              )}
             </div>
-          </div>
-          <div className="flex gap-3 mt-5">
-            <button
-              onClick={handleSubmit}
-              disabled={uploading}
-              className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50"
-            >
-              {uploading ? "Subiendo imagen..." : editingId ? "Actualizar" : "Crear"}
-            </button>
-            {editingId && (
-              <button onClick={resetForm} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
-                Cancelar
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Lista */}
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Imagen</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zona</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehículo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiempo de viaje</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orden</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activo</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {transfers.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-6 py-4">
-                    {item.image ? (
-                      <img src={item.image} alt={item.zone?.name} className="w-12 h-12 object-cover rounded-lg" />
-                    ) : (
-                      <span className="text-gray-400 text-xs">Sin imagen</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.zone?.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{item.vehicle?.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{item.travelTime}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{item.sortOrder}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${item.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {item.active ? 'Sí' : 'No'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => startEdit(item)} className="text-yellow-600 hover:text-yellow-800 mr-3">Editar</button>
-                    <button onClick={() => deleteItem(item.id)} className="text-red-600 hover:text-red-800">Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {transfers.length === 0 && (
-            <div className="text-center text-gray-400 py-8">No hay viajes populares. Crea uno con el formulario de arriba.</div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { format, isToday, isTomorrow, isFuture, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
+import AdminHeader from "@/components/AdminHeader";
 
 interface Payment {
   id: number;
@@ -239,33 +240,49 @@ export default function BookingsPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Cargando reservas...</div>;
-  if (error) return <div className="p-8 text-center text-red-600">Error: {error}</div>;
+  const paymentBadge = (status: string) =>
+    status === "paid"
+      ? "bg-teal-50 text-teal-700 border border-teal-100"
+      : "bg-amber-50 text-amber-700 border border-amber-100";
+
+  const tripBadge = (status: string) =>
+    status === "completed"
+      ? "bg-teal-50 text-teal-700 border border-teal-100"
+      : status === "in_progress"
+      ? "bg-blue-50 text-blue-700 border border-blue-100"
+      : "bg-gray-100 text-gray-600 border border-gray-200";
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Administración de Reservas</h1>
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader section="Reservas" />
+
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Reservas</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Consulta, filtra y actualiza el estado de cada viaje.
+          </p>
+        </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
           <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Buscar</label>
+            <div className="flex-1 min-w-[200px] flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Buscar</label>
               <input
                 type="text"
                 placeholder="Nombre, email, destino..."
                 value={filters.searchTerm}
                 onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Fecha</label>
               <select
                 value={filters.dateRange}
                 onChange={(e) => setFilters({ ...filters, dateRange: e.target.value as any })}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               >
                 <option value="all">Todas</option>
                 <option value="upcoming">Próximas</option>
@@ -274,24 +291,24 @@ export default function BookingsPage() {
                 <option value="thisWeek">Esta semana</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Pago</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Pago</label>
               <select
                 value={filters.paymentStatus}
                 onChange={(e) => setFilters({ ...filters, paymentStatus: e.target.value as any })}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               >
                 <option value="all">Todos</option>
                 <option value="paid">Pagado</option>
                 <option value="pending">Pendiente</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Estado del viaje</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Estado del viaje</label>
               <select
                 value={filters.tripStatus}
                 onChange={(e) => setFilters({ ...filters, tripStatus: e.target.value as any })}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               >
                 <option value="all">Todos</option>
                 <option value="pending">Pendiente</option>
@@ -299,12 +316,12 @@ export default function BookingsPage() {
                 <option value="completed">Completado</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Ordenar por</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Ordenar por</label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
               >
                 <option value="mostRecent">Más reciente</option>
                 <option value="highestRevenue">Mayor ingreso</option>
@@ -321,75 +338,71 @@ export default function BookingsPage() {
         </div>
 
         {/* Lista de reservas */}
-        <div className="space-y-4">
-          {filteredBookings.length === 0 ? (
-            <div className="bg-white rounded-xl p-8 text-center text-gray-400">
-              No se encontraron reservas con los filtros actuales.
-            </div>
-          ) : (
-            filteredBookings.map((booking) => (
-              <div
-                key={booking.id}
-                onClick={() => openModal(booking)}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition cursor-pointer"
-              >
-                <div className="flex flex-wrap justify-between items-start gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-lg text-gray-900">
-                        {booking.firstName} {booking.lastName}
-                      </h3>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          booking.paymentStatus === "paid"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {booking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          booking.tripStatus === "completed"
-                            ? "bg-green-100 text-green-700"
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
+            Cargando reservas...
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-600 text-sm">
+            {error}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredBookings.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
+                No se encontraron reservas con los filtros actuales.
+              </div>
+            ) : (
+              filteredBookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  onClick={() => openModal(booking)}
+                  className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition cursor-pointer"
+                >
+                  <div className="flex flex-wrap justify-between items-start gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-base text-gray-900">
+                          {booking.firstName} {booking.lastName}
+                        </h3>
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${paymentBadge(booking.paymentStatus)}`}>
+                          {booking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}
+                        </span>
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${tripBadge(booking.tripStatus)}`}>
+                          {booking.tripStatus === "completed"
+                            ? "Completado"
                             : booking.tripStatus === "in_progress"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {booking.tripStatus === "completed"
-                          ? "Completado"
-                          : booking.tripStatus === "in_progress"
-                          ? "En curso"
-                          : "Pendiente"}
-                      </span>
+                            ? "En curso"
+                            : "Pendiente"}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {booking.pickupLocation} → {booking.dropoffLocation}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-2">
+                        {formatDate(booking.pickupDate)} a las {booking.pickupTime} · {booking.vehicleType} · {booking.passengers} pasajeros
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      {booking.pickupLocation} → {booking.dropoffLocation}
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-gray-900">
+                        ${booking.totalUSD?.toFixed(2) ?? "—"} USD
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">Ref: #{booking.id}</div>
                     </div>
-                    <div className="text-xs text-gray-400 mt-2">
-                      {formatDate(booking.pickupDate)} a las {booking.pickupTime} · {booking.vehicleType} · {booking.passengers} pasajeros
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-gray-900">
-                      ${booking.totalUSD?.toFixed(2) ?? "—"} USD
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">Ref: #{booking.id}</div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal */}
       {isModalOpen && selectedBooking && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">Detalle de la reserva</h2>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Detalle de la reserva</h2>
               <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
                 ×
               </button>
@@ -398,21 +411,23 @@ export default function BookingsPage() {
             <div className="p-6 space-y-6">
               {/* Cliente */}
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Cliente</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cliente</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="text-gray-500">Nombre:</span> {selectedBooking.firstName} {selectedBooking.lastName}</div>
-                  <div><span className="text-gray-500">Email:</span> {selectedBooking.email}</div>
-                  <div><span className="text-gray-500">Teléfono:</span> {selectedBooking.phone}</div>
+                  <div><span className="text-gray-400">Nombre:</span> {selectedBooking.firstName} {selectedBooking.lastName}</div>
+                  <div><span className="text-gray-400">Email:</span> {selectedBooking.email}</div>
+                  <div><span className="text-gray-400">Teléfono:</span> {selectedBooking.phone}</div>
                 </div>
               </div>
 
+              <div className="border-t border-gray-100" />
+
               {/* Viaje */}
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Viaje</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Viaje</h3>
                 <div className="space-y-1 text-sm">
-                  <div><span className="text-gray-500">Origen:</span> {selectedBooking.pickupLocation}</div>
-                  <div><span className="text-gray-500">Destino:</span> {selectedBooking.dropoffLocation}</div>
-                  <div><span className="text-gray-500">Fecha/Hora:</span> {formatDate(selectedBooking.pickupDate)} a las {selectedBooking.pickupTime}</div>
+                  <div><span className="text-gray-400">Origen:</span> {selectedBooking.pickupLocation}</div>
+                  <div><span className="text-gray-400">Destino:</span> {selectedBooking.dropoffLocation}</div>
+                  <div><span className="text-gray-400">Fecha/Hora:</span> {formatDate(selectedBooking.pickupDate)} a las {selectedBooking.pickupTime}</div>
                   {selectedBooking.roundTrip && (
                     <div className="mt-2 pt-2 border-t border-gray-100">
                       <div className="text-gray-700 font-medium">Regreso</div>
@@ -421,80 +436,90 @@ export default function BookingsPage() {
                       <div>Fecha: {selectedBooking.returnPickupDate && formatDate(selectedBooking.returnPickupDate)} a las {selectedBooking.returnPickupTime}</div>
                     </div>
                   )}
-                  <div className="mt-2"><span className="text-gray-500">Vehículo:</span> {selectedBooking.vehicleType} · {selectedBooking.passengers} pasajeros</div>
+                  <div className="mt-2"><span className="text-gray-400">Vehículo:</span> {selectedBooking.vehicleType} · {selectedBooking.passengers} pasajeros</div>
                 </div>
               </div>
 
               {/* Vuelo */}
               {(selectedBooking.airline || selectedBooking.flightNumber) && (
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Vuelo</h3>
-                  <div className="text-sm">
-                    {selectedBooking.airline && <div>Aerolínea: {selectedBooking.airline}</div>}
-                    {selectedBooking.flightNumber && <div>Número: {selectedBooking.flightNumber}</div>}
-                    {selectedBooking.arrivalTime && <div>Llegada: {selectedBooking.arrivalTime}</div>}
-                    {selectedBooking.returnFlightNumber && <div>Vuelo regreso: {selectedBooking.returnFlightNumber}</div>}
+                <>
+                  <div className="border-t border-gray-100" />
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Vuelo</h3>
+                    <div className="text-sm space-y-0.5">
+                      {selectedBooking.airline && <div>Aerolínea: {selectedBooking.airline}</div>}
+                      {selectedBooking.flightNumber && <div>Número: {selectedBooking.flightNumber}</div>}
+                      {selectedBooking.arrivalTime && <div>Llegada: {selectedBooking.arrivalTime}</div>}
+                      {selectedBooking.returnFlightNumber && <div>Vuelo regreso: {selectedBooking.returnFlightNumber}</div>}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               {/* Notas del cliente */}
               {selectedBooking.notes && (
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Notas del cliente</h3>
-                  <div className="bg-gray-50 p-3 rounded-lg text-sm">{selectedBooking.notes}</div>
-                </div>
+                <>
+                  <div className="border-t border-gray-100" />
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notas del cliente</h3>
+                    <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg text-sm">{selectedBooking.notes}</div>
+                  </div>
+                </>
               )}
+
+              <div className="border-t border-gray-100" />
 
               {/* Notas del conductor */}
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Notas del conductor</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notas del conductor</h3>
                 <textarea
                   rows={3}
                   value={driverNotes}
                   onChange={(e) => setDriverNotes(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                  className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
                   placeholder="Ej. El cliente hizo una parada en la tienda..."
                 />
                 <button
                   onClick={saveDriverNotes}
                   disabled={updating}
-                  className="mt-2 bg-blue-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="mt-2 bg-teal-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 transition"
                 >
                   {updating ? "Guardando..." : "Guardar notas"}
                 </button>
               </div>
 
+              <div className="border-t border-gray-100" />
+
               {/* Estado del viaje */}
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Estado del viaje</h3>
-                <div className="flex gap-3 flex-wrap">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Estado del viaje</h3>
+                <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => changeTripStatus("pending")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       selectedBooking.tripStatus === "pending"
                         ? "bg-gray-800 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     Pendiente
                   </button>
                   <button
                     onClick={() => changeTripStatus("in_progress")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       selectedBooking.tripStatus === "in_progress"
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     En progreso
                   </button>
                   <button
                     onClick={() => changeTripStatus("completed")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       selectedBooking.tripStatus === "completed"
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        ? "bg-teal-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     Completado
@@ -502,9 +527,11 @@ export default function BookingsPage() {
                 </div>
               </div>
 
+              <div className="border-t border-gray-100" />
+
               {/* Pago */}
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Pago</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pago</h3>
                 <div className="text-sm space-y-1">
                   <div>Monto: ${selectedBooking.totalUSD?.toFixed(2)} USD</div>
                   <div>Estado: {selectedBooking.paymentStatus === "paid" ? "Pagado" : "Pendiente"}</div>
@@ -515,8 +542,8 @@ export default function BookingsPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
-              <button onClick={closeModal} className="bg-gray-300 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-400">
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end">
+              <button onClick={closeModal} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
                 Cerrar
               </button>
             </div>
