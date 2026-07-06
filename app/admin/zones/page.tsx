@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminHeader from "@/components/AdminHeader";
 
 interface Zone {
   id: number;
@@ -74,6 +75,7 @@ function BoundsPreview({
 
   return (
     <div className="flex flex-col items-center gap-3">
+      <AdminHeader section="zones" />
       <div className="relative w-40 h-40">
         <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-medium text-gray-400">
           N

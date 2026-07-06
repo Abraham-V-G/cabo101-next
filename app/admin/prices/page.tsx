@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminHeader from "@/components/AdminHeader";
 
 interface Vehicle {
   id: number;
@@ -167,6 +168,7 @@ export default function PricesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      <AdminHeader section="prices" />
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
