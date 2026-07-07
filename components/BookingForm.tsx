@@ -488,13 +488,14 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           padding: 6px 6px 10px;
           font-family: inherit;
           z-index: 9999;
+          min-width: 380px !important;
         }
 
         .pac-item {
           border: none;
           border-radius: 10px;
-          padding: 10px 12px;
-          font-size: 14px;
+          padding: 9px 12px;
+          font-size: 13px;
           line-height: 1.3;
           color: #374151;
           cursor: pointer;
@@ -522,7 +523,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         }
 
         .pac-item-query {
-          font-size: 14px;
+          font-size: 13px;
           color: #111827;
           padding-right: 4px;
         }
@@ -533,7 +534,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         }
 
         .pac-item .pac-secondary-text {
-          font-size: 12px;
+          font-size: 11px;
           color: #9ca3af;
           margin-left: 4px;
         }
