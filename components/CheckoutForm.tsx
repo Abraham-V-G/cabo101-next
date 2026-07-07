@@ -22,6 +22,11 @@ type Props = {
   departureDate: string;
   returnDate: string;
   tripType: string;
+  // Cuando viene true (ej. faltan datos que solo se piden si el cliente
+  // llegó desde una tarjeta de Viajes Populares), el botón de continuar
+  // se mantiene deshabilitado aunque el resto de los campos ya esté
+  // completo. Opcional para no romper otros usos de este componente.
+  disableContinue?: boolean;
 };
 
 export default function CheckoutForm({
@@ -33,6 +38,7 @@ export default function CheckoutForm({
   departureDate,
   returnDate,
   tripType,
+  disableContinue = false,
 }: Props) {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -146,7 +152,11 @@ export default function CheckoutForm({
     priceUSD === null ? "Calculating..." : `$${priceUSD} USD`;
 
   const isContinueDisabled =
-    priceUSD === null || !formData.firstName || !formData.email || !formData.phone;
+    priceUSD === null ||
+    !formData.firstName ||
+    !formData.email ||
+    !formData.phone ||
+    disableContinue;
 
   return (
     <div className="bg-white text-black p-6 rounded-3xl shadow space-y-6">
@@ -325,6 +335,8 @@ export default function CheckoutForm({
                   alert(
                     priceUSD === null
                       ? "Price is still loading. Please wait."
+                      : disableContinue
+                      ? "Please complete your trip details above (date and address) before continuing."
                       : "Complete required fields"
                   );
                   return;

@@ -1,4 +1,4 @@
-// app/booking/bookingContent.tsx
+
 // app/booking/bookingContent.tsx
 "use client";
 
@@ -38,17 +38,52 @@ const vehicles = [
   },
 ];
 
+const inputClass =
+  "border border-gray-200 rounded-lg px-3 py-2.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition";
+const labelClass = "text-xs font-medium text-gray-500 mb-1 block";
+
 export default function BookingContent() {
   const params = useSearchParams();
 
   // Parámetros generales
   const from = params.get("from") || "";
   const to = params.get("to") || "";
-  const departureDate = params.get("departureDate") || "";
-  const returnDate = params.get("returnDate") || "";
   const passengers = params.get("passengers") || "1";
   const passengerCount = Number(passengers);
   const tripType = params.get("tripType") || "oneway";
+
+  // Si viene de una tarjeta de "Viajes Populares", solo trae la zona
+  // (ej. "Cabo San Lucas"), no una fecha ni la dirección específica del
+  // hotel/villa — a diferencia del buscador normal, que siempre trae
+  // ambas cosas desde Google Places / el calendario de BookingForm.
+  const isFromPopularTransfer = params.get("source") === "popular";
+
+  // Fecha: ahora es estado editable (antes eran const solo-lectura),
+  // porque cuando viene de Viajes Populares el admin nunca la definió y
+  // el cliente debe poder elegirla aquí mismo.
+  const [departureDate, setDepartureDate] = useState(params.get("departureDate") || "");
+  const [returnDate, setReturnDate] = useState(params.get("returnDate") || "");
+
+  // Dirección específica de destino (hotel, villa, condominio, etc.)
+  // dentro de la zona. Solo aplica cuando viene de Viajes Populares; en
+  // el buscador normal "to" ya es una dirección específica de Google
+  // Places, así que no hace falta pedir nada extra.
+  const [specificAddress, setSpecificAddress] = useState("");
+
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  // "to" enriquecido con la dirección específica, para que el chofer
+  // reciba algo tan detallado como en el flujo normal de búsqueda.
+  const resolvedTo =
+    isFromPopularTransfer && specificAddress.trim()
+      ? `${specificAddress.trim()}, ${to}`
+      : to;
+
+  // Mientras falten estos datos (solo relevante si vino de Viajes
+  // Populares), no dejamos avanzar a la parte de pago.
+  const missingPopularDetails =
+    isFromPopularTransfer &&
+    (!departureDate || (tripType === "round" && !returnDate) || !specificAddress.trim());
 
   // Coordenadas (raw strings)
   const fromLatRaw = params.get("fromLat") || "";
@@ -189,6 +224,67 @@ export default function BookingContent() {
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
           {/* COLUMNA IZQUIERDA */}
           <div className="space-y-6">
+            {/* Solo aparece si se llegó desde una tarjeta de Viajes
+                Populares: ahí faltan fecha y dirección específica que el
+                buscador normal ya trae resueltas. */}
+            {isFromPopularTransfer && (
+              <div className="bg-white rounded-2xl border border-teal-200 p-6 space-y-4">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Complete your trip details
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Since you booked this from a quick transfer card, we just
+                    need a couple more details before you continue.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Departure date</label>
+                    <input
+                      type="date"
+                      min={todayStr}
+                      value={departureDate}
+                      onChange={(e) => setDepartureDate(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  {tripType === "round" && (
+                    <div>
+                      <label className={labelClass}>Return date</label>
+                      <input
+                        type="date"
+                        min={departureDate || todayStr}
+                        value={returnDate}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className={labelClass}>
+                    Hotel, villa, or address in {to}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Hotel Riu Santa Fe, Villa del Mar 12..."
+                    value={specificAddress}
+                    onChange={(e) => setSpecificAddress(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                {missingPopularDetails && (
+                  <p className="text-xs text-amber-600">
+                    Please complete these fields to continue to payment.
+                  </p>
+                )}
+              </div>
+            )}
+
             <VehicleSelector
             vehicles={availableVehicles}
             selected={vehicle}
@@ -199,11 +295,12 @@ export default function BookingContent() {
               vehicle={vehicle}
               priceUSD={priceUSD}
               from={from}
-              to={to}
+              to={resolvedTo}
               passengers={passengers}
               departureDate={departureDate}
               returnDate={returnDate}
               tripType={tripType as "oneway" | "round"}
+              disableContinue={missingPopularDetails}
             />
           </div>
 
@@ -211,7 +308,7 @@ export default function BookingContent() {
           <div className="lg:sticky top-10 h-fit">
             <BookingSummary
               from={from}
-              to={to}
+              to={resolvedTo}
               vehicle={vehicle}
               priceUSD={priceUSD}
               passengers={passengers}

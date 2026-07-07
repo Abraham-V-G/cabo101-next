@@ -15,6 +15,7 @@ interface Transfer {
   subtitle: string;
   price: string;
   roundTripPriceUSD: number | null;
+  oneWayPriceUSD: number | null;
   tag: string | null;
   image: string;
   vehicleName: string;
@@ -29,6 +30,21 @@ export default function PopularTransfers() {
   const router = useRouter();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
+  // Selección de round trip / one way por tarjeta (clave = slug de la
+  // zona). Por defecto usa round trip si está disponible, si no one way.
+  const [selectedType, setSelectedType] = useState<Record<string, "oneway" | "round">>({});
+
+  const getTripType = (item: Transfer): "oneway" | "round" => {
+    const stored = selectedType[item.slug];
+    if (stored === "round" && item.roundTripPriceUSD !== null) return "round";
+    if (stored === "oneway" && item.oneWayPriceUSD !== null) return "oneway";
+    return item.roundTripPriceUSD !== null ? "round" : "oneway";
+  };
+
+  const getDisplayPrice = (item: Transfer, tripType: "oneway" | "round") => {
+    const amount = tripType === "round" ? item.roundTripPriceUSD : item.oneWayPriceUSD;
+    return amount !== null ? `$${amount} USD` : "Consultar";
+  };
 
   useEffect(() => {
     fetch("/api/popular-transfers")
@@ -52,7 +68,7 @@ export default function PopularTransfers() {
   // Populares" (no un "1" fijo), para que BookingContent seleccione
   // automáticamente ese mismo tipo de vehículo y el precio recalculado
   // coincida con el que se anunció en la tarjeta.
-  const handleBooking = (item: Transfer) => {
+  const handleBooking = (item: Transfer, tripType: "oneway" | "round") => {
     const params = new URLSearchParams({
       fromName: "Los Cabos International Airport",
       toName: item.title,
@@ -65,9 +81,10 @@ export default function PopularTransfers() {
       departureDate: "",
       returnDate: "",
       passengers: String(item.vehicleCapacity || 1),
-      tripType: "round",
+      tripType,
       customFrom: "false",
       customTo: "false",
+      source: "popular",
     });
     router.push(`/booking?${params.toString()}`);
   };
@@ -125,7 +142,9 @@ export default function PopularTransfers() {
             1280: { slidesPerView: 3.2, spaceBetween: 24 },
           }}
         >
-          {transfers.map((item, index) => (
+          {transfers.map((item, index) => {
+            const tripType = getTripType(item);
+            return (
             <SwiperSlide key={index}>
               <div className="group relative rounded-2xl overflow-hidden cursor-pointer h-[380px] sm:h-[420px] shadow-sm hover:shadow-xl transition-shadow duration-500">
                 <img
@@ -142,11 +161,40 @@ export default function PopularTransfers() {
                     {item.tag}
                   </div>
                 )}
-                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-xl shadow-sm">
-                  {item.price}
-                  <span className="block text-[10px] font-normal text-gray-500 leading-none mt-0.5 text-center">
-                    Round Trip
-                  </span>
+                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-gray-900 rounded-xl shadow-sm overflow-hidden w-32">
+                  <div className="text-sm font-bold px-3 pt-1.5 pb-1 text-center">
+                    {getDisplayPrice(item, tripType)}
+                  </div>
+                  <div className="flex text-[10px] font-semibold border-t border-gray-200">
+                    <button
+                      type="button"
+                      disabled={item.roundTripPriceUSD === null}
+                      onClick={() =>
+                        setSelectedType((prev) => ({ ...prev, [item.slug]: "round" }))
+                      }
+                      className={`flex-1 py-1 transition ${
+                        tripType === "round"
+                          ? "bg-gray-900 text-white"
+                          : "text-gray-500 hover:bg-gray-100"
+                      } disabled:opacity-30 disabled:cursor-not-allowed`}
+                    >
+                      Round trip
+                    </button>
+                    <button
+                      type="button"
+                      disabled={item.oneWayPriceUSD === null}
+                      onClick={() =>
+                        setSelectedType((prev) => ({ ...prev, [item.slug]: "oneway" }))
+                      }
+                      className={`flex-1 py-1 transition border-l border-gray-200 ${
+                        tripType === "oneway"
+                          ? "bg-gray-900 text-white"
+                          : "text-gray-500 hover:bg-gray-100"
+                      } disabled:opacity-30 disabled:cursor-not-allowed`}
+                    >
+                      One way
+                    </button>
+                  </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-5">
                   <div className="flex items-center gap-1.5 text-white/60 text-xs mb-2">
@@ -167,7 +215,7 @@ export default function PopularTransfers() {
                   </h3>
                   <p className="text-white/60 text-xs mb-4">{item.subtitle}</p>
                   <button
-                    onClick={() => handleBooking(item)}
+                    onClick={() => handleBooking(item, tripType)}
                     className="w-full bg-white text-gray-900 hover:bg-teal-500 hover:text-white text-sm font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     Book this transfer
@@ -178,7 +226,8 @@ export default function PopularTransfers() {
                 </div>
               </div>
             </SwiperSlide>
-          ))}
+            );
+          })}
         </Swiper>
       </div>
     </section>

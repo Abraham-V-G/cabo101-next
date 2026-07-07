@@ -54,6 +54,7 @@ export async function GET() {
         },
       });
       const roundTripPrice = price?.roundTrip ?? null;
+      const oneWayPrice = price?.oneWay ?? null;
       const destCenter = zoneCenter(item.zone);
 
       return {
@@ -62,6 +63,7 @@ export async function GET() {
         subtitle: item.travelTime,
         price: roundTripPrice ? `$${roundTripPrice} USD` : 'Consultar',
         roundTripPriceUSD: roundTripPrice,
+        oneWayPriceUSD: oneWayPrice,
         tag: null,
         image: item.image || '/images/san jose del cabo.jpg',
         // Necesarios para que /booking recalcule el precio correctamente
@@ -76,11 +78,17 @@ export async function GET() {
     })
   );
 
-  // Se descartan tarjetas sin precio configurado (como antes) Y tarjetas
-  // cuya zona (origen o destino) no tenga límites lat/lng definidos, ya
-  // que sin coordenadas /booking no puede recalcular el precio.
+  // Se descartan tarjetas sin NINGÚN precio configurado (ni one way ni
+  // round trip) y tarjetas cuya zona (origen o destino) no tenga límites
+  // lat/lng definidos, ya que sin coordenadas /booking no puede
+  // recalcular el precio. Si solo tiene uno de los dos precios, la
+  // tarjeta igual se muestra — el toggle en el frontend deshabilita la
+  // opción que no esté disponible para esa ruta.
   const availableTransfers = transfers.filter(
-    (t) => t.price !== 'Consultar' && t.fromLat !== null && t.toLat !== null
+    (t) =>
+      (t.oneWayPriceUSD !== null || t.roundTripPriceUSD !== null) &&
+      t.fromLat !== null &&
+      t.toLat !== null
   );
   return NextResponse.json(availableTransfers);
 }
