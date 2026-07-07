@@ -14,8 +14,15 @@ interface Transfer {
   slug: string;
   subtitle: string;
   price: string;
+  roundTripPriceUSD: number | null;
   tag: string | null;
   image: string;
+  vehicleName: string;
+  vehicleCapacity: number;
+  fromLat: number;
+  fromLng: number;
+  toLat: number;
+  toLng: number;
 }
 
 export default function PopularTransfers() {
@@ -36,24 +43,41 @@ export default function PopularTransfers() {
       });
   }, []);
 
-  const handleBooking = (destinationName: string) => {
-    const query = new URLSearchParams({
-      from: "Airport",
-      to: destinationName,
-      passengers: "1",
-    }).toString();
-    router.push(`/booking?${query}`);
+  // Arma la misma "forma" de query params que BookingForm.tsx (el buscador
+  // normal), usando las coordenadas del centro de cada zona en vez de
+  // coordenadas reales de Google Places. Sin esto, BookingContent no tenía
+  // con qué llamar a /api/pricing y el precio caía a $0.
+  //
+  // Se manda passengers = capacidad del vehículo configurado en "Viajes
+  // Populares" (no un "1" fijo), para que BookingContent seleccione
+  // automáticamente ese mismo tipo de vehículo y el precio recalculado
+  // coincida con el que se anunció en la tarjeta.
+  const handleBooking = (item: Transfer) => {
+    const params = new URLSearchParams({
+      fromName: "Los Cabos International Airport",
+      toName: item.title,
+      from: "Los Cabos International Airport",
+      to: item.title,
+      fromLat: String(item.fromLat),
+      fromLng: String(item.fromLng),
+      toLat: String(item.toLat),
+      toLng: String(item.toLng),
+      departureDate: "",
+      returnDate: "",
+      passengers: String(item.vehicleCapacity || 1),
+      tripType: "round",
+      customFrom: "false",
+      customTo: "false",
+    });
+    router.push(`/booking?${params.toString()}`);
   };
 
   // Función para manejar el error de imagen sin bucle
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const img = e.currentTarget;
     // Si ya tiene el fallback, no hacer nada para evitar bucle
-    if (img.src.includes("fallback.jpg")) return;
-    // Intentar usar una imagen de placeholder confiable (puedes poner una URL externa)
+    if (img.src.includes("placehold.co")) return;
     img.src = "https://placehold.co/600x400/1a1a2e/ffffff?text=No+Image";
-    // O si tienes una imagen local que existe, puedes usarla:
-    // img.src = "/images/no-image.jpg";
   };
 
   if (loading) {
@@ -143,7 +167,7 @@ export default function PopularTransfers() {
                   </h3>
                   <p className="text-white/60 text-xs mb-4">{item.subtitle}</p>
                   <button
-                    onClick={() => handleBooking(item.title)}
+                    onClick={() => handleBooking(item)}
                     className="w-full bg-white text-gray-900 hover:bg-teal-500 hover:text-white text-sm font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     Book this transfer

@@ -3,9 +3,40 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+type ZoneBounds = {
+  latMin: number | null;
+  latMax: number | null;
+  lngMin: number | null;
+  lngMax: number | null;
+};
+
+// Punto central del bounding box de la zona. BookingContent/`/api/pricing`
+// necesitan una coordenada (lat/lng) para volver a ubicar la zona y
+// recalcular el precio exactamente igual que lo hace el buscador normal
+// (BookingForm), que siempre manda coordenadas reales de Google Places.
+// Si a la zona le faltan límites, devolvemos null y esa tarjeta se filtra
+// más abajo (mismo caso que "Zonas sin ningún precio configurado" que
+// vimos en el admin: si no tiene bounds, no podemos geolocalizarla).
+function zoneCenter(zone: ZoneBounds) {
+  if (
+    zone.latMin === null ||
+    zone.latMax === null ||
+    zone.lngMin === null ||
+    zone.lngMax === null
+  ) {
+    return null;
+  }
+  return {
+    lat: (zone.latMin + zone.latMax) / 2,
+    lng: (zone.lngMin + zone.lngMax) / 2,
+  };
+}
+
 export async function GET() {
   const airport = await prisma.zone.findFirst({ where: { isAirport: true } });
   if (!airport) return NextResponse.json([]);
+
+  const airportCenter = zoneCenter(airport);
 
   const populars = await prisma.popularTransfer.findMany({
     where: { active: true },
@@ -23,17 +54,33 @@ export async function GET() {
         },
       });
       const roundTripPrice = price?.roundTrip ?? null;
+      const destCenter = zoneCenter(item.zone);
+
       return {
         title: item.zone.name,
         slug: item.zone.slug,
         subtitle: item.travelTime,
         price: roundTripPrice ? `$${roundTripPrice} USD` : 'Consultar',
+        roundTripPriceUSD: roundTripPrice,
         tag: null,
-        image: item.image || '/images/san jose del cabo.jpg'
+        image: item.image || '/images/san jose del cabo.jpg',
+        // Necesarios para que /booking recalcule el precio correctamente
+        // en vez de mostrar $0 por falta de coordenadas.
+        vehicleName: item.vehicle.name,
+        vehicleCapacity: item.vehicle.capacity,
+        fromLat: airportCenter?.lat ?? null,
+        fromLng: airportCenter?.lng ?? null,
+        toLat: destCenter?.lat ?? null,
+        toLng: destCenter?.lng ?? null,
       };
     })
   );
 
-  const availableTransfers = transfers.filter(t => t.price !== 'Consultar');
+  // Se descartan tarjetas sin precio configurado (como antes) Y tarjetas
+  // cuya zona (origen o destino) no tenga límites lat/lng definidos, ya
+  // que sin coordenadas /booking no puede recalcular el precio.
+  const availableTransfers = transfers.filter(
+    (t) => t.price !== 'Consultar' && t.fromLat !== null && t.toLat !== null
+  );
   return NextResponse.json(availableTransfers);
 }
