@@ -488,7 +488,13 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           padding: 6px 6px 10px;
           font-family: inherit;
           z-index: 9999;
-          min-width: 380px !important;
+          max-width: 92vw;
+        }
+
+        @media (min-width: 640px) {
+          .pac-container {
+            min-width: 380px !important;
+          }
         }
 
         .pac-item {
