@@ -75,7 +75,6 @@ function BoundsPreview({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <AdminHeader section="zones" />
       <div className="relative w-40 h-40">
         <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-medium text-gray-400">
           N
@@ -254,6 +253,7 @@ export default function ZonesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      <AdminHeader section="zones" />
       <div className="max-w-5xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Zonas</h1>
