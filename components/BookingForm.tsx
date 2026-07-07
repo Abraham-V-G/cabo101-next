@@ -11,7 +11,6 @@ declare global {
   interface Window { google: any; }
 }
 
-// Tipo para unificar ubicaciones (Google Places o custom del mapa)
 type PlaceLike = {
   name?: string;
   formatted_address?: string;
@@ -42,11 +41,9 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
   const [selectingFromLocation, setSelectingFromLocation] = useState(false);
   const [selectingToLocation, setSelectingToLocation]     = useState(false);
 
-  // Banderas para saber si la ubicación vino del mapa (custom)
   const [customFrom, setCustomFrom] = useState(false);
   const [customTo,   setCustomTo]   = useState(false);
 
-  // Inicializar Google Places Autocomplete
   useEffect(() => {
     if (!mapsLoaded || !window.google?.maps?.places) return;
 
@@ -68,7 +65,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           if (place?.geometry && fromRef.current) {
             fromPlaceRef.current = place;
             fromRef.current.value = place.name;
-            setCustomFrom(false); // Viene de Google Places, no es custom
+            setCustomFrom(false);
           }
         });
       }
@@ -114,7 +111,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
 
     setLoading(true);
 
-    // Fallback seguro para name
     const fromName = fromPlace.name || fromPlace.formatted_address;
     const toName   = toPlace.name   || toPlace.formatted_address;
 
@@ -135,7 +131,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       customTo:   String(customTo),
     });
 
-    // Redirigir; el setLoading(false) es innecesario porque la página se recarga
     window.location.href = `/booking?${params.toString()}`;
   };
 
@@ -148,7 +143,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
     });
   };
 
-  // ── Minicalendario personalizado (sin cambios) ──────────────────
   const CustomCalendar = ({
     selectedDate,
     onDateChange,
@@ -331,7 +325,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       </div>
     );
   };
-  // ── Fin CustomCalendar ─────────────────────────────────────────
 
   return (
     <>
@@ -339,7 +332,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         onSubmit={handleSubmit}
         className="bg-white rounded-xl w-full flex flex-col sm:flex-row items-stretch overflow-hidden text-gray-700 shadow-lg"
       >
-        {/* From */}
         <div className="flex-[2] flex items-center gap-2 py-[8.4px] pl-5 pr-4 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/from.png" alt="" width={11} height={11} />
           <input
@@ -365,7 +357,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </button>
         </div>
 
-        {/* To */}
         <div className="flex-[2] flex items-center gap-2 pl-5 pr-4 py-[8.4px] border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/to.png" alt="" width={15} height={15} />
           <input
@@ -391,7 +382,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </button>
         </div>
 
-        {/* Departure */}
         <div
           onClick={() => setShowDepartureCalendar(true)}
           className="flex items-center gap-2 px-4 py-[8.4px] flex-1 border-b sm:border-b-0 sm:border-r border-gray-200 cursor-pointer hover:bg-gray-50 transition"
@@ -402,7 +392,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </span>
         </div>
 
-        {/* Return */}
         {tripType === "round" && (
           <div
             onClick={() => setShowReturnCalendar(true)}
@@ -415,7 +404,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </div>
         )}
 
-        {/* Passengers */}
         <div className="flex items-center gap-2 px-4 py-[8.4px] flex-1 border-b sm:border-b-0 sm:border-r border-gray-200">
           <Image src="/images/user.png" alt="" width={18} height={18} />
           <select id="passengers" className="w-full outline-none text-sm sm:text-base py-[8.4px] bg-white cursor-pointer">
@@ -427,7 +415,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           </select>
         </div>
 
-        {/* Search button */}
         <button
           type="submit"
           disabled={loading}
@@ -445,7 +432,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         <CustomCalendar selectedDate={returnDate} onDateChange={setReturnDate} onClose={() => setShowReturnCalendar(false)} />
       )}
 
-      {/* MapModal con lógica robusta y propiedad isCustomLocation */}
       {showMapModal && (
         <MapModal
           isOpen={showMapModal}
@@ -455,7 +441,6 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             setSelectingToLocation(false);
           }}
           onSelect={(location) => {
-            // location ya tiene tipo MapLocation gracias a las props de MapModal
             const address = location.address || location.formattedAddress || `${location.lat}, ${location.lng}`;
 
             const normalizedPlace: PlaceLike = {
@@ -488,6 +473,71 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
           }}
         />
       )}
+
+      {/* Estilo del dropdown de Google Places Autocomplete (.pac-container).
+          Google lo inyecta directamente en <body>, fuera del control de
+          React, así que solo se puede personalizar con CSS global
+          apuntando a sus clases públicas. No se tocó ninguna otra parte
+          del componente: esto es puramente visual. */}
+      <style jsx global>{`
+        .pac-container {
+          border-radius: 14px;
+          margin-top: 8px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+          padding: 6px 6px 10px;
+          font-family: inherit;
+          z-index: 9999;
+        }
+
+        .pac-item {
+          border: none;
+          border-radius: 10px;
+          padding: 10px 12px;
+          font-size: 14px;
+          line-height: 1.3;
+          color: #374151;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+        }
+
+        .pac-item:hover,
+        .pac-item-selected {
+          background-color: #eafaf1;
+        }
+
+        .pac-icon {
+          display: none;
+        }
+
+        .pac-item::before {
+          content: "";
+          width: 6px;
+          height: 6px;
+          border-radius: 9999px;
+          background: #4ccb8c;
+          margin-right: 10px;
+          flex-shrink: 0;
+        }
+
+        .pac-item-query {
+          font-size: 14px;
+          color: #111827;
+          padding-right: 4px;
+        }
+
+        .pac-matched {
+          font-weight: 600;
+          color: #0f6e56;
+        }
+
+        .pac-item .pac-secondary-text {
+          font-size: 12px;
+          color: #9ca3af;
+          margin-left: 4px;
+        }
+      `}</style>
     </>
   );
 }
