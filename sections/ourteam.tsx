@@ -59,6 +59,12 @@ export default function OurTeam() {
   return (
     <section className="py-16 md:py-24 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 mb-10 text-center">
+        {/* Misma etiqueta pequeña + título que el resto de las secciones
+            (Experience, Popular Transfers, Testimonials), para que este
+            carrusel se sienta parte del mismo sistema de diseño. */}
+        <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
+          Behind The Scenes
+        </p>
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
           This is Cabo 101
         </h2>
@@ -90,7 +96,7 @@ export default function OurTeam() {
             {track.map((item, idx) => (
               <div
                 key={`${item.id}-${idx}`}
-                className="relative flex-shrink-0 w-64 h-80 md:w-72 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-gray-100"
+                className="relative flex-shrink-0 w-64 h-80 md:w-72 md:h-96 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500 bg-gray-100"
               >
                 {isVideoUrl(item.url) ? (
                   <video
@@ -110,6 +116,12 @@ export default function OurTeam() {
                     className="object-cover"
                   />
                 )}
+
+                {/* Degradado inferior sutil siempre presente (tenga o no
+                    caption), igual que en las tarjetas de Popular
+                    Transfers, para que ambos carruseles compartan el
+                    mismo lenguaje visual. */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                 {item.caption && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">

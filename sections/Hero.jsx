@@ -44,9 +44,15 @@ export default function Hero() {
         >
           <source src={videoUrl} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 from-[10%] via-black/25 via-[20%] to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 from-[10%] via-black/25 via-[20%] to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 from-[10%] via-black/25 via-[20%] to-transparent" />
+        {/* Degradados de legibilidad sobre el video. En móvil se usan
+            paradas más amplias y graduales (arrancan antes y se
+            extienden más) para que el oscurecimiento se vea suave en
+            vez de cortado; a partir de md: vuelve a las paradas
+            originales, pensadas para pantallas anchas donde el texto
+            vive a la izquierda y el video se ve limpio a la derecha. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/65 from-[5%] via-black/30 via-[45%] to-transparent md:from-black/50 md:from-[10%] md:via-black/25 md:via-[20%]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 from-[5%] via-black/30 via-[35%] to-transparent md:from-black/55 md:from-[10%] md:via-black/25 md:via-[20%]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 from-[5%] via-black/30 via-[35%] to-transparent md:from-black/55 md:from-[10%] md:via-black/25 md:via-[20%]" />
       </div>
 
       <Navbar />

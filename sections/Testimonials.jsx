@@ -34,13 +34,27 @@ function Stars({ count }) {
   );
 }
 
+// Fallback de avatar consistente con el resto del sitio (ya usan
+// placehold.co en Experience.jsx y PopularTransfers.tsx cuando una
+// imagen falla), en vez de introducir un servicio nuevo.
+function getInitials(name) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function Testimonials() {
   return (
-    <section className="bg-white py-20 md:py-28 px-4 sm:px-6 md:px-10 lg:px-20">
+    <section className="bg-gray-50 py-20 md:py-28 px-4 sm:px-6 md:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
-        <div className="mb-12">
+        {/* Header — mismo patrón de "etiqueta pequeña + título" que
+            Experience y Popular Transfers, para que las secciones se
+            sientan parte del mismo sistema de diseño. */}
+        <div className="mb-12 text-center md:text-left">
           <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
             Reviews
           </p>
@@ -54,7 +68,7 @@ export default function Testimonials() {
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="flex flex-col justify-between bg-white "
+              className="flex flex-col justify-between bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 p-6"
             >
               <div>
                 <Stars count={t.rating} />
@@ -64,6 +78,16 @@ export default function Testimonials() {
               </div>
 
               <div className="flex items-center gap-3 mt-6 pt-5 border-t border-gray-100">
+                <img
+                  src={t.avatar}
+                  alt={t.name}
+                  className="w-10 h-10 rounded-full object-cover flex-shrink-0 bg-gray-100"
+                  onError={(e) => {
+                    if (!e.currentTarget.src.includes("placehold.co")) {
+                      e.currentTarget.src = `https://placehold.co/64x64/0d9488/ffffff?text=${getInitials(t.name)}`;
+                    }
+                  }}
+                />
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{t.name}</p>
                   <p className="text-xs text-gray-400">{t.location}</p>
