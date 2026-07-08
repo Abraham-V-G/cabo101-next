@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 export default function Experience() {
   const [perks, setPerks] = useState([]);
   const [videoUrl, setVideoUrl] = useState("/images/experience-preview.mp4");
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/media")
       .then(res => res.json())
       .then(data => {
         console.log("📦 Datos de Experience:", data);
-        
+
         // Íconos de experiencia
         const icons = data.filter(item => item.section === "experience-icons");
         setPerks(icons.map(p => ({
@@ -30,6 +31,16 @@ export default function Experience() {
       })
       .catch(console.error);
   }, []);
+
+  // Cerrar el modal con la tecla Escape, para que no se sienta atrapado
+  useEffect(() => {
+    if (!showVideoModal) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") setShowVideoModal(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [showVideoModal]);
 
   const defaultPerks = [
     {
@@ -91,19 +102,81 @@ export default function Experience() {
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl overflow-hidden shadow-lg aspect-video">
+
+        {/* Vista previa del video: sin controles, en loop y muteado,
+            con un eslogan "How it works" y un botón de play encima. Al
+            hacer clic se abre el modal con el video completo y todos
+            los controles nativos (play/pausa, volumen, tiempo, pantalla
+            completa). */}
+        <div
+          className="relative rounded-2xl overflow-hidden shadow-lg aspect-video cursor-pointer group"
+          onClick={() => setShowVideoModal(true)}
+          role="button"
+          tabIndex={0}
+          aria-label="Play video: How it works"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setShowVideoModal(true);
+          }}
+        >
           <video
             key={videoUrl} // 👈 FORZA RE-RENDER CUANDO CAMBIA LA URL
             src={videoUrl}
             poster="/images/cabo san lucas.jpg"
             className="w-full h-full object-cover"
-            controls
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
             onLoadedData={() => console.log("✅ Video Experience cargado:", videoUrl)}
             onError={(e) => console.error("❌ Error cargando video Experience:", e)}
-            preload="auto"
           />
+
+          {/* Overlay con eslogan + botón de play */}
+          <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-300 flex flex-col items-center justify-center gap-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+              <svg
+                className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600 translate-x-0.5"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+            <p className="text-white text-lg sm:text-xl font-semibold tracking-wide drop-shadow">
+              How it works
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Modal del video con controles completos */}
+      {showVideoModal && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowVideoModal(false)}
+        >
+          <div
+            className="relative w-full max-w-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute -top-10 right-0 text-white text-3xl leading-none hover:text-gray-300 transition-colors"
+              aria-label="Close video"
+            >
+              ×
+            </button>
+            <video
+              src={videoUrl}
+              className="w-full rounded-2xl shadow-2xl"
+              controls
+              autoPlay
+              playsInline
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
