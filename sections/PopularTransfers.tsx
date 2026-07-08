@@ -5,9 +5,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Autoplay } from "swiper/modules";
+import { Autoplay } from "swiper/modules";
 import "swiper/css";
-import "swiper/css/navigation";
 
 interface Transfer {
   title: string;
@@ -128,8 +127,7 @@ export default function PopularTransfers() {
         </div>
 
         <Swiper
-          modules={[Navigation, Autoplay]}
-          navigation
+          modules={[Autoplay]}
           loop={true}
           autoplay={{ delay: 4000, disableOnInteraction: false }}
           spaceBetween={20}
@@ -230,42 +228,6 @@ export default function PopularTransfers() {
           })}
         </Swiper>
       </div>
-
-      {/* Estilo de marca para las flechas de navegación de Swiper
-          (.swiper-button-next/prev). Por defecto Swiper las pinta como
-          simples chevrons negros sin relación con el resto del sitio;
-          aquí se les da la misma pastilla blanca + acento teal que ya
-          se usa en otros controles (ej. el dropdown de Google Places),
-          para que el carrusel se sienta parte del mismo diseño. */}
-      <style jsx global>{`
-        .swiper-button-next,
-        .swiper-button-prev {
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 9999px;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-          color: #0f766e;
-          transition: background-color 0.2s ease, color 0.2s ease;
-        }
-
-        .swiper-button-next:hover,
-        .swiper-button-prev:hover {
-          background: #0f766e;
-          color: #ffffff;
-        }
-
-        .swiper-button-next::after,
-        .swiper-button-prev::after {
-          font-size: 14px;
-          font-weight: 700;
-        }
-
-        .swiper-button-disabled {
-          opacity: 0 !important;
-          pointer-events: none;
-        }
-      `}</style>
     </section>
   );
 }

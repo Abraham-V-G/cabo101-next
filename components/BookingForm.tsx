@@ -500,8 +500,8 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         .pac-item {
           border: none;
           border-radius: 10px;
-          padding: 9px 12px;
-          font-size: 13px;
+          padding: 10px 12px;
+          font-size: 14px;
           line-height: 1.3;
           color: #374151;
           cursor: pointer;
@@ -529,7 +529,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         }
 
         .pac-item-query {
-          font-size: 13px;
+          font-size: 14px;
           color: #111827;
           padding-right: 4px;
         }
@@ -540,9 +540,27 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
         }
 
         .pac-item .pac-secondary-text {
-          font-size: 11px;
+          font-size: 12px;
           color: #9ca3af;
           margin-left: 4px;
+        }
+
+        /* Ajustes SOLO para móvil: texto un poco más compacto para que
+           quepan mejor las sugerencias en pantallas angostas. Desktop
+           conserva el tamaño original de arriba. */
+        @media (max-width: 639px) {
+          .pac-item {
+            font-size: 13px;
+            padding: 8px 10px;
+          }
+
+          .pac-item-query {
+            font-size: 13px;
+          }
+
+          .pac-item .pac-secondary-text {
+            font-size: 11px;
+          }
         }
       `}</style>
     </>
