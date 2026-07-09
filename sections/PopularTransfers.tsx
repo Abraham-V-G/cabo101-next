@@ -101,7 +101,7 @@ export default function PopularTransfers() {
 
   return (
     <section className="py-16 md:py-24 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 mb-10 text-center">
+      <div className="max-w-7xl mx-auto px-4 mb-10 text-center sm:text-left">
         {/* Mismo patrón de encabezado que Our Team: etiqueta pequeña +
             título, centrado. */}
         <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
