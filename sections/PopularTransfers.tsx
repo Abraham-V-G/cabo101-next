@@ -116,6 +116,7 @@ export default function PopularTransfers() {
           navegación, se recorre con swipe/drag o dejando que el
           auto-scroll continúe, y se pausa al pasar el mouse. */}
       <InfiniteCarousel
+        autoScroll={false}
         items={transfers}
         itemKey={(item) => item.slug}
         renderItem={(item) => {
