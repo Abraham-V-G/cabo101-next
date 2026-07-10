@@ -50,15 +50,18 @@ function getInitials(name) {
 export default function Testimonials() {
   return (
     <section className="py-16 sm:py-20 md:py-28 bg-gray-50 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 lg:px-20 mb-10 text-center">
-        {/* Mismo patrón de encabezado que Our Team / Popular Transfers:
-            etiqueta pequeña + título, centrado. */}
-        <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
-          Reviews
-        </p>
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Rated Excellent by Our Travelers
-        </h2>
+      <div className="px-4 sm:px-6 md:px-10 lg:px-20">
+        <div className="max-w-7xl mx-auto mb-10 text-center sm:text-left">
+          {/* Mismo patrón de encabezado que Our Team / Popular Transfers:
+              etiqueta pequeña + título, centrado en móvil, a la izquierda
+              desde tablet/desktop. */}
+          <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
+            Reviews
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Rated Excellent by Our Travelers
+          </h2>
+        </div>
       </div>
 
       {/* Mismo carrusel que Our Team y Popular Transfers: scroll

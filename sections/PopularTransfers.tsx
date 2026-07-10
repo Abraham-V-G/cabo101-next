@@ -101,15 +101,21 @@ export default function PopularTransfers() {
 
   return (
     <section className="py-16 sm:py-20 md:py-28 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 lg:px-20 mb-10 text-center sm:text-left">
-        {/* Mismo patrón de encabezado que Our Team: etiqueta pequeña +
-            título, centrado. */}
-        <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
-          Airport Transfers
-        </p>
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Where are you heading?
-        </h2>
+      {/* El padding responsive vive en este div externo (igual que en
+          Experience, donde vive en el <section>), y el max-w-7xl interno
+          no tiene padding propio. Así el título no se centra dos veces
+          (auto-margin + padding) — solo se ve el inset del padding, igual
+          que en Experience. El carrusel de abajo queda fuera de este
+          wrapper, así que no le afecta en nada. */}
+      <div className="px-4 sm:px-6 md:px-10 lg:px-20">
+        <div className="max-w-7xl mx-auto mb-10 text-center sm:text-left">
+          <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">
+            Airport Transfers
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Where are you heading?
+          </h2>
+        </div>
       </div>
 
       {/* Mismo mecanismo que Our Team: scroll infinito, sin botones de
