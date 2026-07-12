@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "react-datepicker/dist/react-datepicker.css";
 /* globals.css */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
   --background: #f9fafb;
@@ -17,7 +16,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Manrope", sans-serif;
 }
 
 /* 🔥 INPUT FLOATING (PRO) */

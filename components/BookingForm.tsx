@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import useGoogleMaps from "@/lib/useGoogleMaps";
 import MapModal from "@/components/MapModal";
 
@@ -24,6 +25,7 @@ type PlaceLike = {
 };
 
 export default function BookingForm({ tripType }: { tripType: "oneway" | "round" }) {
+  const router = useRouter();
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef   = useRef<HTMLInputElement>(null);
   const fromPlaceRef = useRef<PlaceLike | null>(null);
@@ -131,7 +133,11 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
       customTo:   String(customTo),
     });
 
-    window.location.href = `/booking?${params.toString()}`;
+    // Antes esto era window.location.href, que fuerza una recarga
+    // completa del navegador. router.push hace la navegación del lado
+    // del cliente que ya usa Next.js — reutiliza el JS ya cargado en vez
+    // de descargarlo todo de nuevo, así que /booking carga más rápido.
+    router.push(`/booking?${params.toString()}`);
   };
 
   const formatDate = (dateString: string) => {

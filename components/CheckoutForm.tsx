@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import PaymentBrick from "@/components/PaymentBrick";
 import { motion, AnimatePresence } from "framer-motion";
 import { buildBookingPayload } from "@/lib/buildBookingPayload";
@@ -40,6 +41,7 @@ export default function CheckoutForm({
   tripType,
   disableContinue = false,
 }: Props) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -130,7 +132,9 @@ export default function CheckoutForm({
       }
 
       if (result.status === "approved") {
-        window.location.href = `/success?id=${result.id}`;
+        // router.push en vez de window.location.href: evita una recarga
+        // completa del navegador justo después de pagar.
+        router.push(`/success?id=${result.id}`);
       }
 
       return result;
