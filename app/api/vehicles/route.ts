@@ -1,3 +1,5 @@
+//app/api/vehicles/route.ts
+
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
@@ -12,7 +14,8 @@ export async function POST(req: Request) {
     data: {
       name: body.name,
       capacity: Number(body.capacity),
-      active: body.active ?? true
+      active: body.active ?? true,
+      image: body.image || null,
     }
   })
   return NextResponse.json(vehicle)

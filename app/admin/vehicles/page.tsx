@@ -10,17 +10,26 @@ interface Vehicle {
   name: string;
   capacity: number;
   active: boolean;
+  image?: string | null;
 }
+
+type FormState = {
+  name: string;
+  capacity: string;
+  active: boolean;
+  image: string; // URL ya guardada (al editar) o vacío
+};
+
+const emptyForm: FormState = { name: "", capacity: "", active: true, image: "" };
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [form, setForm] = useState({
-    name: "",
-    capacity: "",
-    active: true,
-  });
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const loadVehicles = async () => {
     const res = await fetch("/api/vehicles");
@@ -32,22 +41,63 @@ export default function VehiclesPage() {
     loadVehicles();
   }, []);
 
+  // Genera una vista previa del archivo elegido y libera el objeto URL
+  // cuando ya no se necesita (evita fugas de memoria).
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(imageFile);
+    setImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
+
   const resetForm = () => {
     setEditingId(null);
-    setForm({ name: "", capacity: "", active: true });
+    setForm(emptyForm);
+    setImageFile(null);
   };
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.capacity) {
-      alert("Name and capacity are required");
+      alert("Nombre y capacidad son obligatorios");
       return;
     }
 
     setLoading(true);
-    const method = editingId ? "PUT" : "POST";
-    const url = editingId ? `/api/vehicles/${editingId}` : "/api/vehicles";
-
     try {
+      let finalImage = form.image;
+
+      // Si se eligió un archivo nuevo, subirlo primero (mismo endpoint
+      // /api/upload que ya usan Fotos y Viajes Populares — ya comprime
+      // la imagen a WebP del lado del servidor).
+      if (imageFile) {
+        setUploading(true);
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", imageFile);
+        uploadFormData.append("section", "vehicles");
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+        setUploading(false);
+
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json().catch(() => ({}));
+          alert(errorData.error || "Error al subir la imagen");
+          setLoading(false);
+          return;
+        }
+
+        const uploadData = await uploadRes.json();
+        finalImage = uploadData.url;
+      }
+
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/vehicles/${editingId}` : "/api/vehicles";
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -55,6 +105,7 @@ export default function VehiclesPage() {
           name: form.name.trim(),
           capacity: parseInt(form.capacity),
           active: form.active,
+          image: finalImage || null,
         }),
       });
 
@@ -64,7 +115,7 @@ export default function VehiclesPage() {
       loadVehicles();
     } catch (error) {
       console.error(error);
-      alert("Error saving vehicle");
+      alert("Error al guardar el vehículo");
     } finally {
       setLoading(false);
     }
@@ -76,7 +127,10 @@ export default function VehiclesPage() {
       name: vehicle.name,
       capacity: String(vehicle.capacity),
       active: vehicle.active,
+      image: vehicle.image || "",
     });
+    setImageFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const deleteVehicle = async (id: number) => {
@@ -100,7 +154,7 @@ export default function VehiclesPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Tipos de vehículo</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Administra los vehículos disponibles y su capacidad.
+            Administra los vehículos disponibles, su capacidad y su foto.
           </p>
         </div>
 
@@ -141,6 +195,41 @@ export default function VehiclesPage() {
                 <span className="text-sm text-gray-700">Activo</span>
               </label>
             </div>
+
+            {/* Foto del vehículo */}
+            <div className="md:col-span-3 flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">
+                Foto del vehículo (opcional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm w-full md:w-1/2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+              />
+
+              {imagePreview ? (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 mb-1">Nueva foto:</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imagePreview}
+                    alt="Vista previa"
+                    className="w-28 h-28 object-cover rounded-xl border border-gray-200"
+                  />
+                </div>
+              ) : form.image ? (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 mb-1">Foto actual:</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.image}
+                    alt="Foto actual"
+                    className="w-28 h-28 object-cover rounded-xl border border-gray-200"
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
           <div className="flex gap-2 mt-5">
             <button
@@ -148,11 +237,12 @@ export default function VehiclesPage() {
               disabled={loading}
               className="bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50 transition"
             >
-              {loading ? "Guardando..." : editingId ? "Actualizar" : "Crear"}
+              {uploading ? "Subiendo foto..." : loading ? "Guardando..." : editingId ? "Actualizar" : "Crear"}
             </button>
             {editingId && (
               <button
                 onClick={resetForm}
+                disabled={loading}
                 className="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
               >
                 Cancelar
@@ -172,20 +262,34 @@ export default function VehiclesPage() {
             {vehicles.map((vehicle) => (
               <div
                 key={vehicle.id}
-                className="flex justify-between items-center px-6 py-4 hover:bg-gray-50 transition"
+                className="flex justify-between items-center px-6 py-4 hover:bg-gray-50 transition gap-4"
               >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-900 text-sm">{vehicle.name}</span>
-                    {!vehicle.active && (
-                      <span className="text-[11px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-100">
-                        Inactivo
-                      </span>
-                    )}
+                <div className="flex items-center gap-4 min-w-0">
+                  {vehicle.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={vehicle.image}
+                      alt={vehicle.name}
+                      className="w-14 h-14 object-cover rounded-lg border border-gray-100 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg border border-dashed border-gray-200 flex items-center justify-center text-[10px] text-gray-300 flex-shrink-0 text-center px-1">
+                      Sin foto
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900 text-sm">{vehicle.name}</span>
+                      {!vehicle.active && (
+                        <span className="text-[11px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-100">
+                          Inactivo
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">Capacidad: {vehicle.capacity} pasajeros</div>
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">Capacidad: {vehicle.capacity} pasajeros</div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => startEdit(vehicle)}
                     className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-amber-100 transition"

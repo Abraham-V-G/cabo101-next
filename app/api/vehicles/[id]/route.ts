@@ -1,3 +1,4 @@
+//app/api/vehicles/[id]/route.ts
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
@@ -8,7 +9,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     data: {
       name: body.name,
       capacity: Number(body.capacity),
-      active: body.active
+      active: body.active,
+      image: body.image,
     }
   })
   return NextResponse.json(vehicle)

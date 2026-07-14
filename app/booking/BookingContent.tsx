@@ -1,4 +1,3 @@
-
 // app/booking/bookingContent.tsx
 "use client";
 
@@ -15,28 +14,42 @@ type Vehicle = {
   name: string;
   capacity: string;
   image: string;
+  maxPassengers: number;
 };
 
-const vehicles = [
-  {
-    name: "SUV",
-    capacity: "Up to 6",
-    image: "/images/suv.png",
-    maxPassengers: 6,
-  },
-  {
-    name: "VAN",
-    capacity: "Up to 11",
-    image: "/images/van.png",
-    maxPassengers: 11,
-  },
-  {
-    name: "SPRINTER",
-    capacity: "Up to 19",
-    image: "/images/splinter.png",
-    maxPassengers: 19,
-  },
+// Forma real que devuelve GET /api/vehicles (tabla Vehicle de Prisma).
+type ApiVehicle = {
+  id: number;
+  name: string;
+  capacity: number;
+  active: boolean;
+  image?: string | null;
+};
+
+// Fotos de respaldo, usadas solo si un vehículo todavía no tiene "image"
+// configurada en el admin, o si /api/vehicles falla por completo (para
+// que el flujo de reserva nunca se rompa por un problema de red/BD).
+const DEFAULT_VEHICLE_IMAGES: Record<string, string> = {
+  SUV: "/images/suv.png",
+  VAN: "/images/van.png",
+  SPRINTER: "/images/splinter.png",
+};
+const FALLBACK_VEHICLE_IMAGE = "/images/van.png";
+
+const FALLBACK_VEHICLES: Vehicle[] = [
+  { name: "SUV", capacity: "Up to 6", image: "/images/suv.png", maxPassengers: 6 },
+  { name: "VAN", capacity: "Up to 11", image: "/images/van.png", maxPassengers: 11 },
+  { name: "SPRINTER", capacity: "Up to 19", image: "/images/splinter.png", maxPassengers: 19 },
 ];
+
+function mapApiVehicle(v: ApiVehicle): Vehicle {
+  return {
+    name: v.name,
+    capacity: `Up to ${v.capacity}`,
+    image: v.image || DEFAULT_VEHICLE_IMAGES[v.name] || FALLBACK_VEHICLE_IMAGE,
+    maxPassengers: v.capacity,
+  };
+}
 
 const inputClass =
   "border border-gray-200 rounded-lg px-3 py-2.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition";
@@ -58,29 +71,17 @@ export default function BookingContent() {
   // ambas cosas desde Google Places / el calendario de BookingForm.
   const isFromPopularTransfer = params.get("source") === "popular";
 
-  // Fecha: ahora es estado editable (antes eran const solo-lectura),
-  // porque cuando viene de Viajes Populares el admin nunca la definió y
-  // el cliente debe poder elegirla aquí mismo.
   const [departureDate, setDepartureDate] = useState(params.get("departureDate") || "");
   const [returnDate, setReturnDate] = useState(params.get("returnDate") || "");
-
-  // Dirección específica de destino (hotel, villa, condominio, etc.)
-  // dentro de la zona. Solo aplica cuando viene de Viajes Populares; en
-  // el buscador normal "to" ya es una dirección específica de Google
-  // Places, así que no hace falta pedir nada extra.
   const [specificAddress, setSpecificAddress] = useState("");
 
   const todayStr = new Date().toISOString().split("T")[0];
 
-  // "to" enriquecido con la dirección específica, para que el chofer
-  // reciba algo tan detallado como en el flujo normal de búsqueda.
   const resolvedTo =
     isFromPopularTransfer && specificAddress.trim()
       ? `${specificAddress.trim()}, ${to}`
       : to;
 
-  // Mientras falten estos datos (solo relevante si vino de Viajes
-  // Populares), no dejamos avanzar a la parte de pago.
   const missingPopularDetails =
     isFromPopularTransfer &&
     (!departureDate || (tripType === "round" && !returnDate) || !specificAddress.trim());
@@ -91,7 +92,6 @@ export default function BookingContent() {
   const toLatRaw   = params.get("toLat") || "";
   const toLngRaw   = params.get("toLng") || "";
 
-  // Validación robusta (evita que Number("") → 0)
   const hasCoordinates =
     fromLatRaw && fromLngRaw && toLatRaw && toLngRaw;
 
@@ -107,30 +107,58 @@ export default function BookingContent() {
     !Number.isNaN(toLat) &&
     !Number.isNaN(toLng);
 
-  // Estados
-  const [vehicle, setVehicle] = useState(vehicles[0]);
+  // Vehículos: arrancan con el respaldo local (para no mostrar nada roto
+  // mientras carga), y se reemplazan por los reales en cuanto llega
+  // /api/vehicles.
+  const [vehicles, setVehicles] = useState<Vehicle[]>(FALLBACK_VEHICLES);
+  const [vehicle, setVehicle] = useState<Vehicle>(FALLBACK_VEHICLES[0]);
   const [priceUSD, setPriceUSD] = useState<number | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
   const [fromZone, setFromZone] = useState("");
   const [toZone, setToZone] = useState("");
 
-    useEffect(() => {
+  // Trae los vehículos reales (con su foto, si el admin ya la subió) de
+  // la base de datos, en vez de usar el arreglo hardcodeado de antes.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/vehicles")
+      .then((res) => res.json())
+      .then((data: ApiVehicle[]) => {
+        if (!active) return;
+        const activeVehicles = data.filter((v) => v.active !== false).map(mapApiVehicle);
+        if (activeVehicles.length > 0) {
+          setVehicles(activeVehicles);
+          setVehicle((prev) =>
+            activeVehicles.find((v) => v.name === prev.name) || activeVehicles[0]
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("Error cargando vehículos, usando respaldo local:", err);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Si el vehículo seleccionado no alcanza para los pasajeros, sube al
+  // más chico que sí alcance (ya no depende de nombres fijos como
+  // "SUV"/"VAN"/"SPRINTER" — funciona con cualquier vehículo que el
+  // admin haya dado de alta).
+  useEffect(() => {
     if (vehicle.maxPassengers >= passengerCount) return;
 
-    if (passengerCount > 11) {
-        setVehicle(vehicles.find(v => v.name === "SPRINTER")!);
-    } else if (passengerCount > 6) {
-        setVehicle(vehicles.find(v => v.name === "VAN")!);
-    } else {
-        setVehicle(vehicles.find(v => v.name === "SUV")!);
-    }
-    }, [passengerCount, vehicle]);
+    const bigEnough = [...vehicles]
+      .sort((a, b) => a.maxPassengers - b.maxPassengers)
+      .find((v) => v.maxPassengers >= passengerCount);
+
+    if (bigEnough) setVehicle(bigEnough);
+  }, [passengerCount, vehicle, vehicles]);
 
   // Llamada a /api/pricing
   useEffect(() => {
     let mounted = true;
 
-    // Limpiar estados si no hay coordenadas válidas
     if (!isValidCoordinates) {
       if (mounted) {
         setPriceUSD(null);
@@ -224,9 +252,6 @@ export default function BookingContent() {
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
           {/* COLUMNA IZQUIERDA */}
           <div className="space-y-6">
-            {/* Solo aparece si se llegó desde una tarjeta de Viajes
-                Populares: ahí faltan fecha y dirección específica que el
-                buscador normal ya trae resueltas. */}
             {isFromPopularTransfer && (
               <div className="bg-white rounded-2xl border border-teal-200 p-6 space-y-4">
                 <div>
