@@ -16,19 +16,49 @@ Modern transportation reservation platform for Los Cabos.
 
 ---
 
+## Roadmap
+
+- [x] Booking System
+
+- [x] Admin Dashboard
+
+- [x] Authentication
+
+- [ ] Analytics
+
+- [ ] Stripe Integration
+
+- [ ] Mobile App
+
+---
+
 ## Features
 
-Online booking
+- Airport transfer reservations
 
-Admin Dashboard
+- Google Maps Autocomplete
 
-Google Maps integration
+- Dynamic pricing
 
-Vehicle management
+- Admin Dashboard
 
-Dynamic pricing
+- Reservation management
 
-Responsive Design
+- Email notifications
+
+- Secure authentication
+
+- Responsive Design
+
+- Payment integration
+
+- MySQL database
+
+- Prisma ORM
+
+- REST API
+
+- Admin Dashboard
 
 ---
 
@@ -51,3 +81,17 @@ npm run dev
 ## Status
 
 Currently under development
+
+## License
+
+MIT License
+
+## Author
+
+Edgar Abraham Gutierrez
+
+GitHub
+
+LinkedIn
+
+Portfolio
