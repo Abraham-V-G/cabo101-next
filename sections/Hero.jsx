@@ -108,7 +108,7 @@ export default function Hero() {
 
         <div className="mt-8 sm:mt-10 md:mt-12 flex flex-col sm:flex-row justify-between items-start sm:items-start mx-auto sm:mx-0 w-fit sm:w-full gap-5 sm:gap-0 text-gray-300 text-lg sm:text-sm md:text-xl mb-25">
           <div className="flex items-center gap-6">
-            <Image src="/images/chat1.png" alt="" width={28} height={28} className="sm:w-[27px] sm:h-[27px]" />
+            <Image src="/images/chat1.png" alt="" width={29} height={29} className="sm:w-[29px] sm:h-[28px]" />
             <span className="font-normal tracking-wide">Easy online booking</span>
           </div>
           <div className="flex items-center gap-6">
