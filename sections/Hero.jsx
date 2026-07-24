@@ -58,7 +58,7 @@ export default function Hero() {
       <Navbar />
 
       <div className="relative z-10 flex flex-col flex-1 justify-center max-w-7xl mx-auto w-full px-5 sm:pl-7 sm:pr-0 mt-0 md:mt-8">
-        <h1 className="text-[26px] tracking-normal sm:text-4xl sm:tracking-[0.5px] md:text-5xl lg:text-[50px] font-semibold leading-tight mb-5 sm:mb-30 text-white max-w-full md:max-w-[850px]">
+        <h1 className="text-[26px] tracking-normal sm:text-4xl sm:tracking-[0.5px] md:text-5xl lg:text-[100px] font-semibold leading-tight mb-5 sm:mb-30 text-white max-w-full md:max-w-[850px]">
           Private transportation & premium experiences in Los Cabos.
         </h1>
 
