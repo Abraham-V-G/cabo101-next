@@ -106,17 +106,17 @@ export default function Hero() {
 
         <BookingForm tripType={tripType} />
 
-        <div className="mt-8 sm:mt-10 md:mt-12 flex flex-col sm:flex-row justify-between items-start sm:items-start mx-auto sm:mx-0 w-fit sm:w-full gap-5 sm:gap-0 text-gray-300 text-base sm:text-lg md:text-xl mb-25">
+        <div className="mt-8 sm:mt-10 md:mt-12 flex flex-col sm:flex-row justify-between items-start sm:items-start mx-auto sm:mx-0 w-fit sm:w-full gap-5 sm:gap-0 text-gray-300 text-base sm:text-base md:text-xl mb-25">
           <div className="flex items-center gap-6">
-            <Image src="/images/chat.png" alt="" width={30} height={30} className="sm:w-[30px] sm:h-[30px]" />
+            <Image src="/images/chat.png" alt="" width={28} height={28} className="sm:w-[30px] sm:h-[30px]" />
             <span className="font-normal tracking-wide">Easy online booking</span>
           </div>
           <div className="flex items-center gap-6">
-            <Image src="/images/booking.png" alt="" width={30} height={30} className="sm:w-[30px] sm:h-[30px]" />
+            <Image src="/images/booking.png" alt="" width={28} height={28} className="sm:w-[30px] sm:h-[30px]" />
             <span className="font-normal tracking-wide">Bilingual chauffeurs</span>
           </div>
           <div className="flex items-center gap-6">
-            <Image src="/images/money.png" alt="" width={30} height={30} className="sm:w-[30px] sm:h-[30px]" />
+            <Image src="/images/money.png" alt="" width={28} height={28} className="sm:w-[30px] sm:h-[30px]" />
             <span className="font-normal tracking-wide">No hidden fees</span>
           </div>
         </div>

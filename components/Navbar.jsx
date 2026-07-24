@@ -177,26 +177,6 @@ export default function Navbar() {
         <a href="#" onClick={closeAll} className="hover:text-[#4ccb8c] transition">Home</a>
         <a href="#" onClick={closeAll} className="hover:text-[#4ccb8c] transition">Experiences</a>
 
-        {/* Activities (nuevo) */}
-        <div className="relative w-full min-[901px]:w-auto">
-          <button
-            onClick={() => toggleMenu("activities")}
-            className="flex items-center gap-1.5 hover:text-[#4ccb8c] transition w-full min-[901px]:w-auto"
-          >
-            Activities
-            <ChevronDownIcon
-              className={`w-4 h-4 transition-transform ${activeMenu === "activities" ? "rotate-180" : ""}`}
-            />
-          </button>
-          {activeMenu === "activities" && (
-            <div className="mt-3 flex flex-col gap-3 pl-4 border-l border-white/20 min-[901px]:absolute min-[901px]:top-full min-[901px]:left-0 min-[901px]:mt-3 min-[901px]:pl-0 min-[901px]:border-l-0 min-[901px]:bg-black/95 min-[901px]:rounded-xl min-[901px]:p-4 min-[901px]:w-48 min-[901px]:shadow-xl">
-              <a href="#" onClick={closeAll} className="text-base text-white/80 hover:text-[#4ccb8c] transition">Fishing</a>
-              <a href="#" onClick={closeAll} className="text-base text-white/80 hover:text-[#4ccb8c] transition">Boats &amp; Yachts</a>
-              <a href="#" onClick={closeAll} className="text-base text-white/80 hover:text-[#4ccb8c] transition">Activities &amp; Tours</a>
-            </div>
-          )}
-        </div>
-
         {/* About us (con dropdown nuevo) */}
         <div className="relative w-full min-[901px]:w-auto">
           <button
