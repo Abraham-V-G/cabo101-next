@@ -136,10 +136,10 @@ export default function Navbar() {
       {/* Logo */}
       <div>
         <Image
-          src="/images/logo.png"
+          src="/images/logo3.png"
           alt="Cabo 101"
-          width={43}
-          height={43}
+          width={45}
+          height={45}
           className="object-contain"
         />
       </div>
