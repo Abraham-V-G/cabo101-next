@@ -384,7 +384,7 @@ export default function BookingForm({ tripType }: { tripType: "oneway" | "round"
             }}
             className="shrink-0"
           >
-            <Image src="/images/mapslogo.png" alt="Custom location" width={18} height={18} />
+            <Image src="/images/mapslogo1.png" alt="Custom location" width={18} height={18} />
           </button>
         </div>
 
